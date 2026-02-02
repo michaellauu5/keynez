@@ -57,6 +57,19 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Feature badge colors
+        feature: {
+          "sea-view": "hsl(var(--feature-sea-view))",
+          "new-build": "hsl(var(--feature-new-build))",
+          "pet-friendly": "hsl(var(--feature-pet-friendly))",
+          garden: "hsl(var(--feature-garden))",
+          parking: "hsl(var(--feature-parking))",
+          gym: "hsl(var(--feature-gym))",
+        },
+      },
+      fontFamily: {
+        serif: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+        sans: ["Inter", "system-ui", "sans-serif"],
       },
       borderRadius: {
         lg: "var(--radius)",
