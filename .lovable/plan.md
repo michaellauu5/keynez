@@ -1,196 +1,12 @@
 
-# Complete Language Translation & Dummy Map Placement
+# Landing Page Images, Logo Enhancement & Color Theme Update
 
 ## Overview
-This plan addresses two key improvements:
-1. **Full Translation Coverage**: Apply the language switch functionality to ALL content throughout the website, including components that currently have hardcoded English text
-2. **Map Placement**: Add the interactive dummy Hong Kong map below the AI chat box, spanning full page width, positioned above the "45,000+ Active Listings" banner
-
----
-
-## Part 1: Full Translation Coverage
-
-### Current State Analysis
-The translation system exists with translations for EN, Traditional Chinese, and Simplified Chinese, but many components still have hardcoded English text that doesn't change when the language is switched.
-
-### Components Requiring Translation Updates
-
-| Component | Hardcoded Text to Translate |
-|-----------|---------------------------|
-| `HeroSection.tsx` | Title, subtitle |
-| `PropertySearchChat.tsx` | Placeholder text, button labels, thinking messages, badges, initial state text |
-| `StatCounter.tsx` | "Active Listings" label |
-| `FilterToggleBar.tsx` | Filter labels, button text |
-| `FilterSidebar.tsx` | Section titles, filter labels, button text |
-| `PropertyCard.tsx` | "For Sale", "For Rent", "New", "View Details", unit labels |
-| `PropertyResultsTable.tsx` | Column headers, empty state text |
-| `ExportActions.tsx` | Button labels |
-| `DummyHongKongMap.tsx` | Legend labels, region names (keep in English but add translated tooltips) |
-| `VideoDemo.tsx` | Title, description text |
-
-### New Translation Keys to Add
-
-```typescript
-// Add to src/translations/index.ts
-
-// Hero Section (enhanced)
-"hero.title": "Find Your Perfect Property in Hong Kong",
-"hero.titleAccent": "Hong Kong",
-"hero.subtitle": "Powered by AI. Search in plain language and discover properties that match your lifestyle.",
-
-// Search Chat
-"search.placeholder": "Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'",
-"search.button": "Search",
-"search.thinking.analyzing": "Analyzing your requirements...",
-"search.thinking.searching": "Searching property database...",
-"search.thinking.ranking": "Ranking by relevance...",
-"search.thinking.preparing": "Preparing results...",
-"search.aiUnderstood": "AI understood your search as:",
-"search.propertiesFound": "properties found",
-"search.selected": "selected",
-"search.noResults": "No properties match your criteria",
-"search.noResultsHint": "Try adjusting your search or filters",
-"search.initialTitle": "AI-Powered Property Search",
-"search.initialDescription": "Describe what you're looking for in natural language, or use the filters above. Our AI will find the most relevant properties for you.",
-"search.emptyState": "Search for properties to see results here",
-
-// Filters
-"filter.propertyType": "Property Type",
-"filter.price": "Price (HKD)",
-"filter.location": "Location",
-"filter.bedrooms": "Bedrooms",
-"filter.bathrooms": "Bathrooms",
-"filter.size": "Size (sqft)",
-"filter.floorLevel": "Floor Level",
-"filter.buildingAge": "Building Age",
-"filter.orientation": "Orientation",
-"filter.developer": "Developer",
-"filter.clearSelection": "Clear selection",
-"filter.resetRange": "Reset range",
-"filter.filtersActive": "filter(s) active",
-"filter.clearAll": "Clear all",
-"filter.district": "District / Area",
-"filter.moreFilters": "More Filters",
-"filter.parking": "Parking",
-"filter.petsAllowed": "Pets Allowed",
-"filter.furnished": "Furnished",
-"filter.newBuild": "New Build",
-"filter.seaView": "Sea View",
-"filter.pool": "Pool",
-"filter.gym": "Gym",
-"filter.all": "All",
-"filter.forSale": "For Sale",
-"filter.forRent": "For Rent",
-
-// Stat Counter
-"stats.activeListings": "Active Listings",
-
-// Property Card
-"property.new": "New",
-"property.bed": "bed",
-"property.bath": "bath",
-"property.perMonth": "/mo",
-
-// Table Headers
-"table.propertyName": "Property Name",
-"table.location": "Location",
-"table.priceHKD": "Price (HKD)",
-"table.sizeSqft": "Size (sqft)",
-"table.bedrooms": "Bedrooms",
-"table.match": "Match",
-"table.keyFeatures": "Key Features",
-
-// Export Actions
-"export.toCSV": "Export to CSV",
-"export.toPDF": "Export to PDF",
-"export.toCanvas": "Export to Research Canvas",
-
-// Map
-"map.legend": "Legend",
-"map.forSale": "For Sale",
-"map.forRent": "For Rent",
-"map.clustered": "Clustered",
-"map.properties": "properties",
-"map.viewDetails": "View Details",
-
-// Video Demo
-"video.title": "See How Keynest AI Works",
-"video.subtitle": "AI-powered property search for Hong Kong",
-"video.caption": "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
-"video.tapToPause": "Tap to pause",
-```
-
----
-
-## Part 2: Dummy Map Placement
-
-### Current Structure
-```text
-Index.tsx
-├── Layout
-│   ├── Header
-│   ├── HeroSection
-│   │   ├── Title & Subtitle
-│   │   ├── Two Column Grid
-│   │   │   ├── PropertySearchChat (left)
-│   │   │   └── VideoDemo (right)
-│   ├── PropertyListingsSection
-│   │   ├── StatCounter ("45,000+ Active Listings")
-│   │   ├── Filters
-│   │   └── Property Grid/Map Toggle
-│   └── Footer
-```
-
-### New Structure
-```text
-Index.tsx
-├── Layout
-│   ├── Header
-│   ├── HeroSection
-│   │   ├── Title & Subtitle
-│   │   ├── Two Column Grid
-│   │   │   ├── PropertySearchChat (left)
-│   │   │   └── VideoDemo (right)
-│   │   └── NEW: DummyHongKongMap (full width, below chat)
-│   ├── PropertyListingsSection
-│   │   ├── StatCounter ("45,000+ Active Listings")
-│   │   ├── Filters
-│   │   └── Property Grid/Map Toggle
-│   └── Footer
-```
-
-### Visual Layout Change
-
-**Before:**
-```text
-+----------------------------------------------------------+
-|  [AI Chat Box]              |  [Video Demo]               |
-+----------------------------------------------------------+
-|                                                           |
-|           45,000+ Active Listings                         |
-|                                                           |
-+----------------------------------------------------------+
-```
-
-**After:**
-```text
-+----------------------------------------------------------+
-|  [AI Chat Box]              |  [Video Demo]               |
-+----------------------------------------------------------+
-|                                                           |
-|  +------------------------------------------------------+ |
-|  |                                                      | |
-|  |              INTERACTIVE HONG KONG MAP               | |
-|  |          (Full width, ~400px height)                 | |
-|  |                                                      | |
-|  +------------------------------------------------------+ |
-|                                                           |
-+----------------------------------------------------------+
-|                                                           |
-|           45,000+ Active Listings                         |
-|                                                           |
-+----------------------------------------------------------+
-```
+This plan implements four key visual changes:
+1. **Hong Kong skyline photo** as landing page backdrop (first uploaded image)
+2. **Google Maps screenshot** replacing the current dummy SVG map (second uploaded image)
+3. **Enlarged logo** in header and **add logo** to footer bottom-left
+4. **Light blue primary / Yellow secondary** color theme adjustment
 
 ---
 
@@ -198,152 +14,268 @@ Index.tsx
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/translations/index.ts` | Modify | Add all missing translation keys for EN, zh-HK, zh-CN |
-| `src/components/landing/HeroSection.tsx` | Modify | Add translations, add DummyHongKongMap below grid |
-| `src/components/landing/PropertySearchChat.tsx` | Modify | Apply translations to all text |
-| `src/components/landing/StatCounter.tsx` | Modify | Apply translation to label |
-| `src/components/landing/FilterToggleBar.tsx` | Modify | Apply translations to all labels |
-| `src/components/landing/FilterSidebar.tsx` | Modify | Apply translations to all labels |
-| `src/components/landing/PropertyCard.tsx` | Modify | Apply translations to badges and labels |
-| `src/components/landing/PropertyResultsTable.tsx` | Modify | Apply translations to headers and empty state |
-| `src/components/landing/ExportActions.tsx` | Modify | Apply translations to button labels |
-| `src/components/landing/VideoDemo.tsx` | Modify | Apply translations to title and descriptions |
-| `src/components/map/DummyHongKongMap.tsx` | Modify | Apply translations to legend and UI text |
+| `src/assets/hong-kong-backdrop.jpg` | Create (copy) | Landing page hero background image |
+| `src/assets/hong-kong-map.png` | Create (copy) | Dummy Google Maps image |
+| `src/index.css` | Modify | Update color scheme to light blue primary, yellow secondary |
+| `src/components/landing/HeroSection.tsx` | Modify | Add backdrop image with overlay |
+| `src/components/map/DummyHongKongMap.tsx` | Modify | Replace SVG with actual map image |
+| `src/components/layout/Header.tsx` | Modify | Enlarge logo (from h-8/h-10 to h-12/h-14) |
+| `src/components/layout/Footer.tsx` | Modify | Add logo in bottom-left of copyright section |
 
 ---
 
-## Implementation Details
+## Part 1: Asset Management
 
-### 1. Translation File Update
+### Copy Images to Project
+```text
+user-uploads://Hong_Kong.jpg → src/assets/hong-kong-backdrop.jpg
+user-uploads://Screenshot_2026-02-02_at_23.55.36.png → src/assets/hong-kong-map.png
+```
 
-Add comprehensive translations for all three languages covering:
-- All filter labels
-- All button text
-- All placeholder text
-- All status messages
-- All table headers
-- All map legend text
-- All empty/loading states
+---
 
-### 2. HeroSection.tsx Changes
+## Part 2: Color Theme Update
+
+### Updated CSS Variables (`src/index.css`)
+
+Transform the color scheme to use **light blue as primary** and **yellow/gold as secondary accent**:
+
+```css
+:root {
+  /* Background: light off-white (keep) */
+  --background: 60 20% 98%;
+  --foreground: 36 38% 13%;
+
+  /* Card: pure white (keep) */
+  --card: 0 0% 100%;
+  --card-foreground: 36 38% 13%;
+
+  /* Primary: Light Blue (NEW - was warm brown) */
+  --primary: 199 93% 45%;           /* #0EA5E9 - bright sky blue */
+  --primary-foreground: 0 0% 100%;  /* White text on blue */
+
+  /* Secondary: Golden Yellow (NEW - elevated from accent) */
+  --secondary: 45 100% 51%;         /* #FFC107 - rich gold */
+  --secondary-foreground: 36 38% 13%; /* Dark text on yellow */
+
+  /* Muted: light beige (keep) */
+  --muted: 38 40% 92%;
+  --muted-foreground: 32 19% 36%;
+
+  /* Accent: Yellow/Gold (CTAs, highlights) - keep */
+  --accent: 45 100% 65%;            /* #FFD54F */
+  --accent-foreground: 36 38% 13%;
+
+  /* Border: warm beige (keep) */
+  --border: 38 40% 85%;
+  --input: 38 40% 85%;
+  --ring: 199 93% 45%;              /* Blue ring (updated) */
+
+  /* Sky color for reference */
+  --sky: 199 93% 74%;               /* Light sky blue */
+}
+```
+
+### Visual Color Mapping
+```text
++----------------------------------+
+|  BEFORE           →    AFTER     |
++----------------------------------+
+|  Primary: Brown   →    Blue      |
+|  Secondary: Beige →    Yellow    |
+|  Accent: Yellow   →    Yellow    |
+|  CTA Buttons      →    Yellow bg |
+|  Headers/Links    →    Blue      |
++----------------------------------+
+```
+
+---
+
+## Part 3: Hero Section with Backdrop
+
+### Changes to `HeroSection.tsx`
+
+Add the Hong Kong skyline as a full-bleed background with dark overlay for text readability:
 
 ```typescript
-// Add at top
-import { useTranslation } from '@/hooks/useTranslation';
-import { DummyHongKongMap } from '@/components/map/DummyHongKongMap';
-import { mockProperties } from '@/data/mockProperties';
+import hongKongBackdrop from '@/assets/hong-kong-backdrop.jpg';
 
 export function HeroSection() {
-  const { t } = useTranslation();
-  
   return (
-    <section className="bg-gradient-hero">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
-        {/* Title with translations */}
-        <h1>
-          {t('hero.title').replace('Hong Kong', '')}
-          <span className="text-accent">{t('hero.titleAccent')}</span>
+    <section 
+      className="relative bg-cover bg-center bg-no-repeat min-h-[90vh]"
+      style={{ backgroundImage: `url(${hongKongBackdrop})` }}
+    >
+      {/* Dark gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
+      
+      {/* Content with relative positioning */}
+      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
+        {/* Title - white text for contrast */}
+        <h1 className="text-white text-shadow-lg ...">
+          {renderTitle()}
         </h1>
-        <p>{t('hero.subtitle')}</p>
-
-        {/* Two Column Grid - existing */}
-        <div className="grid gap-8 lg:grid-cols-[55fr_45fr]">
-          <PropertySearchChat />
-          <VideoDemo />
-        </div>
-
-        {/* NEW: Full Width Map */}
-        <div className="mt-8 lg:mt-12">
-          <DummyHongKongMap
-            properties={mockProperties}
-            className="h-[400px] rounded-xl shadow-lg"
-          />
-        </div>
+        
+        {/* ... rest of content */}
       </div>
     </section>
   );
 }
 ```
 
-### 3. Component Translation Pattern
+### Title Text Styling
+- Change from `text-primary` to `text-white` for contrast against backdrop
+- Add `text-accent` for "Hong Kong" highlight (yellow pops on dark bg)
+- Add subtle text shadow for legibility
 
-Each component will follow this pattern:
+---
+
+## Part 4: Dummy Map with Real Image
+
+### Changes to `DummyHongKongMap.tsx`
+
+Replace the SVG-based map with the uploaded Google Maps screenshot:
 
 ```typescript
-import { useTranslation } from '@/hooks/useTranslation';
+import hongKongMapImage from '@/assets/hong-kong-map.png';
 
-export function SomeComponent() {
-  const { t } = useTranslation();
-  
+export function DummyHongKongMap({ ... }) {
   return (
-    <div>
-      <h1>{t('some.translationKey')}</h1>
-      <button>{t('button.label')}</button>
+    <div className={cn("relative h-[500px] rounded-lg overflow-hidden", className)}>
+      {/* Map Image Background */}
+      <img
+        src={hongKongMapImage}
+        alt="Hong Kong Map"
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      
+      {/* Overlay for property markers */}
+      <div className="absolute inset-0">
+        {/* Property markers positioned over the image */}
+        {/* ... marker logic remains similar */}
+      </div>
+      
+      {/* Controls, Legend, etc. remain the same */}
     </div>
   );
 }
 ```
 
-### 4. PropertySearchChat.tsx Key Changes
-
-- Translate all thinking messages
-- Translate placeholder text
-- Translate button labels
-- Translate "AI understood your search as:"
-- Translate "properties found" / "selected"
-- Translate empty state messages
-- Translate sample search badges
-
-### 5. Filter Components Translation
-
-- Translate all filter section titles
-- Translate "Clear all", "Clear selection", "Reset range"
-- Translate filter count text
-- Keep property type names in English (they're proper nouns/industry terms)
-- Keep location names in English (they're proper nouns)
+Key changes:
+- Remove the SVG `<path>` region shapes
+- Remove the water pattern background
+- Use the uploaded map image as the base layer
+- Keep zoom/pan controls (they'll zoom the image)
+- Keep the legend and property markers overlay
+- Markers will be positioned absolutely over the image
 
 ---
 
-## Technical Notes
+## Part 5: Logo Size Adjustments
 
-### Translation Key Naming Convention
-- Use dot notation: `section.subsection.element`
-- Examples: `filter.propertyType`, `search.button`, `table.location`
+### Header Logo (Enlarge)
 
-### Dynamic Text with Variables
-For text containing dynamic values, use template approach:
 ```typescript
-// Instead of: `${count} properties found`
-// Use translation: t('search.propertiesFound') 
-// Display: `${count} ${t('search.propertiesFound')}`
+// In Header.tsx
+<img
+  src={keynestLogo}
+  alt="Keynest AI"
+  className="h-12 w-auto md:h-14"  // Changed from h-8/h-10
+/>
 ```
 
-### Keeping Proper Nouns in English
-- District/region names (Central, Kowloon, etc.) remain in English
-- Developer names remain in English
-- These are recognized proper nouns that don't require translation
+### Footer Logo (Add to Copyright Section)
+
+```typescript
+// In Footer.tsx - Update copyright section
+<div className="mt-12 pt-8 border-t border-primary-foreground/20">
+  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+    {/* Logo at bottom left */}
+    <Link to="/" className="flex items-center">
+      <img
+        src={keynestLogo}
+        alt="Keynest AI"
+        className="h-10 w-auto brightness-0 invert"
+      />
+    </Link>
+    
+    {/* Copyright at center/right */}
+    <p className="text-sm text-primary-foreground/60">
+      © {currentYear} Keynest AI. {t('footer.copyright')}.
+    </p>
+  </div>
+</div>
+```
+
+---
+
+## Visual Layout Summary
+
+### Hero Section
+```text
++------------------------------------------------------------------+
+|  [Hong Kong Skyline Photo - Full Width Background]                |
+|  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Dark Overlay ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓               |
+|                                                                   |
+|      "Find Your Perfect Property in HONG KONG"                    |
+|      (White text with yellow accent)                              |
+|                                                                   |
+|  +--------------------------+  +------------------------+         |
+|  |     AI Chat Box          |  |     Video Demo         |        |
+|  |     (white card)         |  |     (white card)       |        |
+|  +--------------------------+  +------------------------+         |
+|                                                                   |
+|  +----------------------------------------------------------+    |
+|  |                                                          |    |
+|  |          [Google Maps Screenshot]                        |    |
+|  |          with property markers overlay                   |    |
+|  |                                                          |    |
+|  +----------------------------------------------------------+    |
++------------------------------------------------------------------+
+```
+
+### Footer
+```text
++------------------------------------------------------------------+
+|  FOOTER CONTENT (4 columns as before)                             |
++------------------------------------------------------------------+
+|  [Logo]                              © 2026 Keynest AI...         |
++------------------------------------------------------------------+
+```
 
 ---
 
 ## Implementation Order
 
-1. **Update translations/index.ts** - Add all missing translation keys for all three languages
+1. **Copy assets** - Copy both uploaded images to `src/assets/`
 
-2. **Update HeroSection.tsx** - Add translations and include DummyHongKongMap
+2. **Update color scheme** - Modify `src/index.css` CSS variables
 
-3. **Update PropertySearchChat.tsx** - Full translation coverage
+3. **Update HeroSection** - Add backdrop image and overlay styling
 
-4. **Update filter components** - FilterToggleBar and FilterSidebar
+4. **Update DummyHongKongMap** - Replace SVG with map image
 
-5. **Update remaining components** - PropertyCard, PropertyResultsTable, ExportActions, VideoDemo, DummyHongKongMap, StatCounter
+5. **Update Header** - Enlarge logo
+
+6. **Update Footer** - Add logo to copyright section
 
 ---
 
-## Expected Result
+## Technical Notes
 
-After implementation:
-- Switching language in the header dropdown will translate ALL text on the page
-- The dummy Hong Kong map will appear below the chat/video section
-- The map will span the full container width with rounded corners
-- The "45,000+ Active Listings" banner will appear below the map
-- All user-facing text will be available in English, Traditional Chinese, and Simplified Chinese
+### Text Shadow for Hero
+Add a utility class in `src/index.css`:
+```css
+.text-shadow-lg {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+```
+
+### Image Optimization
+- The backdrop image will be imported via ES6 modules for proper bundling
+- Vite will optimize the images during build
+
+### Responsive Considerations
+- Backdrop uses `bg-cover bg-center` for proper scaling
+- Map image uses `object-cover` for consistent display
+- Logo sizes adjust at `md:` breakpoint
