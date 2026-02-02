@@ -50,9 +50,7 @@ export function VideoDemo() {
       {/* Title Section */}
       <div className="mb-4 text-center lg:text-left">
         
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('video.subtitle')}
-        </p>
+        
       </div>
 
       {/* Video Container */}
@@ -91,7 +89,7 @@ export function VideoDemo() {
       </div>
 
       {/* Caption Below */}
-      <p className="mt-4 text-center text-sm text-muted-foreground lg:text-left">
+      <p className="mt-4 text-center text-sm lg:text-left text-primary-foreground">
         {t('video.caption')}
       </p>
     </div>;
