@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
 import { Header } from "@/components/landing/Header";
 import { PropertyGrid } from "@/components/landing/PropertyGrid";
 import { AdvancedFilterSidebar, type FilterState } from "./AdvancedFilterSidebar";
 import { ResultsHeader, type SortOption, type ViewMode } from "./ResultsHeader";
-import { MapView } from "./MapView";
+import { GoogleMapView } from "@/components/map/GoogleMapView";
 import { SaveSearchDialog } from "./SaveSearchDialog";
 import { mockProperties, type PropertyListing } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,6 +63,7 @@ export function ListingsPageLayout({ transactionType, title }: ListingsPageLayou
   const [sortBy, setSortBy] = useState<SortOption>("relevant");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
 
   // Sync filters from URL on mount
   useEffect(() => {
@@ -238,10 +239,39 @@ export function ListingsPageLayout({ transactionType, title }: ListingsPageLayou
             </div>
 
             {/* Results */}
-            {viewMode === "grid" ? (
-              <PropertyGrid properties={filteredProperties} />
-            ) : (
-              <MapView />
+            {viewMode === "grid" && (
+              <PropertyGrid 
+                properties={filteredProperties}
+                onPropertyHover={setHoveredPropertyId}
+              />
+            )}
+            
+            {viewMode === "map" && (
+              <GoogleMapView
+                properties={filteredProperties}
+                hoveredPropertyId={hoveredPropertyId}
+                onPropertyHover={setHoveredPropertyId}
+                activeFilterCount={activeFilterCount}
+                className="h-[600px]"
+              />
+            )}
+            
+            {viewMode === "split" && (
+              <div className="grid grid-cols-2 gap-6">
+                <div className="max-h-[600px] overflow-y-auto">
+                  <PropertyGrid 
+                    properties={filteredProperties}
+                    onPropertyHover={setHoveredPropertyId}
+                  />
+                </div>
+                <GoogleMapView
+                  properties={filteredProperties}
+                  hoveredPropertyId={hoveredPropertyId}
+                  onPropertyHover={setHoveredPropertyId}
+                  activeFilterCount={activeFilterCount}
+                  className="h-[600px] sticky top-0"
+                />
+              </div>
             )}
           </div>
         </div>

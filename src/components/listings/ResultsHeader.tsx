@@ -1,4 +1,4 @@
-import { LayoutGrid, Map, Heart, Bell } from "lucide-react";
+import { LayoutGrid, Map, Heart, Columns } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,9 +8,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type SortOption = "price_asc" | "price_desc" | "size_desc" | "newest" | "relevant";
-export type ViewMode = "grid" | "map";
+export type ViewMode = "grid" | "map" | "split";
 
 interface ResultsHeaderProps {
   totalCount: number;
@@ -37,6 +38,8 @@ export function ResultsHeader({
   onViewModeChange,
   onSaveSearch,
 }: ResultsHeaderProps) {
+  const isMobile = useIsMobile();
+
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
       {/* Left: Count */}
@@ -84,6 +87,7 @@ export function ResultsHeader({
               "h-9 px-3 rounded-none",
               viewMode === "grid" && "bg-accent text-accent-foreground"
             )}
+            title="Grid View"
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
@@ -95,9 +99,25 @@ export function ResultsHeader({
               "h-9 px-3 rounded-none border-l border-border",
               viewMode === "map" && "bg-accent text-accent-foreground"
             )}
+            title="Map View"
           >
             <Map className="h-4 w-4" />
           </Button>
+          {/* Split View - Desktop Only */}
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onViewModeChange("split")}
+              className={cn(
+                "h-9 px-3 rounded-none border-l border-border",
+                viewMode === "split" && "bg-accent text-accent-foreground"
+              )}
+              title="Split View"
+            >
+              <Columns className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

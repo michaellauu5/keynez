@@ -1,9 +1,13 @@
 import { useState, useMemo } from "react";
+import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { StatCounter } from "./StatCounter";
 import { FilterSidebar, type FilterState } from "./FilterSidebar";
 import { PropertyGrid } from "./PropertyGrid";
+import { GoogleMapView } from "@/components/map/GoogleMapView";
+import { Button } from "@/components/ui/button";
 import { mockProperties } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 const defaultFilters: FilterState = {
   transactionType: "all",
@@ -23,8 +27,12 @@ const defaultFilters: FilterState = {
   hasGym: null,
 };
 
+type ViewMode = "grid" | "map";
+
 export function PropertyListingsSection() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const isMobile = useIsMobile();
 
   const filteredProperties = useMemo(() => {
@@ -112,9 +120,56 @@ export function PropertyListingsSection() {
             <FilterSidebar filters={filters} onFiltersChange={setFilters} />
           )}
 
-          {/* Property Grid */}
+          {/* Property Grid/Map */}
           <div className="flex-1 min-w-0">
-            <PropertyGrid properties={filteredProperties} />
+            {/* View Toggle */}
+            <div className="flex items-center justify-between mb-6">
+              <p className="text-sm font-medium text-foreground">
+                <span className="text-lg font-bold">{filteredProperties.length}</span>{" "}
+                <span className="text-muted-foreground">properties found</span>
+              </p>
+              <div className="flex border border-border rounded-md overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "h-9 px-3 rounded-none",
+                    viewMode === "grid" && "bg-accent text-accent-foreground"
+                  )}
+                  title="Grid View"
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("map")}
+                  className={cn(
+                    "h-9 px-3 rounded-none border-l border-border",
+                    viewMode === "map" && "bg-accent text-accent-foreground"
+                  )}
+                  title="Map View"
+                >
+                  <MapIcon className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Results */}
+            {viewMode === "grid" ? (
+              <PropertyGrid 
+                properties={filteredProperties}
+                onPropertyHover={setHoveredPropertyId}
+              />
+            ) : (
+              <GoogleMapView
+                properties={filteredProperties}
+                hoveredPropertyId={hoveredPropertyId}
+                onPropertyHover={setHoveredPropertyId}
+                className="h-[600px]"
+              />
+            )}
           </div>
         </div>
       </div>
