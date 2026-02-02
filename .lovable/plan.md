@@ -1,210 +1,390 @@
 
 
-# Keynest AI Landing Page - Bottom Section
+# Keynest AI Research Canvas - Notion-Style Property Research Tool
 
 ## Overview
-Create the property listings section for the bottom half of the landing page, featuring an animated statistics counter, property cards with image carousels, and a comprehensive filtering sidebar inspired by Centanet's design.
+A powerful, interactive research workspace where users can visualize, compare, and annotate properties imported from AI search results. Features free-form drag-and-drop canvas with property cards, sticky notes, connectors, and grouping capabilities.
 
 ---
 
-## File Changes Summary
+## Architecture
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/assets/keynest-logo.png` | Copy | Store the Keynest AI logo for header |
-| `src/components/landing/Header.tsx` | Create | Navigation header with logo |
-| `src/components/landing/StatCounter.tsx` | Create | Animated 45,000+ listings counter |
-| `src/components/landing/PropertyCard.tsx` | Create | Individual property card with carousel |
-| `src/components/landing/PropertyGrid.tsx` | Create | Grid layout for property cards |
-| `src/components/landing/FilterSidebar.tsx` | Create | Comprehensive filtering panel |
-| `src/components/landing/PropertyListingsSection.tsx` | Create | Main container for listings section |
-| `src/pages/Index.tsx` | Modify | Add Header and PropertyListingsSection |
-
----
-
-## Visual Design
-
-### Layout Structure
 ```text
-+--------------------------------------------------+
-|  [Logo]  Buy | Rent | Sell | Research   [Login]  |  <-- Header (new)
-+--------------------------------------------------+
-|                  HERO SECTION                     |  <-- Existing
-|         (AI Chat + Video Demo)                    |
-+--------------------------------------------------+
-|                                                   |
-|   "45,000+ Active Listings"  (animated counter)   |
-|                                                   |
-+--------------------------------------------------+
-|  FILTER     |        PROPERTY GRID                |
-|  SIDEBAR    |   +------+ +------+ +------+        |
-|             |   | Card | | Card | | Card |        |
-|  - District |   +------+ +------+ +------+        |
-|  - Type     |   +------+ +------+ +------+        |
-|  - Price    |   | Card | | Card | | Card |        |
-|  - Size     |   +------+ +------+ +------+        |
-|  - Rooms    |                                     |
-|  - More     |   [Load More / Pagination]          |
-+--------------------------------------------------+
++---------------------------------------------------+
+|  Header (existing)                                 |
++---------------------------------------------------+
+|  TOOLBAR                                           |
+|  [Add Note] [Add Text] [Connector] [Clear] [Save] [Export] |
++---------------------------------------------------+
+|                                                    |
+|   +-------+                      +-------+         |
+|   |Property|  --------->        |Property|         |
+|   | Card  |                      | Card  |         |
+|   +-------+                      +-------+         |
+|                                                    |
+|   +-------------+     +-------+                    |
+|   | Sticky Note |     |Property|                   |
+|   |             |     | Card  |                    |
+|   +-------------+     +-------+         +--------+ |
+|                                         | Group  | |
+|   +----------+                          | Area   | |
+|   | Text Box |                          +--------+ |
+|   +----------+                                     |
+|                                                    |
++---------------------------------------------------+
 ```
 
-### Responsive Behavior
-- Desktop: Sidebar (280px) + 3-4 column grid
-- Tablet: Collapsible filter drawer + 2 column grid
-- Mobile: Filter modal + 1 column stack
+---
+
+## File Structure
+
+| File | Purpose |
+|------|---------|
+| `src/pages/ResearchCanvas.tsx` | Main page component |
+| `src/components/canvas/CanvasToolbar.tsx` | Top toolbar with actions |
+| `src/components/canvas/CanvasArea.tsx` | Main drag-and-drop canvas container |
+| `src/components/canvas/DraggablePropertyCard.tsx` | Condensed property card for canvas |
+| `src/components/canvas/DraggableStickyNote.tsx` | Draggable sticky note component |
+| `src/components/canvas/DraggableTextBox.tsx` | Text annotation component |
+| `src/components/canvas/ConnectorLine.tsx` | SVG connector between elements |
+| `src/components/canvas/GroupArea.tsx` | Visual grouping rectangle |
+| `src/components/canvas/StarRating.tsx` | 1-5 star ranking component |
+| `src/hooks/useCanvasState.ts` | Canvas state management and persistence |
+| `src/types/canvas.ts` | TypeScript interfaces for canvas elements |
+
+---
+
+## Dependencies
+
+New package required:
+- `@dnd-kit/core` - Core drag and drop functionality
+- `@dnd-kit/utilities` - CSS transform utilities
+
+---
+
+## Data Types
+
+```typescript
+// src/types/canvas.ts
+
+interface Position {
+  x: number;
+  y: number;
+}
+
+interface CanvasProperty {
+  id: string;
+  type: 'property';
+  position: Position;
+  data: {
+    propertyId: string;
+    name: string;
+    location: string;
+    price: number;
+    size: number;
+    bedrooms: string;
+    bathrooms?: number;
+    thumbnail: string;
+    features: string[];
+  };
+  rank: number; // 0-5 stars
+  notes: string;
+  colorCode: string; // hex color for card border
+}
+
+interface CanvasStickyNote {
+  id: string;
+  type: 'sticky';
+  position: Position;
+  content: string;
+  color: 'yellow' | 'pink' | 'blue' | 'green' | 'purple';
+  width: number;
+  height: number;
+}
+
+interface CanvasTextBox {
+  id: string;
+  type: 'text';
+  position: Position;
+  content: string;
+  fontSize: number;
+}
+
+interface CanvasConnector {
+  id: string;
+  type: 'connector';
+  fromId: string;
+  toId: string;
+  color: string;
+  style: 'solid' | 'dashed' | 'arrow';
+}
+
+interface CanvasGroup {
+  id: string;
+  type: 'group';
+  position: Position;
+  width: number;
+  height: number;
+  label: string;
+  color: string;
+}
+
+type CanvasElement = 
+  | CanvasProperty 
+  | CanvasStickyNote 
+  | CanvasTextBox 
+  | CanvasGroup;
+
+interface CanvasState {
+  elements: CanvasElement[];
+  connectors: CanvasConnector[];
+  zoom: number;
+  selectedIds: string[];
+}
+```
 
 ---
 
 ## Component Details
 
-### 1. Header Component
-**Location**: `src/components/landing/Header.tsx`
+### 1. ResearchCanvas Page
+**Route**: `/research-canvas`
 
-- Keynest AI logo (copied from user upload) positioned top-left
-- Main navigation links: Buy, Rent, Sell, Research Canvas
-- Language selector dropdown (placeholder)
-- Login button with user icon
-- Sticky positioning on scroll
-- Mobile hamburger menu
+- Full-height canvas workspace
+- Header with back navigation
+- Receives imported properties via URL state or localStorage
+- Initializes canvas from localStorage if existing session
 
-### 2. Animated Stat Counter
-**Location**: `src/components/landing/StatCounter.tsx`
+### 2. CanvasToolbar
+Fixed toolbar at top with:
 
-- Large, prominent display: "45,000+ Active Listings"
-- Number animates from 0 to 45,000 on scroll into view
-- Uses Intersection Observer for trigger
-- Smooth easeOut animation over 2 seconds
-- Yellow accent underline decoration
+| Button | Icon | Action |
+|--------|------|--------|
+| Add Sticky Note | StickyNote | Creates new draggable sticky at center |
+| Add Text Box | Type | Creates text annotation element |
+| Draw Connector | ArrowRight | Enables connector drawing mode |
+| Color Picker | Palette | Opens color selector for selected elements |
+| Clear Canvas | Trash2 | Confirms and clears all elements |
+| Save Canvas | Save | Saves to localStorage with toast confirmation |
+| Load Canvas | FolderOpen | Loads saved canvas state |
+| Export PDF | FileDown | Generates PDF of canvas |
 
-### 3. Property Card Component
-**Location**: `src/components/landing/PropertyCard.tsx`
+Additional controls:
+- Zoom slider (50% - 200%)
+- Undo/Redo buttons
+- Element count indicator
 
-Each card includes:
-- **Image Carousel**: Using Embla carousel with dots navigation
-  - Multiple property images (3-5 per property)
-  - Swipe enabled on mobile
-  - Arrow navigation on hover
-- **Price**: Bold, prominent in HKD format
-- **Property Type Badge**: "For Sale" (green) or "For Rent" (blue)
-- **Location**: Address and district
-- **Property Info Row**: Icons for bedrooms, bathrooms, size (sqft)
-- **Agent Section**: Avatar, name, contact button
-- **Action Buttons**:
-  - Heart icon for save/favorite (toggleable)
-  - "View Details" button
+### 3. CanvasArea (DndContext Container)
+- Uses `@dnd-kit/core` DndContext
+- Full viewport canvas with grid background
+- Absolute positioning for all elements
+- Pan/scroll with mouse drag on empty space
+- Zoom with scroll wheel + ctrl key
+- Click to deselect, click element to select
 
-### 4. Property Grid
-**Location**: `src/components/landing/PropertyGrid.tsx`
+### 4. DraggablePropertyCard
+Condensed property display:
+- 120x160px card size
+- Thumbnail image (80px height)
+- Property name (truncated)
+- Price in HKD
+- Bed/Bath/Size icons row
+- Star rating component (clickable)
+- Color-coded left border
+- Expand button to show notes
+- Right-click context menu:
+  - Edit notes
+  - Change color
+  - Remove from canvas
 
-- Responsive grid: 1 column (mobile) / 2 (tablet) / 3-4 (desktop)
-- Gap spacing of 24px
-- Animated card entrance (staggered fade-in)
-- Pagination or "Load More" button
-- Shows 12 properties initially, loads 12 more on demand
+### 5. DraggableStickyNote
+- Resizable (drag corner)
+- Editable text content (click to edit)
+- 5 color options
+- Delete button on hover
+- Shadow effect for depth
 
-### 5. Filter Sidebar (Centanet-inspired)
-**Location**: `src/components/landing/FilterSidebar.tsx`
+### 6. DraggableTextBox
+- Inline editable text
+- Font size selector
+- Minimal styling (clean look)
+- Delete on empty + blur
 
-Filter categories based on Centanet reference:
+### 7. ConnectorLine (SVG)
+- Bezier curve between element centers
+- Arrow head option
+- Color customizable
+- Click to select/delete
+- Updates position when connected elements move
 
-1. **Transaction Type**: Buy / Rent toggle
-2. **District/Area**: Multi-level dropdown
-   - Hong Kong Island, Kowloon, New Territories East/West
-   - Sub-districts within each region
-3. **Property Type**: Checkboxes
-   - Apartment, House, Commercial, Studio, Penthouse
-4. **Price Range**: Dual-handle slider
-   - Sale: HK$0 - HK$200M
-   - Rent: HK$0 - HK$200K/month
-5. **Size Range**: Dual-handle slider (0 - 5,000 sqft)
-6. **Bedrooms**: Number selector buttons (Studio, 1, 2, 3, 4, 5+)
-7. **Bathrooms**: Number selector buttons (1, 2, 3, 4+)
-8. **Additional Filters** (expandable):
-   - Parking included
-   - Pets allowed
-   - Furnished
-   - New Build
-   - Sea View
-   - Pool
-   - Gym
+### 8. GroupArea
+- Resizable rectangle
+- Label at top
+- Semi-transparent fill
+- Elements inside move together
+- Lower z-index (behind other elements)
 
-**Mobile Behavior**: Slides in as a drawer/sheet from left
-
-### 6. Main Listings Section Container
-**Location**: `src/components/landing/PropertyListingsSection.tsx`
-
-- Manages filter state
-- Coordinates between FilterSidebar and PropertyGrid
-- Contains the stat counter at top
-- Handles mock data filtering logic
-- Background: Subtle gradient continuation from hero
+### 9. StarRating
+- 5 clickable stars
+- Half-star support optional
+- Yellow filled, gray empty
+- Compact size for card
 
 ---
 
-## Mock Data Structure
+## useCanvasState Hook
 
 ```typescript
-interface PropertyListing {
-  id: string;
-  name: string;
-  address: string;
-  district: string;
-  region: string;
-  price: number;
-  priceType: "sale" | "rent";
-  size: number;
-  bedrooms: number;
-  bathrooms: number;
-  propertyType: string;
-  images: string[];
-  features: string[];
-  agent: {
-    name: string;
-    avatar: string;
-    phone: string;
-  };
-  isNew: boolean;
-  hasParking: boolean;
-  petsAllowed: boolean;
-  isFurnished: boolean;
+// Manages:
+// - elements array with CRUD operations
+// - connectors array
+// - selection state
+// - undo/redo history
+// - localStorage persistence
+// - export functions
+
+function useCanvasState() {
+  // State
+  const [elements, setElements] = useState<CanvasElement[]>([]);
+  const [connectors, setConnectors] = useState<CanvasConnector[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [history, setHistory] = useState<CanvasState[]>([]);
+  
+  // Element operations
+  const addElement = (element: CanvasElement) => {...};
+  const updateElement = (id: string, updates: Partial<CanvasElement>) => {...};
+  const removeElement = (id: string) => {...};
+  const moveElement = (id: string, position: Position) => {...};
+  
+  // Connector operations
+  const addConnector = (fromId: string, toId: string) => {...};
+  const removeConnector = (id: string) => {...};
+  
+  // Canvas operations
+  const clearCanvas = () => {...};
+  const saveToStorage = () => {...};
+  const loadFromStorage = () => {...};
+  const undo = () => {...};
+  const redo = () => {...};
+  
+  // Import from search
+  const importProperties = (properties: PropertyResult[]) => {...};
+  
+  // Export
+  const exportToPDF = () => {...};
+  
+  return {...};
 }
 ```
 
-Generate 20+ mock properties with realistic Hong Kong addresses and price ranges.
+---
+
+## Drag and Drop Implementation
+
+Using @dnd-kit/core for free-form positioning:
+
+```typescript
+// CanvasArea.tsx
+import { DndContext, DragEndEvent, DragMoveEvent } from '@dnd-kit/core';
+
+function CanvasArea() {
+  const { elements, moveElement } = useCanvasState();
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, delta } = event;
+    const element = elements.find(e => e.id === active.id);
+    if (element) {
+      moveElement(active.id, {
+        x: element.position.x + delta.x,
+        y: element.position.y + delta.y,
+      });
+    }
+  };
+
+  return (
+    <DndContext onDragEnd={handleDragEnd}>
+      <div className="relative w-full h-full overflow-auto bg-[url('/grid.svg')]">
+        {elements.map(element => (
+          <DraggableElement key={element.id} element={element} />
+        ))}
+        <svg className="absolute inset-0 pointer-events-none">
+          {connectors.map(connector => (
+            <ConnectorLine key={connector.id} connector={connector} />
+          ))}
+        </svg>
+      </div>
+    </DndContext>
+  );
+}
+```
 
 ---
 
-## Technical Implementation
+## Integration with AI Search
 
-### Dependencies
-- Uses existing Embla carousel for image galleries
-- Uses existing shadcn/ui components (Slider, Checkbox, Sheet, Button, Badge)
-- Intersection Observer API for scroll animations
-- React state for filter management
+1. Update `ExportActions.tsx` to use `react-router-dom` navigation
+2. Pass selected properties via route state or store in localStorage
+3. Research Canvas reads and imports on mount
 
-### Animation Details
-- **Counter Animation**: Custom hook with requestAnimationFrame
-- **Card Entrance**: CSS keyframe animation with staggered delay
-- **Filter Transitions**: Smooth height/opacity transitions
-- **Carousel**: Embla's built-in smooth scrolling
+```typescript
+// ExportActions.tsx update
+const navigate = useNavigate();
 
-### Accessibility
-- Keyboard navigation for carousel
-- ARIA labels on all interactive elements
-- Focus management in filter sidebar
-- Screen reader friendly stat counter
+const handleExportToResearchCanvas = () => {
+  const dataToExport = selectedIds.length > 0 ? selectedResults : results.slice(0, 4);
+  // Store in localStorage for cross-page access
+  localStorage.setItem('keynest_canvas_import', JSON.stringify(dataToExport));
+  navigate('/research-canvas', { state: { properties: dataToExport } });
+};
+```
+
+---
+
+## Local Storage Persistence
+
+- Key: `keynest_research_canvas`
+- Auto-save on changes (debounced 1 second)
+- Manual save button
+- Load on page mount
+- Clear storage on "Clear Canvas"
+
+---
+
+## Responsive Design
+
+- Desktop: Full canvas experience
+- Tablet: Simplified toolbar, touch-friendly drag
+- Mobile: Read-only view or simplified list mode
 
 ---
 
 ## Implementation Order
 
-1. Copy logo to `src/assets/`
-2. Create Header component with logo
-3. Create StatCounter with animation
-4. Create PropertyCard with image carousel
-5. Create FilterSidebar with all filter options
-6. Create PropertyGrid with pagination
-7. Create PropertyListingsSection container
-8. Update Index.tsx to include new sections
-9. Add mock data for demonstration
+1. Install @dnd-kit/core and @dnd-kit/utilities
+2. Create types/canvas.ts with all interfaces
+3. Create useCanvasState hook with basic state management
+4. Create CanvasArea with DndContext
+5. Create DraggablePropertyCard component
+6. Create CanvasToolbar with add/clear/save buttons
+7. Create ResearchCanvas page and add route
+8. Update ExportActions to navigate to canvas
+9. Add DraggableStickyNote component
+10. Add DraggableTextBox component
+11. Add ConnectorLine with SVG drawing
+12. Add GroupArea component
+13. Add StarRating component
+14. Implement localStorage persistence
+15. Add PDF export functionality
+16. Polish animations and interactions
+
+---
+
+## Visual Design
+
+- Canvas background: Subtle dot grid pattern (like Figma)
+- Property cards: White with colored left border, subtle shadow
+- Sticky notes: Paper texture effect, slightly rotated
+- Connectors: Gray by default, accent yellow when selected
+- Groups: Semi-transparent with dashed border
+- Toolbar: Matches existing header style (beige/brown tones)
 
