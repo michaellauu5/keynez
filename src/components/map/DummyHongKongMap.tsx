@@ -199,7 +199,7 @@ export function DummyHongKongMap({
   return (
     <div
       className={cn(
-        "relative h-[500px] rounded-lg overflow-hidden bg-gradient-to-b from-sky-100 to-blue-200",
+        "relative h-[500px] rounded-lg overflow-hidden bg-gradient-hero",
         className
       )}
       onClick={() => setSelectedPopup(null)}

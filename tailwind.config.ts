@@ -57,6 +57,11 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Custom accent colors
+        coral: "hsl(var(--coral))",
+        sage: "hsl(var(--sage))",
+        sky: "hsl(var(--sky))",
+        gold: "hsl(var(--gold))",
         // Feature badge colors
         feature: {
           "sea-view": "hsl(var(--feature-sea-view))",
@@ -68,13 +73,27 @@ export default {
         },
       },
       fontFamily: {
-        serif: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"],
         sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+      },
+      fontSize: {
+        xs: ["0.875rem", { lineHeight: "1.25rem" }],
+        sm: ["1rem", { lineHeight: "1.5rem" }],
+        base: ["1.125rem", { lineHeight: "1.75rem" }],
+        lg: ["1.25rem", { lineHeight: "1.75rem" }],
+        xl: ["1.5rem", { lineHeight: "2rem" }],
+        "2xl": ["2rem", { lineHeight: "2.25rem" }],
+        "3xl": ["2.5rem", { lineHeight: "2.75rem" }],
+        "4xl": ["3rem", { lineHeight: "1.1" }],
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        card: "0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.06)",
+        "card-hover": "0 8px 24px -4px rgba(0, 0, 0, 0.12), 0 12px 32px -8px rgba(0, 0, 0, 0.08)",
       },
       keyframes: {
         "accordion-down": {

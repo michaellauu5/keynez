@@ -2,104 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Keynest AI Design System - Hong Kong PropTech
-   Color Palette: Warm beige/brown tones with yellow accent
+/* Keynest AI Design System - Fresh Mint-Green to Sky-Blue Palette
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Warm beige background */
-    --background: 40 30% 96%;
-    --foreground: 30 20% 15%;
+    /* Background: light off-white */
+    --background: 60 20% 98%;
+    --foreground: 36 38% 13%;
 
-    /* Cream/white card */
-    --card: 40 40% 98%;
-    --card-foreground: 30 20% 15%;
+    /* Card: pure white */
+    --card: 0 0% 100%;
+    --card-foreground: 36 38% 13%;
 
-    --popover: 40 40% 98%;
-    --popover-foreground: 30 20% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 36 38% 13%;
 
-    /* Warm brown primary */
-    --primary: 30 45% 25%;
-    --primary-foreground: 40 40% 98%;
+    /* Primary: warm brown (for buttons, links) */
+    --primary: 34 27% 29%;
+    --primary-foreground: 60 20% 98%;
 
-    /* Light beige secondary */
-    --secondary: 35 25% 90%;
-    --secondary-foreground: 30 20% 15%;
+    /* Secondary: cream beige */
+    --secondary: 60 56% 91%;
+    --secondary-foreground: 36 38% 13%;
 
-    --muted: 35 20% 92%;
-    --muted-foreground: 30 15% 45%;
+    /* Muted: light beige */
+    --muted: 38 40% 92%;
+    --muted-foreground: 32 19% 36%;
 
-    /* Yellow accent */
-    --accent: 45 95% 55%;
-    --accent-foreground: 30 20% 15%;
+    /* Accent: golden yellow (CTAs, highlights) */
+    --accent: 45 100% 65%;
+    --accent-foreground: 36 38% 13%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 35 20% 85%;
-    --input: 35 20% 85%;
-    --ring: 45 95% 55%;
+    /* Border: warm beige border */
+    --border: 38 40% 85%;
+    --input: 38 40% 85%;
+    --ring: 45 100% 65%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
     /* Sidebar */
-    --sidebar-background: 40 30% 96%;
-    --sidebar-foreground: 30 20% 15%;
-    --sidebar-primary: 30 45% 25%;
-    --sidebar-primary-foreground: 40 40% 98%;
-    --sidebar-accent: 35 25% 90%;
-    --sidebar-accent-foreground: 30 20% 15%;
-    --sidebar-border: 35 20% 85%;
-    --sidebar-ring: 45 95% 55%;
+    --sidebar-background: 60 20% 98%;
+    --sidebar-foreground: 36 38% 13%;
+    --sidebar-primary: 34 27% 29%;
+    --sidebar-primary-foreground: 60 20% 98%;
+    --sidebar-accent: 60 56% 91%;
+    --sidebar-accent-foreground: 36 38% 13%;
+    --sidebar-border: 38 40% 85%;
+    --sidebar-ring: 45 100% 65%;
+
+    /* Additional custom colors */
+    --coral: 14 100% 70%;
+    --sage: 122 38% 74%;
+    --sky: 199 93% 74%;
+    --gold: 45 100% 51%;
 
     /* Custom semantic colors for features */
-    --feature-sea-view: 200 80% 50%;
-    --feature-new-build: 145 70% 40%;
+    --feature-sea-view: 199 93% 74%;
+    --feature-new-build: 122 38% 74%;
     --feature-pet-friendly: 280 60% 55%;
-    --feature-garden: 120 50% 45%;
-    --feature-parking: 220 60% 50%;
-    --feature-gym: 350 70% 55%;
+    --feature-garden: 122 38% 60%;
+    --feature-parking: 199 60% 50%;
+    --feature-gym: 14 100% 70%;
   }
 
   .dark {
-    --background: 30 20% 10%;
-    --foreground: 40 30% 95%;
+    --background: 30 20% 8%;
+    --foreground: 60 20% 95%;
 
-    --card: 30 20% 12%;
-    --card-foreground: 40 30% 95%;
+    --card: 30 20% 10%;
+    --card-foreground: 60 20% 95%;
 
-    --popover: 30 20% 12%;
-    --popover-foreground: 40 30% 95%;
+    --popover: 30 20% 10%;
+    --popover-foreground: 60 20% 95%;
 
-    --primary: 45 95% 55%;
-    --primary-foreground: 30 20% 10%;
+    --primary: 45 100% 65%;
+    --primary-foreground: 30 20% 8%;
 
-    --secondary: 30 15% 20%;
-    --secondary-foreground: 40 30% 95%;
+    --secondary: 30 15% 18%;
+    --secondary-foreground: 60 20% 95%;
 
-    --muted: 30 15% 18%;
-    --muted-foreground: 35 15% 60%;
+    --muted: 30 15% 16%;
+    --muted-foreground: 38 20% 55%;
 
-    --accent: 45 95% 55%;
-    --accent-foreground: 30 20% 10%;
+    --accent: 45 100% 65%;
+    --accent-foreground: 30 20% 8%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 25%;
-    --input: 30 15% 25%;
-    --ring: 45 95% 55%;
+    --border: 30 15% 22%;
+    --input: 30 15% 22%;
+    --ring: 45 100% 65%;
 
-    --sidebar-background: 30 20% 10%;
-    --sidebar-foreground: 40 30% 95%;
-    --sidebar-primary: 45 95% 55%;
-    --sidebar-primary-foreground: 30 20% 10%;
-    --sidebar-accent: 30 15% 20%;
-    --sidebar-accent-foreground: 40 30% 95%;
-    --sidebar-border: 30 15% 25%;
-    --sidebar-ring: 45 95% 55%;
+    --sidebar-background: 30 20% 8%;
+    --sidebar-foreground: 60 20% 95%;
+    --sidebar-primary: 45 100% 65%;
+    --sidebar-primary-foreground: 30 20% 8%;
+    --sidebar-accent: 30 15% 18%;
+    --sidebar-accent-foreground: 60 20% 95%;
+    --sidebar-border: 30 15% 22%;
+    --sidebar-ring: 45 100% 65%;
+
+    --coral: 14 100% 70%;
+    --sage: 122 38% 74%;
+    --sky: 199 93% 74%;
+    --gold: 45 100% 51%;
   }
 }
 
@@ -172,7 +184,7 @@
 /* Custom Google Maps info window styling */
 .gm-style .gm-style-iw-c {
   padding: 0 !important;
-  border-radius: 0.75rem !important;
+  border-radius: 0.5rem !important;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
 }
 
@@ -191,7 +203,15 @@
 
 /* Gradient utilities */
 .bg-gradient-hero {
-  background: linear-gradient(135deg, hsl(40 30% 96%) 0%, hsl(35 25% 90%) 100%);
+  background: linear-gradient(135deg, #E8F5E9 0%, #BBDEFB 100%);
+}
+
+.bg-gradient-card {
+  background: linear-gradient(180deg, #FAFAF8 0%, #F5F5DC 100%);
+}
+
+.bg-gradient-accent {
+  background: linear-gradient(90deg, #FFD54F 0%, #FFC107 100%);
 }
 
 .bg-gradient-dark-overlay {

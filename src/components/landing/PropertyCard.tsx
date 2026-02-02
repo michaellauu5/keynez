@@ -41,8 +41,8 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
 
   return (
     <Card className={cn(
-      "group overflow-hidden transition-all hover:shadow-lg",
-      isHighlighted && "ring-2 ring-accent shadow-lg",
+      "group overflow-hidden bg-card shadow-card transition-all duration-200 hover:shadow-card-hover",
+      isHighlighted && "ring-2 ring-accent shadow-card-hover",
       className
     )}>
       {/* Image Carousel */}
@@ -182,7 +182,7 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
             <Button size="sm" variant="outline" className="h-8 w-8 p-0">
               <Phone className="h-3.5 w-3.5" />
             </Button>
-            <Button size="sm" className="h-8 text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button size="sm" className="h-8 text-xs bg-accent hover:bg-coral text-accent-foreground transition-colors">
               View Details
             </Button>
           </div>
