@@ -19,12 +19,12 @@
     --popover: 0 0% 100%;
     --popover-foreground: 36 38% 13%;
 
-    /* Primary: warm brown (for buttons, links) */
-    --primary: 34 27% 29%;
-    --primary-foreground: 60 20% 98%;
+    /* Primary: Light Blue (sky blue) */
+    --primary: 199 93% 45%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Secondary: cream beige */
-    --secondary: 60 56% 91%;
+    /* Secondary: Golden Yellow */
+    --secondary: 45 100% 51%;
     --secondary-foreground: 36 38% 13%;
 
     /* Muted: light beige */
@@ -41,19 +41,19 @@
     /* Border: warm beige border */
     --border: 38 40% 85%;
     --input: 38 40% 85%;
-    --ring: 45 100% 65%;
+    --ring: 199 93% 45%;
 
     --radius: 0.5rem;
 
     /* Sidebar */
     --sidebar-background: 60 20% 98%;
     --sidebar-foreground: 36 38% 13%;
-    --sidebar-primary: 34 27% 29%;
-    --sidebar-primary-foreground: 60 20% 98%;
-    --sidebar-accent: 60 56% 91%;
+    --sidebar-primary: 199 93% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 100% 65%;
     --sidebar-accent-foreground: 36 38% 13%;
     --sidebar-border: 38 40% 85%;
-    --sidebar-ring: 45 100% 65%;
+    --sidebar-ring: 199 93% 45%;
 
     /* Additional custom colors */
     --coral: 14 100% 70%;
@@ -80,11 +80,11 @@
     --popover: 30 20% 10%;
     --popover-foreground: 60 20% 95%;
 
-    --primary: 45 100% 65%;
-    --primary-foreground: 30 20% 8%;
+    --primary: 199 93% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 30 15% 18%;
-    --secondary-foreground: 60 20% 95%;
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 30 20% 8%;
 
     --muted: 30 15% 16%;
     --muted-foreground: 38 20% 55%;
@@ -97,16 +97,16 @@
 
     --border: 30 15% 22%;
     --input: 30 15% 22%;
-    --ring: 45 100% 65%;
+    --ring: 199 93% 55%;
 
     --sidebar-background: 30 20% 8%;
     --sidebar-foreground: 60 20% 95%;
-    --sidebar-primary: 45 100% 65%;
-    --sidebar-primary-foreground: 30 20% 8%;
-    --sidebar-accent: 30 15% 18%;
-    --sidebar-accent-foreground: 60 20% 95%;
+    --sidebar-primary: 199 93% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 45 100% 65%;
+    --sidebar-accent-foreground: 30 20% 8%;
     --sidebar-border: 30 15% 22%;
-    --sidebar-ring: 45 100% 65%;
+    --sidebar-ring: 199 93% 55%;
 
     --coral: 14 100% 70%;
     --sage: 122 38% 74%;
@@ -199,6 +199,11 @@
 
 .gm-style button.gm-ui-hover-effect {
   display: none !important;
+}
+
+/* Text shadow utility */
+.text-shadow-lg {
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* Gradient utilities */

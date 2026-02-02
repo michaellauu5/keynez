@@ -50,7 +50,7 @@ export function Header() {
           <img
             src={keynestLogo}
             alt="Keynest AI"
-            className="h-8 w-auto md:h-10"
+            className="h-12 w-auto md:h-14"
           />
         </Link>
 

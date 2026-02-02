@@ -140,9 +140,21 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-primary-foreground/20">
-          <p className="text-center text-sm text-primary-foreground/60">
-            © {currentYear} Keynest AI. {t('footer.copyright')}.
-          </p>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            {/* Logo at bottom left */}
+            <Link to="/" className="flex items-center">
+              <img
+                src={keynestLogo}
+                alt="Keynest AI"
+                className="h-10 w-auto brightness-0 invert"
+              />
+            </Link>
+            
+            {/* Copyright */}
+            <p className="text-sm text-primary-foreground/60">
+              © {currentYear} Keynest AI. {t('footer.copyright')}.
+            </p>
+          </div>
         </div>
       </div>
     </footer>
