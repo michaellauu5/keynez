@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 interface ExportActionsProps {
   results: PropertyResult[];
   selectedIds: string[];
+  searchQuery?: string;
 }
 
 export function ExportActions({
   results,
   selectedIds,
+  searchQuery = "",
 }: ExportActionsProps) {
   const navigate = useNavigate();
   const selectedResults = results.filter((r) => selectedIds.includes(r.id));

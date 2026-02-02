@@ -1,0 +1,4 @@
+project_id = "kfsemsacrjlvkzvewbqp"
+
+[functions.ai-property-search]
+verify_jwt = false

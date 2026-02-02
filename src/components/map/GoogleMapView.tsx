@@ -4,6 +4,7 @@ import { MapPin, Loader2 } from "lucide-react";
 import { MapControls } from "./MapControls";
 import { PropertyInfoWindow } from "./PropertyInfoWindow";
 import { PropertyDetailsPanel } from "./PropertyDetailsPanel";
+import { DummyHongKongMap } from "./DummyHongKongMap";
 import { useMapState } from "@/hooks/useMapState";
 import { cn } from "@/lib/utils";
 import type { PropertyListing } from "@/data/mockProperties";
@@ -228,25 +229,17 @@ export function GoogleMapView({
     );
   }
 
+  // Show dummy map when no API key is configured
   if (!apiKey) {
     return (
-      <div className={cn("flex items-center justify-center h-[500px] bg-muted rounded-lg", className)}>
-        <div className="text-center p-6 max-w-md">
-          <MapPin className="h-12 w-12 mx-auto text-accent mb-4" />
-          <h3 className="font-semibold text-foreground mb-2">Google Maps API Key Required</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            To enable the interactive map, please add your Google Maps API key.
-          </p>
-          <a
-            href="https://console.cloud.google.com/google/maps-apis"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-accent hover:underline text-sm"
-          >
-            Get an API key from Google Cloud Console →
-          </a>
-        </div>
-      </div>
+      <DummyHongKongMap
+        properties={properties}
+        hoveredPropertyId={hoveredPropertyId}
+        onPropertyHover={onPropertyHover}
+        onPropertyClick={onPropertyClick}
+        activeFilterCount={activeFilterCount}
+        className={className}
+      />
     );
   }
 
