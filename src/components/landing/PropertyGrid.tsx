@@ -6,11 +6,13 @@ import type { PropertyListing } from "@/data/mockProperties";
 
 interface PropertyGridProps {
   properties: PropertyListing[];
+  onPropertyHover?: (propertyId: string | null) => void;
+  highlightedPropertyId?: string | null;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export function PropertyGrid({ properties }: PropertyGridProps) {
+export function PropertyGrid({ properties, onPropertyHover, highlightedPropertyId }: PropertyGridProps) {
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,8 +47,13 @@ export function PropertyGrid({ properties }: PropertyGridProps) {
             key={property.id}
             className="animate-fade-in"
             style={{ animationDelay: `${(index % ITEMS_PER_PAGE) * 50}ms` }}
+            onMouseEnter={() => onPropertyHover?.(property.id)}
+            onMouseLeave={() => onPropertyHover?.(null)}
           >
-            <PropertyCard property={property} />
+            <PropertyCard 
+              property={property} 
+              isHighlighted={highlightedPropertyId === property.id}
+            />
           </div>
         ))}
       </div>

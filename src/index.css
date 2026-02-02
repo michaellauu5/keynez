@@ -127,6 +127,68 @@
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
+/* Map marker animations */
+@keyframes marker-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.9;
+  }
+}
+
+.map-marker-pulse {
+  animation: marker-pulse 1.5s ease-in-out infinite;
+}
+
+/* Details panel slide animation */
+@keyframes slide-up {
+  from { 
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+/* Custom Google Maps info window styling */
+.gm-style .gm-style-iw-c {
+  padding: 0 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+}
+
+.gm-style .gm-style-iw-d {
+  overflow: hidden !important;
+  max-height: none !important;
+}
+
+.gm-style .gm-style-iw-tc {
+  display: none;
+}
+
+.gm-style button.gm-ui-hover-effect {
+  display: none !important;
+}
+
 /* Gradient utilities */
 .bg-gradient-hero {
   background: linear-gradient(135deg, hsl(40 30% 96%) 0%, hsl(35 25% 90%) 100%);

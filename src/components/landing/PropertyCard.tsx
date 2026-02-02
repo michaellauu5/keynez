@@ -11,9 +11,10 @@ import type { PropertyListing } from "@/data/mockProperties";
 interface PropertyCardProps {
   property: PropertyListing;
   className?: string;
+  isHighlighted?: boolean;
 }
 
-export function PropertyCard({ property, className }: PropertyCardProps) {
+export function PropertyCard({ property, className, isHighlighted }: PropertyCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -39,7 +40,11 @@ export function PropertyCard({ property, className }: PropertyCardProps) {
   };
 
   return (
-    <Card className={cn("group overflow-hidden transition-shadow hover:shadow-lg", className)}>
+    <Card className={cn(
+      "group overflow-hidden transition-all hover:shadow-lg",
+      isHighlighted && "ring-2 ring-accent shadow-lg",
+      className
+    )}>
       {/* Image Carousel */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <div ref={emblaRef} className="h-full">

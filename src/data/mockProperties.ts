@@ -27,7 +27,39 @@ export interface PropertyListing {
   orientation: string;
   developer: string;
   nearMTR: boolean;
+  // Coordinates for map
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
 }
+
+// Hong Kong district coordinates
+const districtCoordinates: Record<string, { lat: number; lng: number }> = {
+  "Central": { lat: 22.2819, lng: 114.1587 },
+  "Mid-Levels": { lat: 22.2776, lng: 114.1477 },
+  "The Peak": { lat: 22.2759, lng: 114.1455 },
+  "Happy Valley": { lat: 22.2694, lng: 114.1839 },
+  "Causeway Bay": { lat: 22.2801, lng: 114.1842 },
+  "Wan Chai": { lat: 22.2787, lng: 114.1732 },
+  "Repulse Bay": { lat: 22.2360, lng: 114.1978 },
+  "Tsim Sha Tsui": { lat: 22.2988, lng: 114.1722 },
+  "Mong Kok": { lat: 22.3193, lng: 114.1694 },
+  "Kowloon Tong": { lat: 22.3372, lng: 114.1756 },
+  "Ho Man Tin": { lat: 22.3131, lng: 114.1798 },
+  "Hung Hom": { lat: 22.3058, lng: 114.1874 },
+  "Kowloon City": { lat: 22.3297, lng: 114.1872 },
+  "Sha Tin": { lat: 22.3870, lng: 114.1953 },
+  "Tai Po": { lat: 22.4511, lng: 114.1648 },
+  "Sai Kung": { lat: 22.3815, lng: 114.2711 },
+  "Ma On Shan": { lat: 22.4243, lng: 114.2325 },
+  "Clearwater Bay": { lat: 22.2787, lng: 114.3019 },
+  "Tsuen Wan": { lat: 22.3689, lng: 114.1197 },
+  "Tuen Mun": { lat: 22.3953, lng: 113.9728 },
+  "Yuen Long": { lat: 22.4445, lng: 114.0222 },
+  "Discovery Bay": { lat: 22.2940, lng: 114.0155 },
+  "Tung Chung": { lat: 22.2886, lng: 113.9416 },
+};
 
 const agentAvatars = [
   "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face",
@@ -123,6 +155,13 @@ function generateProperty(index: number): PropertyListing {
   const salePrice = Math.floor((size * (15000 + Math.random() * 25000)) / 100000) * 100000;
   const rentPrice = Math.floor((size * (25 + Math.random() * 45)) / 100) * 100;
 
+  // Get base coordinates for district with slight random offset
+  const baseCoords = districtCoordinates[district] || { lat: 22.3193, lng: 114.1694 };
+  const coordinates = {
+    lat: baseCoords.lat + (Math.random() - 0.5) * 0.02,
+    lng: baseCoords.lng + (Math.random() - 0.5) * 0.02,
+  };
+
   return {
     id: `property-${index}`,
     name: `${district} Residence ${index + 1}`,
@@ -151,6 +190,7 @@ function generateProperty(index: number): PropertyListing {
     orientation: getRandomItem(orientationOptions),
     developer: getRandomItem(developerNames),
     nearMTR: Math.random() > 0.5,
+    coordinates,
   };
 }
 
