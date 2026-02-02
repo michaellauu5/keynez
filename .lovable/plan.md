@@ -1,9 +1,8 @@
 
-
-# Global Navigation and Components Implementation
+# HD Logo & New Color Scheme Implementation
 
 ## Overview
-Implement a complete global navigation system including an enhanced header with functioning language translation, a footer component, and a login modal with social authentication options using Supabase Auth.
+Replace the existing Keynest AI logo with the new HD version and implement the comprehensive new color scheme across the entire application. This will update the CSS variables, Tailwind configuration, and ensure all components reflect the fresh mint-green to sky-blue gradient aesthetic with warm brown accents.
 
 ---
 
@@ -11,405 +10,257 @@ Implement a complete global navigation system including an enhanced header with 
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/contexts/LanguageContext.tsx` | Create | Global language state and translation functions |
-| `src/translations/index.ts` | Create | Translation strings for EN, Traditional Chinese, Simplified Chinese |
-| `src/components/layout/Header.tsx` | Create | New global header with language translation |
-| `src/components/layout/Footer.tsx` | Create | Site-wide footer component |
-| `src/components/layout/Layout.tsx` | Create | Layout wrapper with Header + Footer |
-| `src/components/auth/LoginModal.tsx` | Create | Login/signup modal with social auth |
-| `src/components/auth/AuthContext.tsx` | Create | Authentication state management |
-| `src/hooks/useTranslation.ts` | Create | Hook for accessing translations |
-| `src/pages/Index.tsx` | Modify | Use new Layout component |
-| `src/pages/BuyPage.tsx` | Modify | Use new Layout component |
-| `src/pages/RentPage.tsx` | Modify | Use new Layout component |
-| `src/pages/ResearchCanvas.tsx` | Modify | Use new Layout component |
-| `src/App.tsx` | Modify | Wrap with LanguageProvider and AuthProvider |
-| `src/components/landing/Header.tsx` | Delete | Replaced by new global Header |
+| `src/assets/keynest-logo.png` | Replace | Update with new HD logo |
+| `src/index.css` | Modify | Update all CSS variables with new HSL values |
+| `tailwind.config.ts` | Modify | Add custom colors and ensure font configuration |
+| `src/components/landing/HeroSection.tsx` | Modify | Apply new hero gradient |
+| `src/components/layout/Header.tsx` | Modify | Update styling for new color scheme |
+| `src/components/layout/Footer.tsx` | Modify | Update footer styling |
+| `src/components/map/DummyHongKongMap.tsx` | Modify | Update map colors to match new palette |
+| `src/components/ui/button.tsx` | Modify | Add coral hover variant |
 
 ---
 
-## Architecture
+## Color Conversion to HSL
+
+The new color scheme converted to HSL format for CSS variables:
 
 ```text
-App.tsx
-  ├── LanguageProvider (language state + translations)
-  │   └── AuthProvider (auth state + user session)
-  │       └── Routes
-  │           └── Layout (Header + Footer wrapper)
-  │               ├── Header
-  │               │   ├── Logo (left)
-  │               │   ├── Navigation (center): Home, Buy, Rent, Sell, Research Canvas
-  │               │   ├── Language Dropdown (right)
-  │               │   ├── User Button / Avatar (right)
-  │               │   └── Mobile Hamburger Menu
-  │               ├── Page Content
-  │               └── Footer
-  │                   ├── Company Info
-  │                   ├── Quick Links
-  │                   ├── Social Icons
-  │                   ├── Newsletter Signup
-  │                   └── Copyright
-  └── LoginModal (global, triggered from Header)
+PRIMARY COLORS:
+- primary-bg-start (#E8F5E9) → 125 40% 94%    (mint green)
+- primary-bg-end (#BBDEFB)   → 207 89% 86%    (sky blue)
+- primary-dark (#5D4E37)     → 34 27% 29%     (warm brown)
+- primary-text (#3E2723)     → 10 28% 19%     (dark brown)
+
+SECONDARY COLORS:
+- secondary-yellow (#FFD54F) → 45 100% 65%    (golden yellow)
+- secondary-gold (#FFC107)   → 45 100% 51%    (rich gold)
+- secondary-beige (#F5F5DC)  → 60 56% 91%     (cream beige)
+
+ACCENT COLORS:
+- accent-coral (#FF8A65)     → 14 100% 70%    (coral orange)
+- accent-sage (#A5D6A7)      → 122 38% 74%    (sage green)
+- accent-sky (#81D4FA)       → 199 93% 74%    (light sky)
+
+NEUTRAL COLORS:
+- background-light (#FAFAF8) → 60 20% 98%     (off-white)
+- background-card (#FFFFFF)  → 0 0% 100%      (pure white)
+- text-primary (#2C2416)     → 36 38% 13%     (dark earth)
+- text-secondary (#6D5D4B)   → 32 19% 36%     (muted brown)
+- border-color (#E8DCC8)     → 38 40% 85%     (warm border)
 ```
 
 ---
 
-## Component Details
+## Detailed Implementation
 
-### 1. Language Context & Translations
+### 1. Logo Replacement
+Copy the uploaded HD logo to `src/assets/keynest-logo.png`:
+- High resolution for crisp display on all screen sizes
+- Used in Header, Footer, and Login Modal
+- No code changes needed - same import path
 
-**`src/contexts/LanguageContext.tsx`**
+### 2. CSS Variables Update (`src/index.css`)
 
-Global context managing:
-- Current language state: `'en' | 'zh-HK' | 'zh-CN'`
-- Translation function: `t(key: string) => string`
-- Language setter: `setLanguage(lang)`
-- Persists selection to localStorage
+Replace the `:root` color variables with the new scheme:
 
-**`src/translations/index.ts`**
+```css
+:root {
+  /* New Keynest AI Color Scheme */
+  
+  /* Background: light off-white */
+  --background: 60 20% 98%;
+  --foreground: 36 38% 13%;
 
-Translation keys organized by section:
+  /* Card: pure white */
+  --card: 0 0% 100%;
+  --card-foreground: 36 38% 13%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 36 38% 13%;
+
+  /* Primary: warm brown (for buttons, links) */
+  --primary: 34 27% 29%;
+  --primary-foreground: 60 20% 98%;
+
+  /* Secondary: cream beige */
+  --secondary: 60 56% 91%;
+  --secondary-foreground: 36 38% 13%;
+
+  /* Muted: light beige */
+  --muted: 38 40% 92%;
+  --muted-foreground: 32 19% 36%;
+
+  /* Accent: golden yellow (CTAs, highlights) */
+  --accent: 45 100% 65%;
+  --accent-foreground: 36 38% 13%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Border: warm beige border */
+  --border: 38 40% 85%;
+  --input: 38 40% 85%;
+  --ring: 45 100% 65%;
+
+  --radius: 0.5rem;
+
+  /* Additional custom colors */
+  --coral: 14 100% 70%;
+  --sage: 122 38% 74%;
+  --sky: 199 93% 74%;
+  --gold: 45 100% 51%;
+}
+```
+
+Update gradient utilities:
+
+```css
+.bg-gradient-hero {
+  background: linear-gradient(135deg, #E8F5E9 0%, #BBDEFB 100%);
+}
+
+.bg-gradient-card {
+  background: linear-gradient(180deg, #FAFAF8 0%, #F5F5DC 100%);
+}
+
+.bg-gradient-accent {
+  background: linear-gradient(90deg, #FFD54F 0%, #FFC107 100%);
+}
+```
+
+### 3. Tailwind Configuration Update (`tailwind.config.ts`)
+
+Add custom colors and update font configuration:
 
 ```typescript
-const translations = {
-  en: {
-    // Navigation
-    "nav.home": "Home",
-    "nav.buy": "Buy",
-    "nav.rent": "Rent",
-    "nav.sell": "Sell",
-    "nav.research": "Research Canvas",
-    
-    // Auth
-    "auth.login": "Login",
-    "auth.signup": "Sign Up",
-    "auth.email": "Email",
-    "auth.password": "Password",
-    "auth.remember": "Remember me",
-    "auth.forgot": "Forgot password?",
-    "auth.google": "Continue with Google",
-    "auth.facebook": "Continue with Facebook",
-    "auth.or": "or",
-    "auth.noAccount": "Don't have an account?",
-    "auth.hasAccount": "Already have an account?",
-    
-    // Footer
-    "footer.about": "About",
-    "footer.contact": "Contact",
-    "footer.terms": "Terms of Service",
-    "footer.privacy": "Privacy Policy",
-    "footer.newsletter": "Subscribe to our newsletter",
-    "footer.subscribe": "Subscribe",
-    "footer.copyright": "All rights reserved",
-    "footer.description": "Keynest AI is Hong Kong's premier AI-powered property search platform...",
-    
-    // ... other sections
+extend: {
+  colors: {
+    // ... existing semantic colors ...
+    coral: "hsl(var(--coral))",
+    sage: "hsl(var(--sage))",
+    sky: "hsl(var(--sky))",
+    gold: "hsl(var(--gold))",
   },
-  "zh-HK": {
-    "nav.home": "首頁",
-    "nav.buy": "買樓",
-    "nav.rent": "租樓",
-    "nav.sell": "賣樓",
-    "nav.research": "研究畫板",
-    // ... Traditional Chinese translations
+  fontFamily: {
+    sans: ["Inter", "system-ui", "sans-serif"],
+    serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
   },
-  "zh-CN": {
-    "nav.home": "首页",
-    "nav.buy": "买房",
-    "nav.rent": "租房",
-    "nav.sell": "卖房",
-    "nav.research": "研究画板",
-    // ... Simplified Chinese translations
-  }
-};
-```
-
-### 2. Global Header Component
-
-**`src/components/layout/Header.tsx`**
-
-Enhanced header with all features:
-
-**Structure:**
-```text
-+--------------------------------------------------------------+
-| [Logo]    Home  Buy  Rent  Sell  Canvas    [Lang v] [Avatar] |
-+--------------------------------------------------------------+
-```
-
-**Features:**
-- Sticky positioning with blur backdrop
-- Logo links to home
-- Active route highlighting (using `useLocation`)
-- Language dropdown with flag icons
-- User button showing:
-  - "Login" text when logged out (opens LoginModal)
-  - User avatar when logged in (dropdown with profile, settings, logout)
-- Mobile hamburger menu using Sheet component
-- Translations applied to all text using `useTranslation` hook
-
-**Mobile View:**
-```text
-+----------------------------------+
-| [Logo]              [Menu Icon]  |
-+----------------------------------+
-```
-
-### 3. Footer Component
-
-**`src/components/layout/Footer.tsx`**
-
-Full-width footer with warm beige styling:
-
-**Layout:**
-```text
-+----------------------------------------------------------------+
-|  KEYNEST AI              QUICK LINKS       CONNECT WITH US     |
-|  [Logo]                  - About           [FB] [IG] [TW] [LI] |
-|  AI-powered property     - Contact                              |
-|  search for Hong Kong    - Terms           NEWSLETTER           |
-|                          - Privacy         [email input] [Sub]  |
-+----------------------------------------------------------------+
-|              (c) 2024 Keynest AI. All rights reserved.          |
-+----------------------------------------------------------------+
-```
-
-**Sections:**
-1. **Company Info**: Logo, tagline, brief description
-2. **Quick Links**: About, Contact, Terms, Privacy (translated)
-3. **Social Media Icons**: Facebook, Instagram, Twitter, LinkedIn
-4. **Newsletter Signup**: Email input + subscribe button
-5. **Copyright**: Dynamic year + company name
-
-**Newsletter Form:**
-- Email validation (using zod)
-- Toast notification on submit
-- Stores to localStorage (or later to Supabase)
-
-### 4. Layout Wrapper
-
-**`src/components/layout/Layout.tsx`**
-
-```typescript
-interface LayoutProps {
-  children: React.ReactNode;
-  showFooter?: boolean; // Optional, defaults to true
-}
-
-export function Layout({ children, showFooter = true }: LayoutProps) {
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1">{children}</main>
-      {showFooter && <Footer />}
-    </div>
-  );
+  fontSize: {
+    // Consistent type scale
+    'xs': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px
+    'sm': ['1rem', { lineHeight: '1.5rem' }],        // 16px
+    'base': ['1.25rem', { lineHeight: '1.75rem' }],  // 20px
+    'lg': ['1.5rem', { lineHeight: '2rem' }],        // 24px
+    'xl': ['2rem', { lineHeight: '2.5rem' }],        // 32px
+    '2xl': ['3rem', { lineHeight: '1' }],            // 48px
+  },
+  borderRadius: {
+    DEFAULT: "0.5rem", // 8px
+  },
 }
 ```
 
-### 5. Auth Context
+### 4. Component Updates
 
-**`src/components/auth/AuthContext.tsx`**
+**HeroSection.tsx:**
+- Use new `bg-gradient-hero` class
+- Apply `text-[#5D4E37]` (primary-dark) for headings
 
-Using Supabase Auth:
-- Session state management
-- `onAuthStateChange` listener
-- Sign in/up/out methods
-- Google OAuth method
-- Facebook OAuth method
-- User profile state
+**Header.tsx:**
+- Clean white background with subtle border
+- Primary-dark color for text
+- Yellow accent for active states
 
-```typescript
-interface AuthContextType {
-  user: User | null;
-  session: Session | null;
-  isLoading: boolean;
-  signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
-  signOut: () => Promise<void>;
-}
-```
+**Footer.tsx:**
+- Use primary-dark background
+- Light text for contrast
+- Yellow accent for links on hover
 
-### 6. Login Modal
+**PropertyCard.tsx:**
+- White card with subtle shadow
+- Coral hover states for buttons
+- Yellow accent badges
 
-**`src/components/auth/LoginModal.tsx`**
+**DummyHongKongMap.tsx:**
+- Update region fills to use new palette colors
+- Sage green for land areas
+- Sky blue for water background
 
-Clean modal design matching Keynest AI branding:
+**Button hover states:**
+- Add coral color option for hover effects
 
-**Features:**
-- Dialog component with Keynest logo at top
-- Tabs for switching between Login and Sign Up
-- Email/Password form with validation:
-  - Email: valid format required
-  - Password: minimum 8 characters
-- "Remember me" checkbox
-- "Forgot password" link (triggers password reset email)
-- Social login buttons:
-  - Google (with Google icon)
-  - Facebook (with Facebook icon)
-- Form validation using react-hook-form + zod
-- Loading states during authentication
-- Error message display
-- Success toast notifications
+---
 
-**Visual Design:**
+## Visual Summary
+
 ```text
-+------------------------------------+
-|              [X Close]             |
-|                                    |
-|         [Keynest AI Logo]          |
-|                                    |
-|      [ Login ]  [ Sign Up ]        |
-|                                    |
-|  Email                             |
-|  [________________________]        |
-|                                    |
-|  Password                          |
-|  [________________________] [Show] |
-|                                    |
-|  [x] Remember me    Forgot?        |
-|                                    |
-|  [====== Login Button ======]      |
-|                                    |
-|  ─────────── or ───────────        |
-|                                    |
-|  [G] Continue with Google          |
-|  [f] Continue with Facebook        |
-|                                    |
-|  Don't have an account? Sign up    |
-+------------------------------------+
++----------------------------------------------------------+
+|  HEADER (white bg, warm brown text)                       |
+|  [Logo] Home Buy Rent Sell Canvas    [Lang] [User]       |
++----------------------------------------------------------+
+|                                                           |
+|  HERO SECTION                                             |
+|  Background: Mint Green → Sky Blue gradient               |
+|                                                           |
+|  "Find Your Perfect Property" (warm brown heading)        |
+|                                                           |
+|  +------------------+  +------------------+                |
+|  | AI Chat Card     |  | Video Demo       |               |
+|  | (white bg)       |  | (white bg)       |               |
+|  | [Yellow CTA]     |  |                  |               |
+|  +------------------+  +------------------+                |
+|                                                           |
++----------------------------------------------------------+
+|  PROPERTY CARDS                                           |
+|  +----------+  +----------+  +----------+                 |
+|  | [Image]  |  | [Image]  |  | [Image]  |                |
+|  | White bg |  | White bg |  | White bg |                |
+|  | Shadow   |  | Shadow   |  | Shadow   |                |
+|  | [Yellow] |  | [Yellow] |  | [Yellow] |  ← CTAs        |
+|  +----------+  +----------+  +----------+                 |
+|                                                           |
++----------------------------------------------------------+
+|  FOOTER (warm brown bg)                                   |
+|  Light text, yellow links on hover                        |
++----------------------------------------------------------+
 ```
 
 ---
 
-## Page Updates
+## Dark Mode Considerations
 
-### All Pages
-Update to use the new Layout wrapper:
-
-```typescript
-// Before
-import { Header } from "@/components/landing/Header";
-
-export default function SomePage() {
-  return (
-    <>
-      <Header />
-      <main>...</main>
-    </>
-  );
-}
-
-// After
-import { Layout } from "@/components/layout/Layout";
-
-export default function SomePage() {
-  return (
-    <Layout>
-      ...page content...
-    </Layout>
-  );
-}
-```
-
-### Research Canvas
-- Use Layout with `showFooter={false}` (full-screen canvas)
-
----
-
-## App.tsx Wrapper Structure
-
-```typescript
-<QueryClientProvider>
-  <LanguageProvider>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>...</Routes>
-          <LoginModal /> {/* Global modal */}
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </LanguageProvider>
-</QueryClientProvider>
-```
+The dark mode will be updated to complement the light theme:
+- Dark warm brown background
+- Light cream text
+- Maintaining yellow/gold accents
+- Coral for interactive elements
 
 ---
 
 ## Implementation Order
 
-1. **Create Translation System**
-   - `src/translations/index.ts` with all strings
-   - `src/contexts/LanguageContext.tsx`
-   - `src/hooks/useTranslation.ts`
+1. **Logo Replacement**
+   - Copy new HD logo to src/assets
 
-2. **Create Auth System**
-   - `src/components/auth/AuthContext.tsx`
-   - `src/components/auth/LoginModal.tsx`
+2. **Core Styling**
+   - Update src/index.css with new CSS variables
+   - Update gradient utilities
+   - Add smooth transitions for hover states
 
-3. **Create Layout Components**
-   - `src/components/layout/Header.tsx`
-   - `src/components/layout/Footer.tsx`
-   - `src/components/layout/Layout.tsx`
+3. **Tailwind Config**
+   - Add custom colors
+   - Verify font configuration
+   - Add consistent type scale
 
-4. **Update App.tsx**
-   - Add providers
-   - Add global LoginModal
+4. **Component Updates**
+   - Update HeroSection with new gradient
+   - Update Header styling
+   - Update Footer styling
+   - Update PropertyCard hover states
+   - Update DummyHongKongMap colors
 
-5. **Update All Pages**
-   - Index, BuyPage, RentPage, ResearchCanvas
-   - Remove old Header imports
-   - Use new Layout wrapper
-
-6. **Clean Up**
-   - Delete old `src/components/landing/Header.tsx`
-   - Update any remaining imports
-
----
-
-## Technical Notes
-
-### Authentication with Supabase
-- Email/password authentication uses `supabase.auth.signInWithPassword` and `supabase.auth.signUp`
-- Google OAuth uses managed credentials (already configured in Lovable Cloud)
-- Facebook OAuth will require user to configure Facebook App credentials through Lovable Cloud settings
-- Password reset uses `supabase.auth.resetPasswordForEmail`
-- Email confirmation is recommended (can be configured in Cloud settings)
-
-### Language Persistence
-- Language preference stored in localStorage as `keynest-language`
-- Loaded on app initialization
-- Applied across all translated components
-
-### Newsletter Subscription
-- Initially stores to localStorage
-- Can be migrated to a Supabase table later for email campaigns
-
-### Mobile Responsiveness
-- Header: Hamburger menu on mobile (< 768px)
-- Footer: Stacked layout on mobile
-- Login Modal: Full-width on mobile, centered on desktop
-
----
-
-## Styling Details
-
-### Footer Colors
-- Background: `bg-primary` (warm brown)
-- Text: `text-primary-foreground` (cream)
-- Links: Hover with `text-accent` (yellow)
-- Input: `bg-background/10` with light border
-
-### Social Icons
-- Use Lucide React icons: Facebook, Instagram, Twitter, Linkedin
-- Circular buttons with hover effect
-- Size: 40x40px
-
-### Header Active State
-- Active nav link: `text-foreground font-semibold`
-- Inactive: `text-muted-foreground`
-- Yellow underline indicator for active route
-
+5. **Testing**
+   - Verify all pages render correctly
+   - Check color contrast for accessibility
+   - Test hover states and transitions
