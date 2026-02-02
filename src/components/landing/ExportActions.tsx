@@ -1,18 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, FileText, FlaskConical } from "lucide-react";
 import { PropertyResult } from "./PropertyResultsTable";
+import { useNavigate } from "react-router-dom";
 
 interface ExportActionsProps {
   results: PropertyResult[];
   selectedIds: string[];
-  onExportToResearchCanvas: (selectedResults: PropertyResult[]) => void;
 }
 
 export function ExportActions({
   results,
   selectedIds,
-  onExportToResearchCanvas,
 }: ExportActionsProps) {
+  const navigate = useNavigate();
   const selectedResults = results.filter((r) => selectedIds.includes(r.id));
   const exportData = selectedIds.length > 0 ? selectedResults : results;
 
@@ -104,7 +104,9 @@ export function ExportActions({
 
   const handleExportToResearchCanvas = () => {
     const dataToExport = selectedIds.length > 0 ? selectedResults : results.slice(0, 4);
-    onExportToResearchCanvas(dataToExport);
+    // Store in localStorage for cross-page access
+    localStorage.setItem('keynest_canvas_import', JSON.stringify(dataToExport));
+    navigate('/research-canvas');
   };
 
   return (

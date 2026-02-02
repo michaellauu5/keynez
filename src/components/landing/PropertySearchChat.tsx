@@ -207,12 +207,6 @@ export function PropertySearchChat() {
     setHasSearched(true);
   };
 
-  const handleExportToResearchCanvas = (selectedResults: PropertyResult[]) => {
-    // In production, this would navigate to the Research Canvas page
-    // with the selected properties
-    console.log("Exporting to Research Canvas:", selectedResults);
-    alert(`Opening Research Canvas with ${selectedResults.length} properties...`);
-  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -270,7 +264,6 @@ export function PropertySearchChat() {
               <ExportActions
                 results={results}
                 selectedIds={selectedIds}
-                onExportToResearchCanvas={handleExportToResearchCanvas}
               />
             </div>
 
