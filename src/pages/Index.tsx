@@ -1,16 +1,13 @@
-import { Header } from "@/components/landing/Header";
+import { Layout } from "@/components/layout/Layout";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { PropertyListingsSection } from "@/components/landing/PropertyListingsSection";
 
 const Index = () => {
   return (
-    <>
-      <Header />
-      <main>
-        <HeroSection />
-        <PropertyListingsSection />
-      </main>
-    </>
+    <Layout>
+      <HeroSection />
+      <PropertyListingsSection />
+    </Layout>
   );
 };
 

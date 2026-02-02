@@ -1,7 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
-import { Header } from "@/components/landing/Header";
 import { PropertyGrid } from "@/components/landing/PropertyGrid";
 import { AdvancedFilterSidebar, type FilterState } from "./AdvancedFilterSidebar";
 import { ResultsHeader, type SortOption, type ViewMode } from "./ResultsHeader";
@@ -188,9 +187,7 @@ export function ListingsPageLayout({ transactionType, title }: ListingsPageLayou
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container px-4 md:px-6 py-6">
+      <div className="container px-4 md:px-6 py-6">
         {/* Breadcrumb */}
         <nav className="flex items-center text-sm text-muted-foreground mb-6">
           <Link to="/" className="hover:text-foreground flex items-center gap-1">
@@ -275,7 +272,7 @@ export function ListingsPageLayout({ transactionType, title }: ListingsPageLayou
             )}
           </div>
         </div>
-      </main>
+      </div>
 
       {/* Save Search Dialog */}
       <SaveSearchDialog
