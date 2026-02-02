@@ -1,10 +1,16 @@
+import { Header } from "@/components/landing/Header";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { PropertyListingsSection } from "@/components/landing/PropertyListingsSection";
 
 const Index = () => {
   return (
-    <main>
-      <HeroSection />
-    </main>
+    <>
+      <Header />
+      <main>
+        <HeroSection />
+        <PropertyListingsSection />
+      </main>
+    </>
   );
 };
 
