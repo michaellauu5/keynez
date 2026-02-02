@@ -3,6 +3,7 @@ import { VideoDemo } from "./VideoDemo";
 import { DummyHongKongMap } from "@/components/map/DummyHongKongMap";
 import { mockProperties } from "@/data/mockProperties";
 import { useTranslation } from "@/hooks/useTranslation";
+import hongKongBackdrop from "@/assets/hong-kong-backdrop.jpg";
 
 export function HeroSection() {
   const { t, language } = useTranslation();
@@ -28,14 +29,21 @@ export function HeroSection() {
   };
 
   return (
-    <section className="bg-gradient-hero">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
+    <section 
+      className="relative bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${hongKongBackdrop})` }}
+    >
+      {/* Dark gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
+      
+      {/* Content with relative positioning */}
+      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
         {/* Header */}
         <div className="mb-8 text-center lg:mb-12">
-          <h1 className="font-sans text-3xl font-bold text-primary sm:text-4xl lg:text-5xl">
+          <h1 className="font-sans text-3xl font-bold text-white text-shadow-lg sm:text-4xl lg:text-5xl">
             {renderTitle()}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-white/90 text-shadow-lg">
             {t('hero.subtitle')}
           </p>
         </div>

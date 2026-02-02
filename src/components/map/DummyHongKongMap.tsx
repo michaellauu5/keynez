@@ -1,10 +1,11 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { MapPin, Plus, Minus, Crosshair, Search, X } from "lucide-react";
+import { Plus, Minus, Crosshair, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { PropertyListing } from "@/data/mockProperties";
 import { useTranslation } from "@/hooks/useTranslation";
+import hongKongMapImage from "@/assets/hong-kong-map.png";
 
 interface DummyHongKongMapProps {
   properties: PropertyListing[];
@@ -15,56 +16,34 @@ interface DummyHongKongMapProps {
   className?: string;
 }
 
-// Hong Kong regions with SVG paths and district data
-const REGIONS = {
-  "New Territories": {
-    path: "M 10 5 L 90 5 L 95 25 L 85 35 L 70 30 L 55 35 L 40 30 L 25 35 L 10 25 Z",
-    fill: "hsl(var(--muted))",
-    center: { x: 52, y: 18 },
-    districts: ["Sha Tin", "Tai Po", "Sai Kung", "Ma On Shan", "Clearwater Bay", "Tsuen Wan", "Tuen Mun", "Yuen Long", "Discovery Bay", "Tung Chung"],
-  },
-  "Kowloon": {
-    path: "M 35 35 L 65 35 L 70 50 L 60 55 L 40 55 L 30 50 Z",
-    fill: "hsl(var(--secondary))",
-    center: { x: 50, y: 45 },
-    districts: ["Tsim Sha Tsui", "Mong Kok", "Kowloon Tong", "Ho Man Tin", "Hung Hom", "Kowloon City"],
-  },
-  "Hong Kong Island": {
-    path: "M 25 60 L 75 60 L 80 72 L 70 85 L 50 90 L 30 85 L 20 72 Z",
-    fill: "hsl(var(--accent)/0.3)",
-    center: { x: 50, y: 73 },
-    districts: ["Central", "Mid-Levels", "The Peak", "Happy Valley", "Causeway Bay", "Wan Chai", "Repulse Bay"],
-  },
-};
-
-// District positions within regions (relative x, y percentages)
+// Property marker positions (percentage-based for the map image)
 const DISTRICT_POSITIONS: Record<string, { x: number; y: number }> = {
   // New Territories
-  "Sha Tin": { x: 55, y: 15 },
-  "Tai Po": { x: 65, y: 10 },
-  "Sai Kung": { x: 80, y: 20 },
-  "Ma On Shan": { x: 70, y: 15 },
-  "Clearwater Bay": { x: 85, y: 28 },
-  "Tsuen Wan": { x: 25, y: 22 },
-  "Tuen Mun": { x: 15, y: 15 },
-  "Yuen Long": { x: 20, y: 10 },
-  "Discovery Bay": { x: 30, y: 28 },
-  "Tung Chung": { x: 12, y: 25 },
+  "Sha Tin": { x: 55, y: 25 },
+  "Tai Po": { x: 60, y: 18 },
+  "Sai Kung": { x: 72, y: 35 },
+  "Ma On Shan": { x: 65, y: 28 },
+  "Clearwater Bay": { x: 75, y: 45 },
+  "Tsuen Wan": { x: 30, y: 40 },
+  "Tuen Mun": { x: 18, y: 35 },
+  "Yuen Long": { x: 22, y: 25 },
+  "Discovery Bay": { x: 28, y: 55 },
+  "Tung Chung": { x: 15, y: 50 },
   // Kowloon
-  "Tsim Sha Tsui": { x: 50, y: 50 },
-  "Mong Kok": { x: 45, y: 42 },
-  "Kowloon Tong": { x: 55, y: 38 },
-  "Ho Man Tin": { x: 48, y: 45 },
-  "Hung Hom": { x: 58, y: 48 },
-  "Kowloon City": { x: 60, y: 42 },
+  "Tsim Sha Tsui": { x: 48, y: 58 },
+  "Mong Kok": { x: 45, y: 52 },
+  "Kowloon Tong": { x: 52, y: 48 },
+  "Ho Man Tin": { x: 48, y: 52 },
+  "Hung Hom": { x: 54, y: 56 },
+  "Kowloon City": { x: 56, y: 50 },
   // Hong Kong Island
-  "Central": { x: 42, y: 65 },
-  "Mid-Levels": { x: 38, y: 70 },
-  "The Peak": { x: 35, y: 75 },
-  "Happy Valley": { x: 55, y: 70 },
-  "Causeway Bay": { x: 60, y: 65 },
-  "Wan Chai": { x: 52, y: 65 },
-  "Repulse Bay": { x: 58, y: 82 },
+  "Central": { x: 45, y: 65 },
+  "Mid-Levels": { x: 42, y: 68 },
+  "The Peak": { x: 40, y: 72 },
+  "Happy Valley": { x: 52, y: 68 },
+  "Causeway Bay": { x: 56, y: 64 },
+  "Wan Chai": { x: 50, y: 65 },
+  "Repulse Bay": { x: 55, y: 78 },
 };
 
 interface PropertyPopup {
@@ -83,8 +62,6 @@ export function DummyHongKongMap({
 }: DummyHongKongMapProps) {
   const { t } = useTranslation();
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [selectedPopup, setSelectedPopup] = useState<PropertyPopup | null>(null);
 
   // Group properties by district
@@ -99,40 +76,16 @@ export function DummyHongKongMap({
     return grouped;
   }, [properties]);
 
-  // Get district property count
-  const getDistrictCount = useCallback(
-    (district: string) => propertiesByDistrict[district]?.length || 0,
-    [propertiesByDistrict]
-  );
-
-  // Get region property count
-  const getRegionCount = useCallback(
-    (regionName: string) => {
-      const region = REGIONS[regionName as keyof typeof REGIONS];
-      if (!region) return 0;
-      return region.districts.reduce((sum, district) => sum + getDistrictCount(district), 0);
-    },
-    [getDistrictCount]
-  );
-
   const handleZoomIn = () => setZoom((z) => Math.min(z + 0.2, 2));
   const handleZoomOut = () => setZoom((z) => Math.max(z - 0.2, 0.6));
-  const handleReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  };
+  const handleReset = () => setZoom(1);
 
-  const handleMarkerClick = (property: PropertyListing, e: React.MouseEvent) => {
-    e.stopPropagation();
-    const rect = e.currentTarget.getBoundingClientRect();
-    const parentRect = e.currentTarget.closest("svg")?.getBoundingClientRect();
-    if (parentRect) {
-      setSelectedPopup({
-        property,
-        x: ((rect.left - parentRect.left + rect.width / 2) / parentRect.width) * 100,
-        y: ((rect.top - parentRect.top) / parentRect.height) * 100,
-      });
-    }
+  const handleMarkerClick = (property: PropertyListing, position: { x: number; y: number }) => {
+    setSelectedPopup({
+      property,
+      x: position.x,
+      y: position.y,
+    });
   };
 
   const handleViewDetails = () => {
@@ -151,49 +104,55 @@ export function DummyHongKongMap({
     // If multiple properties, show clustered marker
     if (districtProperties.length > 3) {
       return (
-        <g key={`cluster-${district}`}>
-          <circle
-            cx={position.x}
-            cy={position.y}
-            r={3}
-            className="fill-accent stroke-white stroke-[0.5] cursor-pointer transition-transform hover:scale-125"
-            onClick={(e) => handleMarkerClick(districtProperties[0], e)}
-          />
-          <text
-            x={position.x}
-            y={position.y + 0.8}
-            textAnchor="middle"
-            className="fill-accent-foreground text-[2.5px] font-bold pointer-events-none"
-          >
+        <div
+          key={`cluster-${district}`}
+          className="absolute cursor-pointer transition-transform hover:scale-110"
+          style={{
+            left: `${position.x}%`,
+            top: `${position.y}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+          onClick={() => handleMarkerClick(districtProperties[0], position)}
+        >
+          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-accent-foreground font-bold text-sm shadow-lg border-2 border-white">
             {districtProperties.length}
-          </text>
-        </g>
+          </div>
+        </div>
       );
     }
 
     // Individual markers with slight offset
     return districtProperties.map((property, index) => {
-      const offsetX = (index % 2) * 3 - 1.5;
-      const offsetY = Math.floor(index / 2) * 3;
+      const offsetX = (index % 2) * 2 - 1;
+      const offsetY = Math.floor(index / 2) * 2;
       const isHovered = hoveredPropertyId === property.id;
       const isSelected = selectedPopup?.property.id === property.id;
-      const markerColor = property.priceType === "sale" ? "#3B82F6" : "#22C55E";
+      const markerColor = property.priceType === "sale" ? "bg-blue-500" : "bg-green-500";
 
       return (
-        <circle
+        <div
           key={property.id}
-          cx={position.x + offsetX}
-          cy={position.y + offsetY}
-          r={isHovered || isSelected ? 2.5 : 2}
-          fill={markerColor}
           className={cn(
-            "stroke-white stroke-[0.4] cursor-pointer transition-all",
-            isHovered && "animate-pulse"
+            "absolute cursor-pointer transition-all duration-200",
+            isHovered && "animate-pulse z-10"
           )}
-          onClick={(e) => handleMarkerClick(property, e)}
+          style={{
+            left: `${position.x + offsetX}%`,
+            top: `${position.y + offsetY}%`,
+            transform: "translate(-50%, -50%)",
+          }}
+          onClick={() => handleMarkerClick(property, { x: position.x + offsetX, y: position.y + offsetY })}
           onMouseEnter={() => onPropertyHover?.(property.id)}
           onMouseLeave={() => onPropertyHover?.(null)}
-        />
+        >
+          <div
+            className={cn(
+              "rounded-full border-2 border-white shadow-lg transition-all",
+              markerColor,
+              isHovered || isSelected ? "w-5 h-5" : "w-4 h-4"
+            )}
+          />
+        </div>
       );
     });
   };
@@ -201,95 +160,30 @@ export function DummyHongKongMap({
   return (
     <div
       className={cn(
-        "relative h-[500px] rounded-lg overflow-hidden bg-gradient-hero",
+        "relative h-[500px] rounded-lg overflow-hidden",
         className
       )}
       onClick={() => setSelectedPopup(null)}
     >
-      {/* Water background pattern */}
-      <div className="absolute inset-0 opacity-30">
-        <svg width="100%" height="100%">
-          <pattern id="water-pattern" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path
-              d="M0 10 Q5 5 10 10 Q15 15 20 10"
-              fill="none"
-              stroke="hsl(var(--primary)/0.2)"
-              strokeWidth="0.5"
-            />
-          </pattern>
-          <rect width="100%" height="100%" fill="url(#water-pattern)" />
-        </svg>
-      </div>
-
-      {/* Main map SVG */}
-      <svg
-        viewBox="0 0 100 100"
-        className="absolute inset-0 w-full h-full"
+      {/* Map Image Background */}
+      <div 
+        className="absolute inset-0 transition-transform duration-200"
         style={{
-          transform: `scale(${zoom}) translate(${pan.x}px, ${pan.y}px)`,
+          transform: `scale(${zoom})`,
           transformOrigin: "center",
-          transition: "transform 0.2s ease-out",
         }}
       >
-        {/* Render regions */}
-        {Object.entries(REGIONS).map(([name, region]) => {
-          const isHovered = hoveredRegion === name;
-          const propertyCount = getRegionCount(name);
-
-          return (
-            <g key={name}>
-              {/* Region shape */}
-              <path
-                d={region.path}
-                fill={region.fill}
-                stroke="hsl(var(--border))"
-                strokeWidth="0.5"
-                className={cn(
-                  "transition-all duration-200 cursor-pointer",
-                  isHovered && "brightness-110"
-                )}
-                onMouseEnter={() => setHoveredRegion(name)}
-                onMouseLeave={() => setHoveredRegion(null)}
-              />
-
-              {/* Region label */}
-              <text
-                x={region.center.x}
-                y={region.center.y}
-                textAnchor="middle"
-                className="fill-foreground/70 text-[3px] font-medium pointer-events-none select-none"
-              >
-                {name}
-              </text>
-
-              {/* Property count badge */}
-              {propertyCount > 0 && (
-                <g>
-                  <rect
-                    x={region.center.x - 5}
-                    y={region.center.y + 2}
-                    width={10}
-                    height={4}
-                    rx={1}
-                    className="fill-primary"
-                  />
-                  <text
-                    x={region.center.x}
-                    y={region.center.y + 4.8}
-                    textAnchor="middle"
-                    className="fill-primary-foreground text-[2.5px] font-bold pointer-events-none"
-                  >
-                    {propertyCount}
-                  </text>
-                </g>
-              )}
-            </g>
-          );
-        })}
-
-        {/* Render property markers */}
-        {Object.keys(DISTRICT_POSITIONS).map((district) => renderDistrictMarkers(district))}
-      </svg>
+        <img
+          src={hongKongMapImage}
+          alt="Hong Kong Map"
+          className="w-full h-full object-cover"
+        />
+        
+        {/* Property markers overlay */}
+        <div className="absolute inset-0">
+          {Object.keys(DISTRICT_POSITIONS).map((district) => renderDistrictMarkers(district))}
+        </div>
+      </div>
 
       {/* Property popup */}
       {selectedPopup && (
@@ -345,7 +239,7 @@ export function DummyHongKongMap({
       )}
 
       {/* Map controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2">
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
         <Button variant="secondary" size="icon" className="h-8 w-8 shadow-md" onClick={handleZoomIn}>
           <Plus className="h-4 w-4" />
         </Button>
@@ -359,14 +253,14 @@ export function DummyHongKongMap({
 
       {/* Filter badge */}
       {activeFilterCount > 0 && (
-        <Badge className="absolute top-4 left-4 gap-1 bg-accent text-accent-foreground">
+        <Badge className="absolute top-4 left-4 gap-1 bg-accent text-accent-foreground z-10">
           <Search className="h-3 w-3" />
           {activeFilterCount} {t('map.filters')}
         </Badge>
       )}
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs">
+      <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs z-10">
         <p className="font-medium mb-2">{t('map.legend')}</p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
@@ -386,14 +280,6 @@ export function DummyHongKongMap({
         </div>
         <p className="mt-2 text-muted-foreground">{properties.length} {t('map.properties')}</p>
       </div>
-
-      {/* Hover tooltip for regions */}
-      {hoveredRegion && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
-          <p className="font-medium">{hoveredRegion}</p>
-          <p className="text-sm text-muted-foreground">{getRegionCount(hoveredRegion)} {t('map.properties')}</p>
-        </div>
-      )}
     </div>
   );
 }
