@@ -21,6 +21,12 @@ export interface PropertyListing {
   hasParking: boolean;
   petsAllowed: boolean;
   isFurnished: boolean;
+  // New fields for advanced filtering
+  floorLevel: string;
+  buildingAge: string;
+  orientation: string;
+  developer: string;
+  nearMTR: boolean;
 }
 
 const agentAvatars = [
@@ -77,7 +83,7 @@ const districts = {
   "New Territories West": ["Tsuen Wan", "Tuen Mun", "Yuen Long", "Discovery Bay", "Tung Chung"],
 };
 
-const propertyTypes = ["Apartment", "House", "Studio", "Penthouse", "Commercial"];
+const propertyTypes = ["Apartment", "House", "Studio", "Penthouse", "Commercial", "Villa"];
 
 const featureOptions = [
   "Sea View",
@@ -91,6 +97,11 @@ const featureOptions = [
   "Renovated",
   "Near MTR",
 ];
+
+const floorLevelOptions = ["Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"];
+const buildingAgeOptions = ["New (<5 years)", "Recent (5-10)", "Established (10-20)", "Older (20+)"];
+const orientationOptions = ["North", "South", "East", "West"];
+const developerNames = ["Sun Hung Kai", "Henderson Land", "New World", "Cheung Kong", "Sino Land", "Wheelock", "Swire Properties", "Kerry Properties"];
 
 function getRandomItem<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -135,11 +146,17 @@ function generateProperty(index: number): PropertyListing {
     hasParking: Math.random() > 0.4,
     petsAllowed: Math.random() > 0.6,
     isFurnished: Math.random() > 0.5,
+    floorLevel: getRandomItem(floorLevelOptions),
+    buildingAge: getRandomItem(buildingAgeOptions),
+    orientation: getRandomItem(orientationOptions),
+    developer: getRandomItem(developerNames),
+    nearMTR: Math.random() > 0.5,
   };
 }
 
+// Generate 60 properties for better pagination testing
 export const mockProperties: PropertyListing[] = Array.from(
-  { length: 24 },
+  { length: 60 },
   (_, i) => generateProperty(i)
 );
 

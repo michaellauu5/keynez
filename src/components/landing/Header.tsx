@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Menu, X, User, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,10 +12,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import keynestLogo from "@/assets/keynest-logo.png";
 
 const navLinks = [
-  { label: "Buy", href: "#buy" },
-  { label: "Rent", href: "#rent" },
+  { label: "Buy", href: "/buy" },
+  { label: "Rent", href: "/rent" },
   { label: "Sell", href: "#sell" },
-  { label: "Research Canvas", href: "#research" },
+  { label: "Research Canvas", href: "/research-canvas" },
 ];
 
 const languages = [
@@ -31,24 +32,34 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <img
             src={keynestLogo}
             alt="Keynest AI"
             className="h-8 w-auto md:h-10"
           />
-        </a>
+        </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           {navLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </a>
+            link.href.startsWith("#") ? (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </a>
+            ) : (
+              <Link
+                key={link.label}
+                to={link.href}
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {link.label}
+              </Link>
+            )
           ))}
         </nav>
 
@@ -92,14 +103,25 @@ export function Header() {
           <SheetContent side="right" className="w-[280px]">
             <nav className="flex flex-col gap-4 mt-8">
               {navLinks.map((link) => (
-                <a
-                  key={link.label}
-                  href={link.href}
-                  className="text-lg font-medium text-foreground py-2 border-b border-border"
-                  onClick={() => setIsOpen(false)}
-                >
-                  {link.label}
-                </a>
+                link.href.startsWith("#") ? (
+                  <a
+                    key={link.label}
+                    href={link.href}
+                    className="text-lg font-medium text-foreground py-2 border-b border-border"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    key={link.label}
+                    to={link.href}
+                    className="text-lg font-medium text-foreground py-2 border-b border-border"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                )
               ))}
               <div className="pt-4 flex flex-col gap-3">
                 <DropdownMenu>
