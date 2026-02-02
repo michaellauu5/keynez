@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { FileSpreadsheet, FileText, FlaskConical } from "lucide-react";
 import { PropertyResult } from "./PropertyResultsTable";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ExportActionsProps {
   results: PropertyResult[];
@@ -14,6 +15,7 @@ export function ExportActions({
   selectedIds,
   searchQuery = "",
 }: ExportActionsProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const selectedResults = results.filter((r) => selectedIds.includes(r.id));
   const exportData = selectedIds.length > 0 ? selectedResults : results;
@@ -121,7 +123,7 @@ export function ExportActions({
         disabled={results.length === 0}
       >
         <FileSpreadsheet className="h-4 w-4" />
-        Export to CSV
+        {t('export.toCSV')}
       </Button>
       <Button
         variant="outline"
@@ -131,7 +133,7 @@ export function ExportActions({
         disabled={results.length === 0}
       >
         <FileText className="h-4 w-4" />
-        Export to PDF
+        {t('export.toPDF')}
       </Button>
       <Button
         variant="default"
@@ -141,7 +143,7 @@ export function ExportActions({
         disabled={results.length === 0}
       >
         <FlaskConical className="h-4 w-4" />
-        Export to Research Canvas
+        {t('export.toCanvas')}
         {selectedIds.length > 0 && (
           <span className="ml-1 rounded-full bg-accent-foreground/20 px-1.5 text-xs">
             {selectedIds.length}

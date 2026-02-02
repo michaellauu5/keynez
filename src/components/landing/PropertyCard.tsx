@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { PropertyListing } from "@/data/mockProperties";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface PropertyCardProps {
   property: PropertyListing;
@@ -15,6 +16,7 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ property, className, isHighlighted }: PropertyCardProps) {
+  const { t } = useTranslation();
   const [isFavorite, setIsFavorite] = useState(false);
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -36,7 +38,7 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
       }
       return `HK$${(price / 1000000).toFixed(2)}M`;
     }
-    return `HK$${price.toLocaleString()}/mo`;
+    return `HK$${price.toLocaleString()}${t('property.perMonth')}`;
   };
 
   return (
@@ -102,11 +104,11 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
                 : "bg-feature-sea-view text-white"
             )}
           >
-            For {property.priceType === "sale" ? "Sale" : "Rent"}
+            {property.priceType === "sale" ? t('property.forSale') : t('property.forRent')}
           </Badge>
           {property.isNew && (
             <Badge className="bg-accent text-accent-foreground text-xs font-semibold">
-              New
+              {t('property.new')}
             </Badge>
           )}
         </div>
@@ -152,7 +154,7 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
           </span>
           <span className="flex items-center gap-1">
             <Square className="h-4 w-4" />
-            {property.size.toLocaleString()} sqft
+            {property.size.toLocaleString()} {t('property.sqft')}
           </span>
         </div>
 
@@ -183,7 +185,7 @@ export function PropertyCard({ property, className, isHighlighted }: PropertyCar
               <Phone className="h-3.5 w-3.5" />
             </Button>
             <Button size="sm" className="h-8 text-xs bg-accent hover:bg-coral text-accent-foreground transition-colors">
-              View Details
+              {t('property.viewDetails')}
             </Button>
           </div>
         </div>

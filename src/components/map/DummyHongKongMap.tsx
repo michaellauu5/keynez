@@ -4,6 +4,7 @@ import { MapPin, Plus, Minus, Crosshair, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { PropertyListing } from "@/data/mockProperties";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface DummyHongKongMapProps {
   properties: PropertyListing[];
@@ -80,6 +81,7 @@ export function DummyHongKongMap({
   activeFilterCount = 0,
   className,
 }: DummyHongKongMapProps) {
+  const { t } = useTranslation();
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
@@ -321,9 +323,9 @@ export function DummyHongKongMap({
           <p className="text-xs text-muted-foreground mb-1">{selectedPopup.property.address}</p>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
-            <span>{selectedPopup.property.bedrooms} bed</span>
+            <span>{selectedPopup.property.bedrooms} {t('property.bed')}</span>
             <span>•</span>
-            <span>{selectedPopup.property.bathrooms} bath</span>
+            <span>{selectedPopup.property.bathrooms} {t('property.bath')}</span>
             <span>•</span>
             <span>{selectedPopup.property.size.toLocaleString()} sqft</span>
           </div>
@@ -332,12 +334,12 @@ export function DummyHongKongMap({
             {selectedPopup.property.priceType === "sale" ? (
               <>HK${(selectedPopup.property.price / 1000000).toFixed(1)}M</>
             ) : (
-              <>HK${selectedPopup.property.price.toLocaleString()}/mo</>
+              <>HK${selectedPopup.property.price.toLocaleString()}{t('property.perMonth')}</>
             )}
           </p>
 
           <Button size="sm" className="w-full" onClick={handleViewDetails}>
-            View Details
+            {t('map.viewDetails')}
           </Button>
         </div>
       )}
@@ -359,37 +361,37 @@ export function DummyHongKongMap({
       {activeFilterCount > 0 && (
         <Badge className="absolute top-4 left-4 gap-1 bg-accent text-accent-foreground">
           <Search className="h-3 w-3" />
-          {activeFilterCount} filters
+          {activeFilterCount} {t('map.filters')}
         </Badge>
       )}
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs">
-        <p className="font-medium mb-2">Legend</p>
+        <p className="font-medium mb-2">{t('map.legend')}</p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500" />
-            <span>For Sale</span>
+            <span>{t('map.forSale')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500" />
-            <span>For Rent</span>
+            <span>{t('map.forRent')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-accent flex items-center justify-center text-[8px] text-accent-foreground font-bold">
               5
             </div>
-            <span>Clustered</span>
+            <span>{t('map.clustered')}</span>
           </div>
         </div>
-        <p className="mt-2 text-muted-foreground">{properties.length} properties</p>
+        <p className="mt-2 text-muted-foreground">{properties.length} {t('map.properties')}</p>
       </div>
 
       {/* Hover tooltip for regions */}
       {hoveredRegion && (
         <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-card/95 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
           <p className="font-medium">{hoveredRegion}</p>
-          <p className="text-sm text-muted-foreground">{getRegionCount(hoveredRegion)} properties</p>
+          <p className="text-sm text-muted-foreground">{getRegionCount(hoveredRegion)} {t('map.properties')}</p>
         </div>
       )}
     </div>

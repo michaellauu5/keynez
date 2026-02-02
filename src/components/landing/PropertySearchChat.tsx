@@ -9,6 +9,7 @@ import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { ExportActions } from "./ExportActions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ExtractedCriteria {
   locations: string[];
@@ -27,14 +28,8 @@ interface AISearchResponse {
   searchSummary: string;
 }
 
-const THINKING_MESSAGES = [
-  "Analyzing your requirements...",
-  "Searching property database...",
-  "Ranking by relevance...",
-  "Preparing results...",
-];
-
 export function PropertySearchChat() {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [thinkingMessage, setThinkingMessage] = useState("");
@@ -56,6 +51,13 @@ export function PropertySearchChat() {
     orientations: [],
     developers: [],
   });
+
+  const THINKING_MESSAGES = [
+    t('search.thinking.analyzing'),
+    t('search.thinking.searching'),
+    t('search.thinking.ranking'),
+    t('search.thinking.preparing'),
+  ];
 
   const handleSearch = async () => {
     setIsSearching(true);
@@ -103,7 +105,7 @@ export function PropertySearchChat() {
         }
         setHighlightTerms(terms);
 
-        toast.success(`Found ${data.results.length} matching properties`);
+        toast.success(`${t('search.found')} ${data.results.length} ${t('search.matchingProperties')}`);
       }
     } catch (error) {
       console.error("Search error:", error);
@@ -154,7 +156,7 @@ export function PropertySearchChat() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'"
+              placeholder={t('search.placeholder')}
               className="h-12 pl-10 pr-4 text-base"
               disabled={isSearching}
             />
@@ -169,7 +171,7 @@ export function PropertySearchChat() {
             ) : (
               <Search className="h-4 w-4" />
             )}
-            Search
+            {t('search.button')}
           </Button>
         </div>
 
@@ -191,7 +193,7 @@ export function PropertySearchChat() {
         {/* Extracted Criteria Badges */}
         {extractedCriteria && !isSearching && (
           <div className="mb-4 animate-in fade-in-50 slide-in-from-top-2 duration-300">
-            <p className="text-xs text-muted-foreground mb-2">AI understood your search as:</p>
+            <p className="text-xs text-muted-foreground mb-2">{t('search.aiUnderstood')}</p>
             <div className="flex flex-wrap gap-2">
               {extractedCriteria.locations.length > 0 && (
                 <Badge variant="secondary" className="gap-1">
@@ -240,10 +242,10 @@ export function PropertySearchChat() {
             {/* Export Actions */}
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {results.length} properties found
+                {results.length} {t('search.propertiesFound')}
                 {selectedIds.length > 0 && (
                   <span className="ml-2 font-medium text-foreground">
-                    ({selectedIds.length} selected)
+                    ({selectedIds.length} {t('search.selected')})
                   </span>
                 )}
               </p>
@@ -266,8 +268,8 @@ export function PropertySearchChat() {
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed">
                 <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
-                <p className="text-muted-foreground">No properties match your criteria</p>
-                <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filters</p>
+                <p className="text-muted-foreground">{t('search.noResults')}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('search.noResultsHint')}</p>
               </div>
             )}
           </div>
@@ -280,21 +282,20 @@ export function PropertySearchChat() {
               <Sparkles className="h-8 w-8 text-accent" />
             </div>
             <h3 className="mb-2 font-serif text-lg font-semibold">
-              AI-Powered Property Search
+              {t('search.initialTitle')}
             </h3>
             <p className="max-w-md text-sm text-muted-foreground">
-              Describe what you're looking for in natural language, or use the filters above.
-              Our AI will find the most relevant properties for you.
+              {t('search.initialDescription')}
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("3 bedroom in Mid-Levels with sea view")}>
-                3BR Mid-Levels sea view
+                {t('search.sample.midLevels')}
               </Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("Family home under 50 million with garden")}>
-                Family home with garden
+                {t('search.sample.family')}
               </Badge>
               <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("Pet friendly apartment in Kowloon")}>
-                Pet friendly Kowloon
+                {t('search.sample.petFriendly')}
               </Badge>
             </div>
           </div>

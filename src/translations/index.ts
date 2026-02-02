@@ -57,12 +57,69 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "Connect With Us",
 
     // Hero Section
-    "hero.title": "Find Your Dream Home in Hong Kong",
-    "hero.subtitle": "AI-powered property search for smarter decisions",
+    "hero.title": "Find Your Perfect Property in",
+    "hero.titleAccent": "Hong Kong",
+    "hero.subtitle": "Powered by AI. Search in plain language and discover properties that match your lifestyle.",
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
-    // Property
+    // Search Chat
+    "search.placeholder": "Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'",
+    "search.button": "Search",
+    "search.thinking.analyzing": "Analyzing your requirements...",
+    "search.thinking.searching": "Searching property database...",
+    "search.thinking.ranking": "Ranking by relevance...",
+    "search.thinking.preparing": "Preparing results...",
+    "search.aiUnderstood": "AI understood your search as:",
+    "search.propertiesFound": "properties found",
+    "search.selected": "selected",
+    "search.noResults": "No properties match your criteria",
+    "search.noResultsHint": "Try adjusting your search or filters",
+    "search.initialTitle": "AI-Powered Property Search",
+    "search.initialDescription": "Describe what you're looking for in natural language, or use the filters above. Our AI will find the most relevant properties for you.",
+    "search.emptyState": "Search for properties to see results here",
+    "search.found": "Found",
+    "search.matchingProperties": "matching properties",
+    "search.sample.midLevels": "3BR Mid-Levels sea view",
+    "search.sample.family": "Family home with garden",
+    "search.sample.petFriendly": "Pet friendly Kowloon",
+
+    // Filters
+    "filter.propertyType": "Property Type",
+    "filter.price": "Price (HKD)",
+    "filter.location": "Location",
+    "filter.bedrooms": "Bedrooms",
+    "filter.bathrooms": "Bathrooms",
+    "filter.size": "Size (sqft)",
+    "filter.floorLevel": "Floor Level",
+    "filter.buildingAge": "Building Age",
+    "filter.orientation": "Orientation",
+    "filter.developer": "Developer",
+    "filter.clearSelection": "Clear selection",
+    "filter.resetRange": "Reset range",
+    "filter.filtersActive": "filter(s) active",
+    "filter.clearAll": "Clear all",
+    "filter.district": "District / Area",
+    "filter.moreFilters": "More Filters",
+    "filter.priceRange": "Price Range",
+    "filter.filters": "Filters",
+    "filter.filterProperties": "Filter Properties",
+    "filter.all": "All",
+    "filter.forSale": "For Sale",
+    "filter.forRent": "For Rent",
+    "filter.parking": "Parking",
+    "filter.petsAllowed": "Pets Allowed",
+    "filter.furnished": "Furnished",
+    "filter.newBuild": "New Build",
+    "filter.seaView": "Sea View",
+    "filter.pool": "Pool",
+    "filter.gym": "Gym",
+
+    // Stat Counter
+    "stats.activeListings": "Active Listings",
+
+    // Property Card
+    "property.new": "New",
     "property.forSale": "For Sale",
     "property.forRent": "For Rent",
     "property.bedrooms": "Bedrooms",
@@ -71,6 +128,38 @@ export const translations: Record<Language, Record<string, string>> = {
     "property.viewDetails": "View Details",
     "property.addToCanvas": "Add to Canvas",
     "property.export": "Export",
+    "property.bed": "bed",
+    "property.bath": "bath",
+    "property.perMonth": "/mo",
+
+    // Table Headers
+    "table.propertyName": "Property Name",
+    "table.location": "Location",
+    "table.priceHKD": "Price (HKD)",
+    "table.sizeSqft": "Size (sqft)",
+    "table.bedrooms": "Bedrooms",
+    "table.match": "Match",
+    "table.keyFeatures": "Key Features",
+
+    // Export Actions
+    "export.toCSV": "Export to CSV",
+    "export.toPDF": "Export to PDF",
+    "export.toCanvas": "Export to Research Canvas",
+
+    // Map
+    "map.legend": "Legend",
+    "map.forSale": "For Sale",
+    "map.forRent": "For Rent",
+    "map.clustered": "Clustered",
+    "map.properties": "properties",
+    "map.viewDetails": "View Details",
+    "map.filters": "filters",
+
+    // Video Demo
+    "video.title": "See How Keynest AI Works",
+    "video.subtitle": "AI-powered property search for Hong Kong",
+    "video.caption": "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
+    "video.tapToPause": "Tap to pause",
 
     // Common
     "common.loading": "Loading...",
@@ -130,12 +219,69 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "關注我們",
 
     // Hero Section
-    "hero.title": "在香港尋找您的理想居所",
-    "hero.subtitle": "AI驅動的物業搜尋，助您作出更明智的決定",
+    "hero.title": "在",
+    "hero.titleAccent": "香港",
+    "hero.subtitle": "由人工智能驅動。用自然語言搜尋，發現符合您生活方式的物業。",
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
-    // Property
+    // Search Chat
+    "search.placeholder": "描述您理想的物業... 例如：「半山區三房海景單位，五千萬以下」",
+    "search.button": "搜尋",
+    "search.thinking.analyzing": "分析您的需求...",
+    "search.thinking.searching": "搜尋物業資料庫...",
+    "search.thinking.ranking": "按相關性排序...",
+    "search.thinking.preparing": "準備結果...",
+    "search.aiUnderstood": "AI 理解您的搜尋為：",
+    "search.propertiesFound": "個物業",
+    "search.selected": "已選擇",
+    "search.noResults": "沒有符合條件的物業",
+    "search.noResultsHint": "請嘗試調整搜尋條件或篩選器",
+    "search.initialTitle": "AI 智能物業搜尋",
+    "search.initialDescription": "用自然語言描述您想要的物業，或使用上方的篩選器。我們的 AI 將為您找到最相關的物業。",
+    "search.emptyState": "搜尋物業以查看結果",
+    "search.found": "找到",
+    "search.matchingProperties": "個符合條件的物業",
+    "search.sample.midLevels": "半山區三房海景",
+    "search.sample.family": "帶花園家庭住宅",
+    "search.sample.petFriendly": "九龍可養寵物",
+
+    // Filters
+    "filter.propertyType": "物業類型",
+    "filter.price": "價格 (港幣)",
+    "filter.location": "地點",
+    "filter.bedrooms": "睡房",
+    "filter.bathrooms": "浴室",
+    "filter.size": "面積 (平方呎)",
+    "filter.floorLevel": "樓層",
+    "filter.buildingAge": "樓齡",
+    "filter.orientation": "座向",
+    "filter.developer": "發展商",
+    "filter.clearSelection": "清除選擇",
+    "filter.resetRange": "重設範圍",
+    "filter.filtersActive": "個篩選器已啟用",
+    "filter.clearAll": "清除全部",
+    "filter.district": "地區 / 區域",
+    "filter.moreFilters": "更多篩選",
+    "filter.priceRange": "價格範圍",
+    "filter.filters": "篩選器",
+    "filter.filterProperties": "篩選物業",
+    "filter.all": "全部",
+    "filter.forSale": "出售",
+    "filter.forRent": "出租",
+    "filter.parking": "車位",
+    "filter.petsAllowed": "可養寵物",
+    "filter.furnished": "連傢俬",
+    "filter.newBuild": "新盤",
+    "filter.seaView": "海景",
+    "filter.pool": "泳池",
+    "filter.gym": "健身室",
+
+    // Stat Counter
+    "stats.activeListings": "個活躍盤源",
+
+    // Property Card
+    "property.new": "新盤",
     "property.forSale": "出售",
     "property.forRent": "出租",
     "property.bedrooms": "房間",
@@ -144,6 +290,38 @@ export const translations: Record<Language, Record<string, string>> = {
     "property.viewDetails": "查看詳情",
     "property.addToCanvas": "加入畫板",
     "property.export": "匯出",
+    "property.bed": "房",
+    "property.bath": "浴室",
+    "property.perMonth": "/月",
+
+    // Table Headers
+    "table.propertyName": "物業名稱",
+    "table.location": "地點",
+    "table.priceHKD": "價格 (港幣)",
+    "table.sizeSqft": "面積 (平方呎)",
+    "table.bedrooms": "睡房",
+    "table.match": "匹配度",
+    "table.keyFeatures": "主要特色",
+
+    // Export Actions
+    "export.toCSV": "匯出 CSV",
+    "export.toPDF": "匯出 PDF",
+    "export.toCanvas": "匯出至研究畫板",
+
+    // Map
+    "map.legend": "圖例",
+    "map.forSale": "出售",
+    "map.forRent": "出租",
+    "map.clustered": "聚合",
+    "map.properties": "個物業",
+    "map.viewDetails": "查看詳情",
+    "map.filters": "個篩選器",
+
+    // Video Demo
+    "video.title": "了解 Keynest AI 如何運作",
+    "video.subtitle": "香港 AI 智能物業搜尋",
+    "video.caption": "我們的 AI 能理解您以自然語言表達的偏好，並在數秒內為您找到完美的物業。",
+    "video.tapToPause": "點擊暫停",
 
     // Common
     "common.loading": "載入中...",
@@ -203,12 +381,69 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "关注我们",
 
     // Hero Section
-    "hero.title": "在香港寻找您的理想居所",
-    "hero.subtitle": "AI驱动的房产搜索，助您作出更明智的决定",
+    "hero.title": "在",
+    "hero.titleAccent": "香港",
+    "hero.subtitle": "由人工智能驱动。用自然语言搜索，发现符合您生活方式的房产。",
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
 
-    // Property
+    // Search Chat
+    "search.placeholder": "描述您理想的房产... 例如：「半山区三房海景单位，五千万以下」",
+    "search.button": "搜索",
+    "search.thinking.analyzing": "分析您的需求...",
+    "search.thinking.searching": "搜索房产数据库...",
+    "search.thinking.ranking": "按相关性排序...",
+    "search.thinking.preparing": "准备结果...",
+    "search.aiUnderstood": "AI 理解您的搜索为：",
+    "search.propertiesFound": "个房产",
+    "search.selected": "已选择",
+    "search.noResults": "没有符合条件的房产",
+    "search.noResultsHint": "请尝试调整搜索条件或筛选器",
+    "search.initialTitle": "AI 智能房产搜索",
+    "search.initialDescription": "用自然语言描述您想要的房产，或使用上方的筛选器。我们的 AI 将为您找到最相关的房产。",
+    "search.emptyState": "搜索房产以查看结果",
+    "search.found": "找到",
+    "search.matchingProperties": "个符合条件的房产",
+    "search.sample.midLevels": "半山区三房海景",
+    "search.sample.family": "带花园家庭住宅",
+    "search.sample.petFriendly": "九龙可养宠物",
+
+    // Filters
+    "filter.propertyType": "房产类型",
+    "filter.price": "价格 (港币)",
+    "filter.location": "地点",
+    "filter.bedrooms": "卧室",
+    "filter.bathrooms": "浴室",
+    "filter.size": "面积 (平方尺)",
+    "filter.floorLevel": "楼层",
+    "filter.buildingAge": "楼龄",
+    "filter.orientation": "朝向",
+    "filter.developer": "开发商",
+    "filter.clearSelection": "清除选择",
+    "filter.resetRange": "重设范围",
+    "filter.filtersActive": "个筛选器已启用",
+    "filter.clearAll": "清除全部",
+    "filter.district": "地区 / 区域",
+    "filter.moreFilters": "更多筛选",
+    "filter.priceRange": "价格范围",
+    "filter.filters": "筛选器",
+    "filter.filterProperties": "筛选房产",
+    "filter.all": "全部",
+    "filter.forSale": "出售",
+    "filter.forRent": "出租",
+    "filter.parking": "车位",
+    "filter.petsAllowed": "可养宠物",
+    "filter.furnished": "带家具",
+    "filter.newBuild": "新盘",
+    "filter.seaView": "海景",
+    "filter.pool": "泳池",
+    "filter.gym": "健身房",
+
+    // Stat Counter
+    "stats.activeListings": "个活跃房源",
+
+    // Property Card
+    "property.new": "新盘",
     "property.forSale": "出售",
     "property.forRent": "出租",
     "property.bedrooms": "房间",
@@ -217,6 +452,38 @@ export const translations: Record<Language, Record<string, string>> = {
     "property.viewDetails": "查看详情",
     "property.addToCanvas": "加入画板",
     "property.export": "导出",
+    "property.bed": "房",
+    "property.bath": "浴室",
+    "property.perMonth": "/月",
+
+    // Table Headers
+    "table.propertyName": "房产名称",
+    "table.location": "地点",
+    "table.priceHKD": "价格 (港币)",
+    "table.sizeSqft": "面积 (平方尺)",
+    "table.bedrooms": "卧室",
+    "table.match": "匹配度",
+    "table.keyFeatures": "主要特色",
+
+    // Export Actions
+    "export.toCSV": "导出 CSV",
+    "export.toPDF": "导出 PDF",
+    "export.toCanvas": "导出至研究画板",
+
+    // Map
+    "map.legend": "图例",
+    "map.forSale": "出售",
+    "map.forRent": "出租",
+    "map.clustered": "聚合",
+    "map.properties": "个房产",
+    "map.viewDetails": "查看详情",
+    "map.filters": "个筛选器",
+
+    // Video Demo
+    "video.title": "了解 Keynest AI 如何运作",
+    "video.subtitle": "香港 AI 智能房产搜索",
+    "video.caption": "我们的 AI 能理解您以自然语言表达的偏好，并在数秒内为您找到完美的房产。",
+    "video.tapToPause": "点击暂停",
 
     // Common
     "common.loading": "加载中...",

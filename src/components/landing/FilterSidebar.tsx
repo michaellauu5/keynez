@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { cn } from "@/lib/utils";
 import { regionOptions } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface FilterState {
   transactionType: "all" | "sale" | "rent";
@@ -37,6 +38,7 @@ const bedroomOptions = [0, 1, 2, 3, 4, 5];
 const bathroomOptions = [1, 2, 3, 4];
 
 function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
+  const { t } = useTranslation();
   const [openSections, setOpenSections] = useState<string[]>(["type", "district", "price"]);
 
   const toggleSection = (section: string) => {
@@ -100,14 +102,24 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
     return `$${value}`;
   };
 
+  const moreFiltersConfig = [
+    { key: "hasParking", labelKey: "filter.parking" },
+    { key: "petsAllowed", labelKey: "filter.petsAllowed" },
+    { key: "isFurnished", labelKey: "filter.furnished" },
+    { key: "isNew", labelKey: "filter.newBuild" },
+    { key: "hasSeaView", labelKey: "filter.seaView" },
+    { key: "hasPool", labelKey: "filter.pool" },
+    { key: "hasGym", labelKey: "filter.gym" },
+  ];
+
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between pb-2 border-b border-border">
-        <h3 className="font-semibold text-foreground">Filters</h3>
+        <h3 className="font-semibold text-foreground">{t('filter.filters')}</h3>
         {activeFilterCount > 0 && (
           <Button variant="ghost" size="sm" onClick={clearAllFilters} className="h-8 text-xs">
-            Clear all ({activeFilterCount})
+            {t('filter.clearAll')} ({activeFilterCount})
           </Button>
         )}
       </div>
@@ -125,7 +137,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
             )}
             onClick={() => onFiltersChange({ ...filters, transactionType: type })}
           >
-            {type === "all" ? "All" : `For ${type === "sale" ? "Sale" : "Rent"}`}
+            {type === "all" ? t('filter.all') : type === "sale" ? t('filter.forSale') : t('filter.forRent')}
           </Button>
         ))}
       </div>
@@ -133,7 +145,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* District/Area */}
       <Collapsible open={openSections.includes("district")} onOpenChange={() => toggleSection("district")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          District / Area
+          {t('filter.district')}
           {openSections.includes("district") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -177,7 +189,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Property Type */}
       <Collapsible open={openSections.includes("type")} onOpenChange={() => toggleSection("type")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          Property Type
+          {t('filter.propertyType')}
           {openSections.includes("type") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -203,7 +215,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Price Range */}
       <Collapsible open={openSections.includes("price")} onOpenChange={() => toggleSection("price")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          Price Range
+          {t('filter.priceRange')}
           {openSections.includes("price") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -231,7 +243,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Size Range */}
       <Collapsible open={openSections.includes("size")} onOpenChange={() => toggleSection("size")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          Size (sqft)
+          {t('filter.size')}
           {openSections.includes("size") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -259,7 +271,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Bedrooms */}
       <Collapsible open={openSections.includes("bedrooms")} onOpenChange={() => toggleSection("bedrooms")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          Bedrooms
+          {t('filter.bedrooms')}
           {openSections.includes("bedrooms") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -289,7 +301,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Bathrooms */}
       <Collapsible open={openSections.includes("bathrooms")} onOpenChange={() => toggleSection("bathrooms")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          Bathrooms
+          {t('filter.bathrooms')}
           {openSections.includes("bathrooms") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -319,7 +331,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
       {/* Additional Filters */}
       <Collapsible open={openSections.includes("more")} onOpenChange={() => toggleSection("more")}>
         <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium">
-          More Filters
+          {t('filter.moreFilters')}
           {openSections.includes("more") ? (
             <ChevronUp className="h-4 w-4" />
           ) : (
@@ -327,15 +339,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
           )}
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-3 pt-2">
-          {[
-            { key: "hasParking", label: "Parking" },
-            { key: "petsAllowed", label: "Pets Allowed" },
-            { key: "isFurnished", label: "Furnished" },
-            { key: "isNew", label: "New Build" },
-            { key: "hasSeaView", label: "Sea View" },
-            { key: "hasPool", label: "Pool" },
-            { key: "hasGym", label: "Gym" },
-          ].map(({ key, label }) => (
+          {moreFiltersConfig.map(({ key, labelKey }) => (
             <div key={key} className="flex items-center gap-2">
               <Checkbox
                 id={key}
@@ -348,7 +352,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
                 }
               />
               <label htmlFor={key} className="text-sm cursor-pointer">
-                {label}
+                {t(labelKey)}
               </label>
             </div>
           ))}
@@ -359,6 +363,7 @@ function FilterContent({ filters, onFiltersChange }: FilterSidebarProps) {
 }
 
 export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) {
+  const { t } = useTranslation();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -375,7 +380,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
         <SheetTrigger asChild>
           <Button variant="outline" className="gap-2">
             <Filter className="h-4 w-4" />
-            Filters
+            {t('filter.filters')}
             {activeFilterCount > 0 && (
               <span className="ml-1 bg-accent text-accent-foreground text-xs px-1.5 py-0.5 rounded-full">
                 {activeFilterCount}
@@ -385,7 +390,7 @@ export function FilterSidebar({ filters, onFiltersChange }: FilterSidebarProps) 
         </SheetTrigger>
         <SheetContent side="left" className="w-[300px] overflow-y-auto">
           <SheetHeader className="mb-4">
-            <SheetTitle>Filter Properties</SheetTitle>
+            <SheetTitle>{t('filter.filterProperties')}</SheetTitle>
           </SheetHeader>
           <FilterContent filters={filters} onFiltersChange={onFiltersChange} />
         </SheetContent>

@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface FilterState {
   propertyTypes: string[];
@@ -70,9 +71,10 @@ interface MultiSelectFilterProps {
   options: string[];
   selected: string[];
   onChange: (selected: string[]) => void;
+  clearLabel: string;
 }
 
-function MultiSelectFilter({ label, options, selected, onChange }: MultiSelectFilterProps) {
+function MultiSelectFilter({ label, options, selected, onChange, clearLabel }: MultiSelectFilterProps) {
   const hasSelection = selected.length > 0;
 
   return (
@@ -123,7 +125,7 @@ function MultiSelectFilter({ label, options, selected, onChange }: MultiSelectFi
             className="mt-2 w-full text-xs"
             onClick={() => onChange([])}
           >
-            Clear selection
+            {clearLabel}
           </Button>
         )}
       </PopoverContent>
@@ -139,9 +141,10 @@ interface RangeFilterProps {
   value: [number, number];
   onChange: (value: [number, number]) => void;
   formatValue: (value: number) => string;
+  resetLabel: string;
 }
 
-function RangeFilter({ label, min, max, step, value, onChange, formatValue }: RangeFilterProps) {
+function RangeFilter({ label, min, max, step, value, onChange, formatValue, resetLabel }: RangeFilterProps) {
   const hasCustomRange = value[0] !== min || value[1] !== max;
 
   return (
@@ -185,7 +188,7 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue }: Ra
               className="w-full text-xs"
               onClick={() => onChange([min, max])}
             >
-              Reset range
+              {resetLabel}
             </Button>
           )}
         </div>
@@ -195,6 +198,8 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue }: Ra
 }
 
 export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarProps) {
+  const { t } = useTranslation();
+  
   const activeFiltersCount = [
     filters.propertyTypes.length > 0,
     filters.priceRange[0] !== 0 || filters.priceRange[1] !== 200000000,
@@ -227,77 +232,87 @@ export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarPro
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
         <MultiSelectFilter
-          label="Property Type"
+          label={t('filter.propertyType')}
           options={PROPERTY_TYPES}
           selected={filters.propertyTypes}
           onChange={(v) => onFiltersChange({ ...filters, propertyTypes: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <RangeFilter
-          label="Price (HKD)"
+          label={t('filter.price')}
           min={0}
           max={200000000}
           step={1000000}
           value={filters.priceRange}
           onChange={(v) => onFiltersChange({ ...filters, priceRange: v })}
           formatValue={(v) => `HK$${(v / 1000000).toFixed(0)}M`}
+          resetLabel={t('filter.resetRange')}
         />
         <MultiSelectFilter
-          label="Location"
+          label={t('filter.location')}
           options={LOCATIONS}
           selected={filters.locations}
           onChange={(v) => onFiltersChange({ ...filters, locations: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <MultiSelectFilter
-          label="Bedrooms"
+          label={t('filter.bedrooms')}
           options={BEDROOMS}
           selected={filters.bedrooms}
           onChange={(v) => onFiltersChange({ ...filters, bedrooms: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <MultiSelectFilter
-          label="Bathrooms"
+          label={t('filter.bathrooms')}
           options={BATHROOMS}
           selected={filters.bathrooms}
           onChange={(v) => onFiltersChange({ ...filters, bathrooms: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <RangeFilter
-          label="Size (sqft)"
+          label={t('filter.size')}
           min={0}
           max={5000}
           step={50}
           value={filters.sizeRange}
           onChange={(v) => onFiltersChange({ ...filters, sizeRange: v })}
           formatValue={(v) => `${v} sqft`}
+          resetLabel={t('filter.resetRange')}
         />
         <MultiSelectFilter
-          label="Floor Level"
+          label={t('filter.floorLevel')}
           options={FLOOR_LEVELS}
           selected={filters.floorLevels}
           onChange={(v) => onFiltersChange({ ...filters, floorLevels: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <MultiSelectFilter
-          label="Building Age"
+          label={t('filter.buildingAge')}
           options={BUILDING_AGE}
           selected={filters.buildingAge}
           onChange={(v) => onFiltersChange({ ...filters, buildingAge: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <MultiSelectFilter
-          label="Orientation"
+          label={t('filter.orientation')}
           options={ORIENTATIONS}
           selected={filters.orientations}
           onChange={(v) => onFiltersChange({ ...filters, orientations: v })}
+          clearLabel={t('filter.clearSelection')}
         />
         <MultiSelectFilter
-          label="Developer"
+          label={t('filter.developer')}
           options={DEVELOPERS}
           selected={filters.developers}
           onChange={(v) => onFiltersChange({ ...filters, developers: v })}
+          clearLabel={t('filter.clearSelection')}
         />
       </div>
 
       {activeFiltersCount > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {activeFiltersCount} filter{activeFiltersCount > 1 ? "s" : ""} active
+            {activeFiltersCount} {t('filter.filtersActive')}
           </span>
           <Button
             variant="ghost"
@@ -306,7 +321,7 @@ export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarPro
             onClick={clearAllFilters}
           >
             <X className="h-3 w-3" />
-            Clear all
+            {t('filter.clearAll')}
           </Button>
         </div>
       )}

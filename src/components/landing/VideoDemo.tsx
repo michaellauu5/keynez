@@ -3,8 +3,10 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function VideoDemo() {
+  const { t } = useTranslation();
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [showPauseHint, setShowPauseHint] = useState(false);
@@ -57,10 +59,10 @@ export function VideoDemo() {
       {/* Title Section */}
       <div className="mb-4 text-center lg:text-left">
         <h2 className="font-serif text-2xl font-semibold text-foreground lg:text-3xl">
-          See How Keynest AI Works
+          {t('video.title')}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          AI-powered property search for Hong Kong
+          {t('video.subtitle')}
         </p>
       </div>
 
@@ -119,7 +121,7 @@ export function VideoDemo() {
               )}
             >
               <Pause className="h-3 w-3" />
-              Tap to pause
+              {t('video.tapToPause')}
             </div>
           </div>
 
@@ -138,7 +140,7 @@ export function VideoDemo() {
 
       {/* Caption Below */}
       <p className="mt-4 text-center text-sm text-muted-foreground lg:text-left">
-        Our AI understands your preferences in plain language and finds the perfect properties in seconds.
+        {t('video.caption')}
       </p>
     </div>
   );

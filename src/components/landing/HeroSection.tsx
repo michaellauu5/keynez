@@ -1,18 +1,42 @@
 import { PropertySearchChat } from "./PropertySearchChat";
 import { VideoDemo } from "./VideoDemo";
+import { DummyHongKongMap } from "@/components/map/DummyHongKongMap";
+import { mockProperties } from "@/data/mockProperties";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export function HeroSection() {
+  const { t, language } = useTranslation();
+
+  // Handle different title structure for Chinese vs English
+  const renderTitle = () => {
+    if (language === 'en') {
+      return (
+        <>
+          {t('hero.title')}{" "}
+          <span className="text-accent">{t('hero.titleAccent')}</span>
+        </>
+      );
+    }
+    // For Chinese: "在香港尋找您的理想居所"
+    return (
+      <>
+        {t('hero.title')}
+        <span className="text-accent">{t('hero.titleAccent')}</span>
+        尋找您的理想居所
+      </>
+    );
+  };
+
   return (
-    <section className="min-h-screen bg-gradient-hero">
+    <section className="bg-gradient-hero">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         {/* Header */}
         <div className="mb-8 text-center lg:mb-12">
           <h1 className="font-sans text-3xl font-bold text-primary sm:text-4xl lg:text-5xl">
-            Find Your Perfect Property in{" "}
-            <span className="text-accent">Hong Kong</span>
+            {renderTitle()}
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Powered by AI. Search in plain language and discover properties that match your lifestyle.
+            {t('hero.subtitle')}
           </p>
         </div>
 
@@ -27,6 +51,14 @@ export function HeroSection() {
           <div className="order-2">
             <VideoDemo />
           </div>
+        </div>
+
+        {/* Full Width Map - Below chat, above stats */}
+        <div className="mt-8 lg:mt-12">
+          <DummyHongKongMap
+            properties={mockProperties}
+            className="h-[400px] rounded-xl shadow-lg"
+          />
         </div>
       </div>
     </section>
