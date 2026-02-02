@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { mockProperties } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-
 const defaultFilters: FilterState = {
   transactionType: "all",
   regions: [],
@@ -24,19 +23,16 @@ const defaultFilters: FilterState = {
   isNew: null,
   hasSeaView: null,
   hasPool: null,
-  hasGym: null,
+  hasGym: null
 };
-
 type ViewMode = "grid" | "map";
-
 export function PropertyListingsSection() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const isMobile = useIsMobile();
-
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter((property) => {
+    return mockProperties.filter(property => {
       // Transaction type
       if (filters.transactionType !== "all" && property.priceType !== filters.transactionType) {
         return false;
@@ -71,7 +67,7 @@ export function PropertyListingsSection() {
 
       // Bedrooms
       if (filters.bedrooms.length > 0) {
-        const bedroomMatch = filters.bedrooms.some((b) => {
+        const bedroomMatch = filters.bedrooms.some(b => {
           if (b === 5) return property.bedrooms >= 5;
           return property.bedrooms === b;
         });
@@ -80,7 +76,7 @@ export function PropertyListingsSection() {
 
       // Bathrooms
       if (filters.bathrooms.length > 0) {
-        const bathroomMatch = filters.bathrooms.some((b) => {
+        const bathroomMatch = filters.bathrooms.some(b => {
           if (b === 4) return property.bathrooms >= 4;
           return property.bathrooms === b;
         });
@@ -95,30 +91,23 @@ export function PropertyListingsSection() {
       if (filters.hasSeaView === true && !property.features.includes("Sea View")) return false;
       if (filters.hasPool === true && !property.features.includes("Pool")) return false;
       if (filters.hasGym === true && !property.features.includes("Gym")) return false;
-
       return true;
     });
   }, [filters]);
-
-  return (
-    <section className="bg-muted/30">
+  return <section className="bg-primary-foreground">
       {/* Stat Counter */}
       <StatCounter />
 
       {/* Main Content */}
       <div className="container px-4 py-8 md:py-12">
         {/* Mobile Filter Button */}
-        {isMobile && (
-          <div className="mb-6">
+        {isMobile && <div className="mb-6">
             <FilterSidebar filters={filters} onFiltersChange={setFilters} />
-          </div>
-        )}
+          </div>}
 
         <div className="flex gap-8">
           {/* Desktop Sidebar */}
-          {!isMobile && (
-            <FilterSidebar filters={filters} onFiltersChange={setFilters} />
-          )}
+          {!isMobile && <FilterSidebar filters={filters} onFiltersChange={setFilters} />}
 
           {/* Property Grid/Map */}
           <div className="flex-1 min-w-0">
@@ -129,50 +118,19 @@ export function PropertyListingsSection() {
                 <span className="text-muted-foreground">properties found</span>
               </p>
               <div className="flex border border-border rounded-md overflow-hidden">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode("grid")}
-                  className={cn(
-                    "h-9 px-3 rounded-none",
-                    viewMode === "grid" && "bg-accent text-accent-foreground"
-                  )}
-                  title="Grid View"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setViewMode("grid")} className={cn("h-9 px-3 rounded-none", viewMode === "grid" && "bg-accent text-accent-foreground")} title="Grid View">
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewMode("map")}
-                  className={cn(
-                    "h-9 px-3 rounded-none border-l border-border",
-                    viewMode === "map" && "bg-accent text-accent-foreground"
-                  )}
-                  title="Map View"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setViewMode("map")} className={cn("h-9 px-3 rounded-none border-l border-border", viewMode === "map" && "bg-accent text-accent-foreground")} title="Map View">
                   <MapIcon className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
             {/* Results */}
-            {viewMode === "grid" ? (
-              <PropertyGrid 
-                properties={filteredProperties}
-                onPropertyHover={setHoveredPropertyId}
-              />
-            ) : (
-              <GoogleMapView
-                properties={filteredProperties}
-                hoveredPropertyId={hoveredPropertyId}
-                onPropertyHover={setHoveredPropertyId}
-                className="h-[600px]"
-              />
-            )}
+            {viewMode === "grid" ? <PropertyGrid properties={filteredProperties} onPropertyHover={setHoveredPropertyId} /> : <GoogleMapView properties={filteredProperties} hoveredPropertyId={hoveredPropertyId} onPropertyHover={setHoveredPropertyId} className="h-[600px]" />}
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 }
