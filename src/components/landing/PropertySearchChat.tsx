@@ -2,157 +2,48 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Sparkles, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Sparkles, Loader2, MapPin, DollarSign, Bed, Eye, AlertCircle } from "lucide-react";
 import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { ExportActions } from "./ExportActions";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-// Mock data for demonstration
-const MOCK_PROPERTIES: PropertyResult[] = [
-  {
-    id: "1",
-    name: "The Cullinan Tower 21",
-    location: "West Kowloon",
-    price: 85000000,
-    size: 1250,
-    bedrooms: "3",
-    features: ["Sea View", "New Build", "Gym"],
-  },
-  {
-    id: "2",
-    name: "One Island South",
-    location: "Wong Chuk Hang",
-    price: 42000000,
-    size: 890,
-    bedrooms: "2",
-    features: ["Mountain View", "Pet Friendly", "Pool"],
-  },
-  {
-    id: "3",
-    name: "Mount Nicholson",
-    location: "The Peak",
-    price: 280000000,
-    size: 3200,
-    bedrooms: "5+",
-    features: ["Sea View", "Garden", "Parking"],
-  },
-  {
-    id: "4",
-    name: "The Pavilia Hill",
-    location: "North Point",
-    price: 35000000,
-    size: 720,
-    bedrooms: "2",
-    features: ["City View", "Renovated", "Gym"],
-  },
-  {
-    id: "5",
-    name: "Larvotto",
-    location: "Ap Lei Chau",
-    price: 58000000,
-    size: 1100,
-    bedrooms: "3",
-    features: ["Sea View", "Balcony", "Pool"],
-  },
-  {
-    id: "6",
-    name: "Victoria Peak House",
-    location: "The Peak",
-    price: 450000000,
-    size: 5500,
-    bedrooms: "5+",
-    features: ["Sea View", "Garden", "Rooftop"],
-  },
-  {
-    id: "7",
-    name: "The Austin",
-    location: "West Kowloon",
-    price: 25000000,
-    size: 550,
-    bedrooms: "1",
-    features: ["City View", "New Build", "Gym"],
-  },
-  {
-    id: "8",
-    name: "Ultima",
-    location: "Ho Man Tin",
-    price: 120000000,
-    size: 2100,
-    bedrooms: "4",
-    features: ["Mountain View", "Pool", "Parking"],
-  },
-  {
-    id: "9",
-    name: "Grand Mayfair",
-    location: "Mid-Levels",
-    price: 68000000,
-    size: 1400,
-    bedrooms: "3",
-    features: ["City View", "Pet Friendly", "Renovated"],
-  },
-  {
-    id: "10",
-    name: "Bel-Air Peak",
-    location: "Pokfulam",
-    price: 95000000,
-    size: 1800,
-    bedrooms: "4",
-    features: ["Sea View", "Garden", "Parking"],
-  },
-  {
-    id: "11",
-    name: "The Morgan",
-    location: "Sheung Wan",
-    price: 32000000,
-    size: 680,
-    bedrooms: "2",
-    features: ["City View", "Renovated", "Rooftop"],
-  },
-  {
-    id: "12",
-    name: "Park Mediterranean",
-    location: "Ma On Shan",
-    price: 15000000,
-    size: 620,
-    bedrooms: "2",
-    features: ["Mountain View", "New Build", "Pool"],
-  },
-  {
-    id: "13",
-    name: "Kadooria Hill",
-    location: "Ho Man Tin",
-    price: 78000000,
-    size: 1550,
-    bedrooms: "3",
-    features: ["Garden", "Pet Friendly", "Parking"],
-  },
-  {
-    id: "14",
-    name: "Repulse Bay Apartments",
-    location: "Repulse Bay",
-    price: 145000000,
-    size: 2400,
-    bedrooms: "4",
-    features: ["Sea View", "Balcony", "Pool"],
-  },
-  {
-    id: "15",
-    name: "Island Crest",
-    location: "Sai Ying Pun",
-    price: 22000000,
-    size: 480,
-    bedrooms: "1",
-    features: ["City View", "Gym", "Renovated"],
-  },
+interface ExtractedCriteria {
+  locations: string[];
+  priceMin: number | null;
+  priceMax: number | null;
+  sizeMin: number | null;
+  sizeMax: number | null;
+  bedrooms: number[];
+  features: string[];
+  specialRequirements: string;
+}
+
+interface AISearchResponse {
+  extractedCriteria: ExtractedCriteria;
+  results: (PropertyResult & { rank: number; relevanceScore: number; matchReason: string })[];
+  searchSummary: string;
+}
+
+const THINKING_MESSAGES = [
+  "Analyzing your requirements...",
+  "Searching property database...",
+  "Ranking by relevance...",
+  "Preparing results...",
 ];
 
 export function PropertySearchChat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [results, setResults] = useState<PropertyResult[]>([]);
+  const [thinkingMessage, setThinkingMessage] = useState("");
+  const [results, setResults] = useState<(PropertyResult & { rank?: number; relevanceScore?: number; matchReason?: string })[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [extractedCriteria, setExtractedCriteria] = useState<ExtractedCriteria | null>(null);
+  const [searchSummary, setSearchSummary] = useState("");
+  const [highlightTerms, setHighlightTerms] = useState<string[]>([]);
   const [filters, setFilters] = useState<FilterState>({
     propertyTypes: [],
     priceRange: [0, 200000000],
@@ -169,49 +60,82 @@ export function PropertySearchChat() {
   const handleSearch = async () => {
     setIsSearching(true);
     setSelectedIds([]);
-    
-    // Simulate AI search delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setExtractedCriteria(null);
+    setSearchSummary("");
 
-    // In production, this would call an AI-powered search API
-    // For now, we'll filter the mock data based on basic criteria
-    let filteredResults = [...MOCK_PROPERTIES];
+    // Animate thinking messages
+    let messageIndex = 0;
+    setThinkingMessage(THINKING_MESSAGES[0]);
+    const thinkingInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % THINKING_MESSAGES.length;
+      setThinkingMessage(THINKING_MESSAGES[messageIndex]);
+    }, 800);
 
-    // Apply some basic filtering logic
-    if (filters.bedrooms.length > 0) {
-      filteredResults = filteredResults.filter((p) =>
-        filters.bedrooms.includes(p.bedrooms)
-      );
+    try {
+      const { data, error } = await supabase.functions.invoke<AISearchResponse>("ai-property-search", {
+        body: {
+          query: searchQuery,
+          filters: {
+            priceRange: filters.priceRange,
+            sizeRange: filters.sizeRange,
+            bedrooms: filters.bedrooms,
+            locations: filters.locations,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setExtractedCriteria(data.extractedCriteria);
+        setResults(data.results);
+        setSearchSummary(data.searchSummary);
+
+        // Build highlight terms from extracted criteria
+        const terms: string[] = [];
+        if (data.extractedCriteria.locations) {
+          terms.push(...data.extractedCriteria.locations);
+        }
+        if (data.extractedCriteria.features) {
+          terms.push(...data.extractedCriteria.features);
+        }
+        setHighlightTerms(terms);
+
+        toast.success(`Found ${data.results.length} matching properties`);
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      
+      // Check for specific error types
+      if (error instanceof Error) {
+        if (error.message.includes("429") || error.message.includes("rate limit")) {
+          toast.error("Too many requests. Please wait a moment and try again.");
+        } else if (error.message.includes("402")) {
+          toast.error("AI credits exhausted. Please add credits to continue.");
+        } else {
+          toast.error("Search failed. Please try again.");
+        }
+      } else {
+        toast.error("Search failed. Please try again.");
+      }
+    } finally {
+      clearInterval(thinkingInterval);
+      setIsSearching(false);
+      setHasSearched(true);
     }
-
-    if (filters.priceRange[0] > 0 || filters.priceRange[1] < 200000000) {
-      filteredResults = filteredResults.filter(
-        (p) => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]
-      );
-    }
-
-    if (filters.sizeRange[0] > 0 || filters.sizeRange[1] < 5000) {
-      filteredResults = filteredResults.filter(
-        (p) => p.size >= filters.sizeRange[0] && p.size <= filters.sizeRange[1]
-      );
-    }
-
-    // If there's a search query, we'd use AI to rank results
-    // For now, just use the filtered results
-    if (filteredResults.length === 0) {
-      filteredResults = MOCK_PROPERTIES.slice(0, 15);
-    }
-
-    setResults(filteredResults.slice(0, 15));
-    setIsSearching(false);
-    setHasSearched(true);
   };
 
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !isSearching) {
       handleSearch();
     }
+  };
+
+  const handleRowClick = (property: PropertyResult) => {
+    // Could open a details modal or navigate to property page
+    console.log("Property clicked:", property);
   };
 
   return (
@@ -230,8 +154,9 @@ export function PropertySearchChat() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Describe your ideal property..."
+              placeholder="Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'"
               className="h-12 pl-10 pr-4 text-base"
+              disabled={isSearching}
             />
           </div>
           <Button
@@ -248,8 +173,69 @@ export function PropertySearchChat() {
           </Button>
         </div>
 
+        {/* AI Thinking State */}
+        {isSearching && (
+          <div className="mb-6 flex items-center justify-center gap-3 rounded-lg bg-accent/10 p-6">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent animate-pulse" />
+              <span className="font-medium text-accent">{thinkingMessage}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        )}
+
+        {/* Extracted Criteria Badges */}
+        {extractedCriteria && !isSearching && (
+          <div className="mb-4 animate-in fade-in-50 slide-in-from-top-2 duration-300">
+            <p className="text-xs text-muted-foreground mb-2">AI understood your search as:</p>
+            <div className="flex flex-wrap gap-2">
+              {extractedCriteria.locations.length > 0 && (
+                <Badge variant="secondary" className="gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {extractedCriteria.locations.join(", ")}
+                </Badge>
+              )}
+              {(extractedCriteria.priceMin || extractedCriteria.priceMax) && (
+                <Badge variant="secondary" className="gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  {extractedCriteria.priceMin
+                    ? `HK$${(extractedCriteria.priceMin / 1000000).toFixed(0)}M`
+                    : "Any"}{" "}
+                  -{" "}
+                  {extractedCriteria.priceMax
+                    ? `HK$${(extractedCriteria.priceMax / 1000000).toFixed(0)}M`
+                    : "Any"}
+                </Badge>
+              )}
+              {extractedCriteria.bedrooms.length > 0 && (
+                <Badge variant="secondary" className="gap-1">
+                  <Bed className="h-3 w-3" />
+                  {extractedCriteria.bedrooms.join(" or ")} BR
+                </Badge>
+              )}
+              {extractedCriteria.features.map((feature) => (
+                <Badge key={feature} variant="outline" className="gap-1">
+                  <Eye className="h-3 w-3" />
+                  {feature}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Search Summary */}
+        {searchSummary && !isSearching && (
+          <p className="text-sm text-muted-foreground mb-4 animate-in fade-in-50">
+            {searchSummary}
+          </p>
+        )}
+
         {/* Results Section */}
-        {hasSearched && (
+        {hasSearched && !isSearching && (
           <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
             {/* Export Actions */}
             <div className="flex items-center justify-between">
@@ -264,20 +250,31 @@ export function PropertySearchChat() {
               <ExportActions
                 results={results}
                 selectedIds={selectedIds}
+                searchQuery={searchQuery}
               />
             </div>
 
             {/* Results Table */}
-            <PropertyResultsTable
-              results={results}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-            />
+            {results.length > 0 ? (
+              <PropertyResultsTable
+                results={results}
+                selectedIds={selectedIds}
+                onSelectionChange={setSelectedIds}
+                highlightTerms={highlightTerms}
+                onRowClick={handleRowClick}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed">
+                <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">No properties match your criteria</p>
+                <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filters</p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Initial State */}
-        {!hasSearched && (
+        {!hasSearched && !isSearching && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <div className="mb-4 rounded-full bg-accent/20 p-4">
               <Sparkles className="h-8 w-8 text-accent" />
@@ -289,6 +286,17 @@ export function PropertySearchChat() {
               Describe what you're looking for in natural language, or use the filters above.
               Our AI will find the most relevant properties for you.
             </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("3 bedroom in Mid-Levels with sea view")}>
+                3BR Mid-Levels sea view
+              </Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("Family home under 50 million with garden")}>
+                Family home with garden
+              </Badge>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted" onClick={() => setSearchQuery("Pet friendly apartment in Kowloon")}>
+                Pet friendly Kowloon
+              </Badge>
+            </div>
           </div>
         )}
       </CardContent>
