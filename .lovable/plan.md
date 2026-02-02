@@ -1,8 +1,196 @@
 
-# HD Logo & New Color Scheme Implementation
+# Complete Language Translation & Dummy Map Placement
 
 ## Overview
-Replace the existing Keynest AI logo with the new HD version and implement the comprehensive new color scheme across the entire application. This will update the CSS variables, Tailwind configuration, and ensure all components reflect the fresh mint-green to sky-blue gradient aesthetic with warm brown accents.
+This plan addresses two key improvements:
+1. **Full Translation Coverage**: Apply the language switch functionality to ALL content throughout the website, including components that currently have hardcoded English text
+2. **Map Placement**: Add the interactive dummy Hong Kong map below the AI chat box, spanning full page width, positioned above the "45,000+ Active Listings" banner
+
+---
+
+## Part 1: Full Translation Coverage
+
+### Current State Analysis
+The translation system exists with translations for EN, Traditional Chinese, and Simplified Chinese, but many components still have hardcoded English text that doesn't change when the language is switched.
+
+### Components Requiring Translation Updates
+
+| Component | Hardcoded Text to Translate |
+|-----------|---------------------------|
+| `HeroSection.tsx` | Title, subtitle |
+| `PropertySearchChat.tsx` | Placeholder text, button labels, thinking messages, badges, initial state text |
+| `StatCounter.tsx` | "Active Listings" label |
+| `FilterToggleBar.tsx` | Filter labels, button text |
+| `FilterSidebar.tsx` | Section titles, filter labels, button text |
+| `PropertyCard.tsx` | "For Sale", "For Rent", "New", "View Details", unit labels |
+| `PropertyResultsTable.tsx` | Column headers, empty state text |
+| `ExportActions.tsx` | Button labels |
+| `DummyHongKongMap.tsx` | Legend labels, region names (keep in English but add translated tooltips) |
+| `VideoDemo.tsx` | Title, description text |
+
+### New Translation Keys to Add
+
+```typescript
+// Add to src/translations/index.ts
+
+// Hero Section (enhanced)
+"hero.title": "Find Your Perfect Property in Hong Kong",
+"hero.titleAccent": "Hong Kong",
+"hero.subtitle": "Powered by AI. Search in plain language and discover properties that match your lifestyle.",
+
+// Search Chat
+"search.placeholder": "Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'",
+"search.button": "Search",
+"search.thinking.analyzing": "Analyzing your requirements...",
+"search.thinking.searching": "Searching property database...",
+"search.thinking.ranking": "Ranking by relevance...",
+"search.thinking.preparing": "Preparing results...",
+"search.aiUnderstood": "AI understood your search as:",
+"search.propertiesFound": "properties found",
+"search.selected": "selected",
+"search.noResults": "No properties match your criteria",
+"search.noResultsHint": "Try adjusting your search or filters",
+"search.initialTitle": "AI-Powered Property Search",
+"search.initialDescription": "Describe what you're looking for in natural language, or use the filters above. Our AI will find the most relevant properties for you.",
+"search.emptyState": "Search for properties to see results here",
+
+// Filters
+"filter.propertyType": "Property Type",
+"filter.price": "Price (HKD)",
+"filter.location": "Location",
+"filter.bedrooms": "Bedrooms",
+"filter.bathrooms": "Bathrooms",
+"filter.size": "Size (sqft)",
+"filter.floorLevel": "Floor Level",
+"filter.buildingAge": "Building Age",
+"filter.orientation": "Orientation",
+"filter.developer": "Developer",
+"filter.clearSelection": "Clear selection",
+"filter.resetRange": "Reset range",
+"filter.filtersActive": "filter(s) active",
+"filter.clearAll": "Clear all",
+"filter.district": "District / Area",
+"filter.moreFilters": "More Filters",
+"filter.parking": "Parking",
+"filter.petsAllowed": "Pets Allowed",
+"filter.furnished": "Furnished",
+"filter.newBuild": "New Build",
+"filter.seaView": "Sea View",
+"filter.pool": "Pool",
+"filter.gym": "Gym",
+"filter.all": "All",
+"filter.forSale": "For Sale",
+"filter.forRent": "For Rent",
+
+// Stat Counter
+"stats.activeListings": "Active Listings",
+
+// Property Card
+"property.new": "New",
+"property.bed": "bed",
+"property.bath": "bath",
+"property.perMonth": "/mo",
+
+// Table Headers
+"table.propertyName": "Property Name",
+"table.location": "Location",
+"table.priceHKD": "Price (HKD)",
+"table.sizeSqft": "Size (sqft)",
+"table.bedrooms": "Bedrooms",
+"table.match": "Match",
+"table.keyFeatures": "Key Features",
+
+// Export Actions
+"export.toCSV": "Export to CSV",
+"export.toPDF": "Export to PDF",
+"export.toCanvas": "Export to Research Canvas",
+
+// Map
+"map.legend": "Legend",
+"map.forSale": "For Sale",
+"map.forRent": "For Rent",
+"map.clustered": "Clustered",
+"map.properties": "properties",
+"map.viewDetails": "View Details",
+
+// Video Demo
+"video.title": "See How Keynest AI Works",
+"video.subtitle": "AI-powered property search for Hong Kong",
+"video.caption": "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
+"video.tapToPause": "Tap to pause",
+```
+
+---
+
+## Part 2: Dummy Map Placement
+
+### Current Structure
+```text
+Index.tsx
+├── Layout
+│   ├── Header
+│   ├── HeroSection
+│   │   ├── Title & Subtitle
+│   │   ├── Two Column Grid
+│   │   │   ├── PropertySearchChat (left)
+│   │   │   └── VideoDemo (right)
+│   ├── PropertyListingsSection
+│   │   ├── StatCounter ("45,000+ Active Listings")
+│   │   ├── Filters
+│   │   └── Property Grid/Map Toggle
+│   └── Footer
+```
+
+### New Structure
+```text
+Index.tsx
+├── Layout
+│   ├── Header
+│   ├── HeroSection
+│   │   ├── Title & Subtitle
+│   │   ├── Two Column Grid
+│   │   │   ├── PropertySearchChat (left)
+│   │   │   └── VideoDemo (right)
+│   │   └── NEW: DummyHongKongMap (full width, below chat)
+│   ├── PropertyListingsSection
+│   │   ├── StatCounter ("45,000+ Active Listings")
+│   │   ├── Filters
+│   │   └── Property Grid/Map Toggle
+│   └── Footer
+```
+
+### Visual Layout Change
+
+**Before:**
+```text
++----------------------------------------------------------+
+|  [AI Chat Box]              |  [Video Demo]               |
++----------------------------------------------------------+
+|                                                           |
+|           45,000+ Active Listings                         |
+|                                                           |
++----------------------------------------------------------+
+```
+
+**After:**
+```text
++----------------------------------------------------------+
+|  [AI Chat Box]              |  [Video Demo]               |
++----------------------------------------------------------+
+|                                                           |
+|  +------------------------------------------------------+ |
+|  |                                                      | |
+|  |              INTERACTIVE HONG KONG MAP               | |
+|  |          (Full width, ~400px height)                 | |
+|  |                                                      | |
+|  +------------------------------------------------------+ |
+|                                                           |
++----------------------------------------------------------+
+|                                                           |
+|           45,000+ Active Listings                         |
+|                                                           |
++----------------------------------------------------------+
+```
 
 ---
 
@@ -10,257 +198,152 @@ Replace the existing Keynest AI logo with the new HD version and implement the c
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/assets/keynest-logo.png` | Replace | Update with new HD logo |
-| `src/index.css` | Modify | Update all CSS variables with new HSL values |
-| `tailwind.config.ts` | Modify | Add custom colors and ensure font configuration |
-| `src/components/landing/HeroSection.tsx` | Modify | Apply new hero gradient |
-| `src/components/layout/Header.tsx` | Modify | Update styling for new color scheme |
-| `src/components/layout/Footer.tsx` | Modify | Update footer styling |
-| `src/components/map/DummyHongKongMap.tsx` | Modify | Update map colors to match new palette |
-| `src/components/ui/button.tsx` | Modify | Add coral hover variant |
+| `src/translations/index.ts` | Modify | Add all missing translation keys for EN, zh-HK, zh-CN |
+| `src/components/landing/HeroSection.tsx` | Modify | Add translations, add DummyHongKongMap below grid |
+| `src/components/landing/PropertySearchChat.tsx` | Modify | Apply translations to all text |
+| `src/components/landing/StatCounter.tsx` | Modify | Apply translation to label |
+| `src/components/landing/FilterToggleBar.tsx` | Modify | Apply translations to all labels |
+| `src/components/landing/FilterSidebar.tsx` | Modify | Apply translations to all labels |
+| `src/components/landing/PropertyCard.tsx` | Modify | Apply translations to badges and labels |
+| `src/components/landing/PropertyResultsTable.tsx` | Modify | Apply translations to headers and empty state |
+| `src/components/landing/ExportActions.tsx` | Modify | Apply translations to button labels |
+| `src/components/landing/VideoDemo.tsx` | Modify | Apply translations to title and descriptions |
+| `src/components/map/DummyHongKongMap.tsx` | Modify | Apply translations to legend and UI text |
 
 ---
 
-## Color Conversion to HSL
+## Implementation Details
 
-The new color scheme converted to HSL format for CSS variables:
+### 1. Translation File Update
 
-```text
-PRIMARY COLORS:
-- primary-bg-start (#E8F5E9) → 125 40% 94%    (mint green)
-- primary-bg-end (#BBDEFB)   → 207 89% 86%    (sky blue)
-- primary-dark (#5D4E37)     → 34 27% 29%     (warm brown)
-- primary-text (#3E2723)     → 10 28% 19%     (dark brown)
+Add comprehensive translations for all three languages covering:
+- All filter labels
+- All button text
+- All placeholder text
+- All status messages
+- All table headers
+- All map legend text
+- All empty/loading states
 
-SECONDARY COLORS:
-- secondary-yellow (#FFD54F) → 45 100% 65%    (golden yellow)
-- secondary-gold (#FFC107)   → 45 100% 51%    (rich gold)
-- secondary-beige (#F5F5DC)  → 60 56% 91%     (cream beige)
-
-ACCENT COLORS:
-- accent-coral (#FF8A65)     → 14 100% 70%    (coral orange)
-- accent-sage (#A5D6A7)      → 122 38% 74%    (sage green)
-- accent-sky (#81D4FA)       → 199 93% 74%    (light sky)
-
-NEUTRAL COLORS:
-- background-light (#FAFAF8) → 60 20% 98%     (off-white)
-- background-card (#FFFFFF)  → 0 0% 100%      (pure white)
-- text-primary (#2C2416)     → 36 38% 13%     (dark earth)
-- text-secondary (#6D5D4B)   → 32 19% 36%     (muted brown)
-- border-color (#E8DCC8)     → 38 40% 85%     (warm border)
-```
-
----
-
-## Detailed Implementation
-
-### 1. Logo Replacement
-Copy the uploaded HD logo to `src/assets/keynest-logo.png`:
-- High resolution for crisp display on all screen sizes
-- Used in Header, Footer, and Login Modal
-- No code changes needed - same import path
-
-### 2. CSS Variables Update (`src/index.css`)
-
-Replace the `:root` color variables with the new scheme:
-
-```css
-:root {
-  /* New Keynest AI Color Scheme */
-  
-  /* Background: light off-white */
-  --background: 60 20% 98%;
-  --foreground: 36 38% 13%;
-
-  /* Card: pure white */
-  --card: 0 0% 100%;
-  --card-foreground: 36 38% 13%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 36 38% 13%;
-
-  /* Primary: warm brown (for buttons, links) */
-  --primary: 34 27% 29%;
-  --primary-foreground: 60 20% 98%;
-
-  /* Secondary: cream beige */
-  --secondary: 60 56% 91%;
-  --secondary-foreground: 36 38% 13%;
-
-  /* Muted: light beige */
-  --muted: 38 40% 92%;
-  --muted-foreground: 32 19% 36%;
-
-  /* Accent: golden yellow (CTAs, highlights) */
-  --accent: 45 100% 65%;
-  --accent-foreground: 36 38% 13%;
-
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-
-  /* Border: warm beige border */
-  --border: 38 40% 85%;
-  --input: 38 40% 85%;
-  --ring: 45 100% 65%;
-
-  --radius: 0.5rem;
-
-  /* Additional custom colors */
-  --coral: 14 100% 70%;
-  --sage: 122 38% 74%;
-  --sky: 199 93% 74%;
-  --gold: 45 100% 51%;
-}
-```
-
-Update gradient utilities:
-
-```css
-.bg-gradient-hero {
-  background: linear-gradient(135deg, #E8F5E9 0%, #BBDEFB 100%);
-}
-
-.bg-gradient-card {
-  background: linear-gradient(180deg, #FAFAF8 0%, #F5F5DC 100%);
-}
-
-.bg-gradient-accent {
-  background: linear-gradient(90deg, #FFD54F 0%, #FFC107 100%);
-}
-```
-
-### 3. Tailwind Configuration Update (`tailwind.config.ts`)
-
-Add custom colors and update font configuration:
+### 2. HeroSection.tsx Changes
 
 ```typescript
-extend: {
-  colors: {
-    // ... existing semantic colors ...
-    coral: "hsl(var(--coral))",
-    sage: "hsl(var(--sage))",
-    sky: "hsl(var(--sky))",
-    gold: "hsl(var(--gold))",
-  },
-  fontFamily: {
-    sans: ["Inter", "system-ui", "sans-serif"],
-    serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
-  },
-  fontSize: {
-    // Consistent type scale
-    'xs': ['0.875rem', { lineHeight: '1.25rem' }],   // 14px
-    'sm': ['1rem', { lineHeight: '1.5rem' }],        // 16px
-    'base': ['1.25rem', { lineHeight: '1.75rem' }],  // 20px
-    'lg': ['1.5rem', { lineHeight: '2rem' }],        // 24px
-    'xl': ['2rem', { lineHeight: '2.5rem' }],        // 32px
-    '2xl': ['3rem', { lineHeight: '1' }],            // 48px
-  },
-  borderRadius: {
-    DEFAULT: "0.5rem", // 8px
-  },
+// Add at top
+import { useTranslation } from '@/hooks/useTranslation';
+import { DummyHongKongMap } from '@/components/map/DummyHongKongMap';
+import { mockProperties } from '@/data/mockProperties';
+
+export function HeroSection() {
+  const { t } = useTranslation();
+  
+  return (
+    <section className="bg-gradient-hero">
+      <div className="container mx-auto px-4 py-8 lg:py-12">
+        {/* Title with translations */}
+        <h1>
+          {t('hero.title').replace('Hong Kong', '')}
+          <span className="text-accent">{t('hero.titleAccent')}</span>
+        </h1>
+        <p>{t('hero.subtitle')}</p>
+
+        {/* Two Column Grid - existing */}
+        <div className="grid gap-8 lg:grid-cols-[55fr_45fr]">
+          <PropertySearchChat />
+          <VideoDemo />
+        </div>
+
+        {/* NEW: Full Width Map */}
+        <div className="mt-8 lg:mt-12">
+          <DummyHongKongMap
+            properties={mockProperties}
+            className="h-[400px] rounded-xl shadow-lg"
+          />
+        </div>
+      </div>
+    </section>
+  );
 }
 ```
 
-### 4. Component Updates
+### 3. Component Translation Pattern
 
-**HeroSection.tsx:**
-- Use new `bg-gradient-hero` class
-- Apply `text-[#5D4E37]` (primary-dark) for headings
+Each component will follow this pattern:
 
-**Header.tsx:**
-- Clean white background with subtle border
-- Primary-dark color for text
-- Yellow accent for active states
+```typescript
+import { useTranslation } from '@/hooks/useTranslation';
 
-**Footer.tsx:**
-- Use primary-dark background
-- Light text for contrast
-- Yellow accent for links on hover
-
-**PropertyCard.tsx:**
-- White card with subtle shadow
-- Coral hover states for buttons
-- Yellow accent badges
-
-**DummyHongKongMap.tsx:**
-- Update region fills to use new palette colors
-- Sage green for land areas
-- Sky blue for water background
-
-**Button hover states:**
-- Add coral color option for hover effects
-
----
-
-## Visual Summary
-
-```text
-+----------------------------------------------------------+
-|  HEADER (white bg, warm brown text)                       |
-|  [Logo] Home Buy Rent Sell Canvas    [Lang] [User]       |
-+----------------------------------------------------------+
-|                                                           |
-|  HERO SECTION                                             |
-|  Background: Mint Green → Sky Blue gradient               |
-|                                                           |
-|  "Find Your Perfect Property" (warm brown heading)        |
-|                                                           |
-|  +------------------+  +------------------+                |
-|  | AI Chat Card     |  | Video Demo       |               |
-|  | (white bg)       |  | (white bg)       |               |
-|  | [Yellow CTA]     |  |                  |               |
-|  +------------------+  +------------------+                |
-|                                                           |
-+----------------------------------------------------------+
-|  PROPERTY CARDS                                           |
-|  +----------+  +----------+  +----------+                 |
-|  | [Image]  |  | [Image]  |  | [Image]  |                |
-|  | White bg |  | White bg |  | White bg |                |
-|  | Shadow   |  | Shadow   |  | Shadow   |                |
-|  | [Yellow] |  | [Yellow] |  | [Yellow] |  ← CTAs        |
-|  +----------+  +----------+  +----------+                 |
-|                                                           |
-+----------------------------------------------------------+
-|  FOOTER (warm brown bg)                                   |
-|  Light text, yellow links on hover                        |
-+----------------------------------------------------------+
+export function SomeComponent() {
+  const { t } = useTranslation();
+  
+  return (
+    <div>
+      <h1>{t('some.translationKey')}</h1>
+      <button>{t('button.label')}</button>
+    </div>
+  );
+}
 ```
 
+### 4. PropertySearchChat.tsx Key Changes
+
+- Translate all thinking messages
+- Translate placeholder text
+- Translate button labels
+- Translate "AI understood your search as:"
+- Translate "properties found" / "selected"
+- Translate empty state messages
+- Translate sample search badges
+
+### 5. Filter Components Translation
+
+- Translate all filter section titles
+- Translate "Clear all", "Clear selection", "Reset range"
+- Translate filter count text
+- Keep property type names in English (they're proper nouns/industry terms)
+- Keep location names in English (they're proper nouns)
+
 ---
 
-## Dark Mode Considerations
+## Technical Notes
 
-The dark mode will be updated to complement the light theme:
-- Dark warm brown background
-- Light cream text
-- Maintaining yellow/gold accents
-- Coral for interactive elements
+### Translation Key Naming Convention
+- Use dot notation: `section.subsection.element`
+- Examples: `filter.propertyType`, `search.button`, `table.location`
+
+### Dynamic Text with Variables
+For text containing dynamic values, use template approach:
+```typescript
+// Instead of: `${count} properties found`
+// Use translation: t('search.propertiesFound') 
+// Display: `${count} ${t('search.propertiesFound')}`
+```
+
+### Keeping Proper Nouns in English
+- District/region names (Central, Kowloon, etc.) remain in English
+- Developer names remain in English
+- These are recognized proper nouns that don't require translation
 
 ---
 
 ## Implementation Order
 
-1. **Logo Replacement**
-   - Copy new HD logo to src/assets
+1. **Update translations/index.ts** - Add all missing translation keys for all three languages
 
-2. **Core Styling**
-   - Update src/index.css with new CSS variables
-   - Update gradient utilities
-   - Add smooth transitions for hover states
+2. **Update HeroSection.tsx** - Add translations and include DummyHongKongMap
 
-3. **Tailwind Config**
-   - Add custom colors
-   - Verify font configuration
-   - Add consistent type scale
+3. **Update PropertySearchChat.tsx** - Full translation coverage
 
-4. **Component Updates**
-   - Update HeroSection with new gradient
-   - Update Header styling
-   - Update Footer styling
-   - Update PropertyCard hover states
-   - Update DummyHongKongMap colors
+4. **Update filter components** - FilterToggleBar and FilterSidebar
 
-5. **Testing**
-   - Verify all pages render correctly
-   - Check color contrast for accessibility
-   - Test hover states and transitions
+5. **Update remaining components** - PropertyCard, PropertyResultsTable, ExportActions, VideoDemo, DummyHongKongMap, StatCounter
+
+---
+
+## Expected Result
+
+After implementation:
+- Switching language in the header dropdown will translate ALL text on the page
+- The dummy Hong Kong map will appear below the chat/video section
+- The map will span the full container width with rounded corners
+- The "45,000+ Active Listings" banner will appear below the map
+- All user-facing text will be available in English, Traditional Chinese, and Simplified Chinese
