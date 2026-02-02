@@ -1,9 +1,22 @@
 
 
-# Dedicated Buy and Rent Property Listing Pages
+# Google Maps Integration for Keynest AI
 
 ## Overview
-Create full-featured property search pages at `/buy` and `/rent` routes, modeled after 28hse.com functionality. These pages will feature comprehensive filtering capabilities, multiple view options (list/map toggle), and enhanced user features like saved searches and email alerts.
+Add interactive Google Maps functionality to the landing page and Buy/Rent listing pages, replacing the current placeholder MapView component. This integration will feature property markers, info windows, synchronized list-map interactions, and a slide-up property details panel.
+
+---
+
+## Prerequisites
+
+### Google Maps API Key Required
+Before implementation, you'll need to:
+1. Create a Google Cloud Platform project
+2. Enable the **Maps JavaScript API**
+3. Generate an API key with appropriate restrictions
+4. Add the key to the project via Lovable's secrets management
+
+The API key will be stored as `GOOGLE_MAPS_API_KEY` and accessed through environment variables.
 
 ---
 
@@ -11,263 +24,334 @@ Create full-featured property search pages at `/buy` and `/rent` routes, modeled
 
 | File | Action | Purpose |
 |------|--------|---------|
-| `src/pages/BuyPage.tsx` | Create | Dedicated buy listings page |
-| `src/pages/RentPage.tsx` | Create | Dedicated rent listings page |
-| `src/components/listings/ListingsPageLayout.tsx` | Create | Shared layout component for both pages |
-| `src/components/listings/AdvancedFilterSidebar.tsx` | Create | Enhanced filter panel with all options |
-| `src/components/listings/ResultsHeader.tsx` | Create | Results count, view toggle, sort options |
-| `src/components/listings/MapView.tsx` | Create | Map view placeholder/integration |
-| `src/components/listings/SaveSearchDialog.tsx` | Create | Save search modal with email alerts |
-| `src/data/mockProperties.ts` | Modify | Add more properties and filter fields |
-| `src/components/landing/Header.tsx` | Modify | Update nav links to use proper routes |
-| `src/App.tsx` | Modify | Add /buy and /rent routes |
+| `package.json` | Modify | Add @react-google-maps/api, @googlemaps/markerclusterer |
+| `src/data/mockProperties.ts` | Modify | Add lat/lng coordinates for each property |
+| `src/components/map/GoogleMapView.tsx` | Create | Main Google Maps component with markers |
+| `src/components/map/PropertyMarker.tsx` | Create | Custom property marker with price label |
+| `src/components/map/PropertyInfoWindow.tsx` | Create | Info window popup for marker click |
+| `src/components/map/PropertyDetailsPanel.tsx` | Create | Slide-up full property details panel |
+| `src/components/map/MapControls.tsx` | Create | Custom zoom, location, search area controls |
+| `src/components/map/MobileMapDrawer.tsx` | Create | Mobile list overlay drawer |
+| `src/components/map/useMapState.ts` | Create | Hook for map state management |
+| `src/components/listings/ResultsHeader.tsx` | Modify | Add split view toggle option |
+| `src/components/listings/ListingsPageLayout.tsx` | Modify | Integrate new map views (full, split) |
+| `src/components/landing/PropertyListingsSection.tsx` | Modify | Add map view toggle to landing page |
+| `src/components/landing/PropertyCard.tsx` | Modify | Add "View on Map" button and hover events |
+| `src/index.css` | Modify | Add custom map styles and animations |
 
 ---
 
-## Layout Structure
+## Architecture
 
 ```text
-+----------------------------------------------------------+
-|  HEADER (existing, with updated nav links)                |
-+----------------------------------------------------------+
-|                                                           |
-|  Breadcrumb: Home > Buy / Rent > [District if selected]   |
-|                                                           |
-+----------------------------------------------------------+
-|  FILTER      |  RESULTS HEADER                            |
-|  SIDEBAR     |  [X properties found] [Save Search]        |
-|              |  [Sort: Price v] [View: Grid | Map]        |
-|  - District  +--------------------------------------------+
-|  - Type      |                                            |
-|  - Price     |  PROPERTY GRID (list view)                 |
-|  - Size      |  +-------+ +-------+ +-------+             |
-|  - Bedrooms  |  | Card  | | Card  | | Card  |             |
-|  - Bathrooms |  +-------+ +-------+ +-------+             |
-|  - Floor     |  +-------+ +-------+ +-------+             |
-|  - Age       |  | Card  | | Card  | | Card  |             |
-|  - Orient    |  +-------+ +-------+ +-------+             |
-|  - Developer |                                            |
-|  - Amenities |  - OR -                                    |
-|  - Transport |                                            |
-|              |  MAP VIEW (when toggled)                   |
-|  [Clear All] |  +-----------------------------------+     |
-|              |  |        Interactive Map            |     |
-|              |  |     (Pins for properties)         |     |
-|              |  +-----------------------------------+     |
-|              |                                            |
-+--------------+--------------------------------------------+
-|                    PAGINATION                             |
-|  Showing 1-24 of 1,247 properties    [< 1 2 3 4 5 ... >]  |
-+----------------------------------------------------------+
++------------------------------------------------------------------+
+|  HEADER                                                           |
++------------------------------------------------------------------+
+|  RESULTS HEADER                                                   |
+|  [X properties] [Sort] [List | Map | Split]  [Save]               |
++------------------------------------------------------------------+
+|                                                                   |
+|  LIST VIEW          |          MAP VIEW                           |
+|  +-------------+    |    +---------------------------+            |
+|  | PropertyCard|    |    |                           |            |
+|  | (with hover)|<-->|    |    [Clustered Markers]    |            |
+|  +-------------+    |    |         [pin] [pin]       |            |
+|  +-------------+    |    |    [pin]      [pin]       |            |
+|  | PropertyCard|    |    |                           |            |
+|  +-------------+    |    |  +--InfoWindow--+         |            |
+|                     |    |  | [image]      |         |            |
+|                     |    |  | $2.5M        |         |            |
+|                     |    |  | 2bd 1ba      |         |            |
+|                     |    |  | [View More]  |         |            |
+|                     |    |  +-------------+          |            |
+|                     |    +---------------------------+            |
++------------------------------------------------------------------+
+|  PROPERTY DETAILS PANEL (slide-up, covers 70% of screen)          |
+|  +----------------------------------------------------------------+
+|  | [X Close]                                                      |
+|  | [Image Carousel]                                               |
+|  | Property Name - $Price                                         |
+|  | Address [Get Directions]                                       |
+|  | Full details, description, agent info                          |
+|  | Similar Properties carousel                                    |
+|  +----------------------------------------------------------------+
 ```
 
 ---
 
-## Technical Details
+## Component Details
 
-### 1. Enhanced Filter State
+### 1. GoogleMapView Component
+Main map container using `@react-google-maps/api`:
+
+**Features:**
+- Lazy loading with `useLoadScript`
+- Custom map styling (Keynest beige/blue palette)
+- Marker clustering for 20+ properties
+- Auto-fit bounds to visible properties
+- Real-time marker updates on filter change
+- Geolocation support ("My Location" button)
+- "Search this area" button when map is panned
+
+**Map Style (matches Keynest palette):**
+- Water: Light blue (#A8D8EA)
+- Land: Warm beige (#F5F0E6)
+- Roads: Subtle brown (#D4C5B0)
+- Parks: Muted green (#C8E6C9)
+- Labels: Dark brown (#4A3B2A)
+
+### 2. PropertyMarker Component
+Custom marker for each property:
+
+**Visual Design:**
+- Colored pin based on transaction type:
+  - For Sale: Blue (#3B82F6)
+  - For Rent: Green (#22C55E)
+- Price label shown on hover
+- Pulse animation when corresponding card is hovered
+- Z-index increase on hover/selection
+
+**States:**
+- Default: Pin icon only
+- Hover: Shows price bubble above pin
+- Selected: Larger pin with highlight ring
+- Clustered: Group indicator with count
+
+### 3. PropertyInfoWindow Component
+Popup displayed when marker is clicked:
+
+**Content:**
+- Property thumbnail (150x100px)
+- Price (large, bold)
+- Address (truncated)
+- Bed/bath/size icons row
+- "View Details" button (opens slide-up panel)
+- Close button (X)
+
+**Styling:**
+- White background with subtle shadow
+- Rounded corners matching card design
+- Max width: 280px
+
+### 4. PropertyDetailsPanel Component
+Slide-up panel for full property details:
+
+**Features:**
+- Covers bottom 70% of screen (desktop) / 90% on mobile
+- Slide-up animation (300ms ease-out)
+- Swipe down to dismiss (mobile)
+- Close button (X) in top-right
+
+**Content:**
+- Image carousel at top (full width)
+- Property name and price
+- Full address with "Get Directions" link (opens Google Maps)
+- All property details and description
+- Agent contact card with phone/email buttons
+- "Similar Properties" carousel at bottom
+
+### 5. MapControls Component
+Custom map control overlay:
+
+**Buttons:**
+- Zoom in (+)
+- Zoom out (-)
+- My Location (crosshair icon)
+- Fullscreen toggle
+- Search this area (appears after pan)
+- Active filter count badge
+
+### 6. MobileMapDrawer Component
+Mobile-optimized list overlay:
+
+**Behavior:**
+- Map fills screen by default
+- Swipe up from bottom handle to reveal list
+- Three snap points: Collapsed (mini cards), Half, Full
+- Mini card carousel when collapsed (horizontal scroll)
+
+### 7. useMapState Hook
+Centralized map state management:
 
 ```typescript
-// Extended filter interface
-interface ExtendedFilterState {
-  // Existing filters
-  regions: string[];
-  districts: string[];
-  propertyTypes: string[];
-  priceRange: [number, number];
-  sizeRange: [number, number];
-  bedrooms: number[];
-  bathrooms: number[];
-  hasParking: boolean | null;
-  petsAllowed: boolean | null;
-  isFurnished: boolean | null;
-  isNew: boolean | null;
-  hasSeaView: boolean | null;
-  hasPool: boolean | null;
-  hasGym: boolean | null;
-  
-  // New 28hse-style filters
-  floorLevels: string[];      // "Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"
-  buildingAge: string[];      // "New (<5 years)", "Recent (5-10)", "Established (10-20)", "Older (20+)"
-  orientations: string[];     // "North", "South", "East", "West"
-  developers: string[];       // Searchable dropdown
-  nearMTR: boolean | null;    // MTR nearby
-  hasBusRoutes: boolean | null;
-  
-  // Sort and view
-  sortBy: "price_asc" | "price_desc" | "size_desc" | "newest" | "relevant";
-  viewMode: "grid" | "map";
+interface MapState {
+  center: google.maps.LatLngLiteral;
+  zoom: number;
+  bounds: google.maps.LatLngBounds | null;
+  selectedPropertyId: string | null;
+  hoveredPropertyId: string | null;
+  isInfoWindowOpen: boolean;
+  isDetailsPanelOpen: boolean;
+  searchThisAreaVisible: boolean;
 }
 ```
 
-### 2. AdvancedFilterSidebar Component
+---
 
-Enhanced sidebar with all filter categories:
+## View Modes
 
-| Section | Type | Options |
-|---------|------|---------|
-| District | Multi-select dropdown | Popular districts at top, grouped by region |
-| Property Type | Checkboxes | Apartment, House, Villa, Commercial, Parking, Studio, Penthouse |
-| Price Range | Dual sliders | Min/Max with HKD formatting |
-| Size Range | Dual sliders | Min/Max in square feet |
-| Bedrooms | Button group | Studio, 1, 2, 3, 4, 5+ |
-| Bathrooms | Button group | 1, 2, 3, 4+ |
-| Floor Level | Checkboxes | Low/Mid/High/Ultra High |
-| Building Age | Checkboxes | New, Recent, Established, Older |
-| Orientation | Checkboxes | N, S, E, W checkboxes |
-| Developer | Searchable dropdown | Sun Hung Kai, Henderson, New World, etc. |
-| Amenities | Checkboxes | Pool, Gym, Parking, Pet-friendly, Furnished |
-| Transportation | Checkboxes | MTR nearby, Bus routes |
+### 1. Grid/List View (Default)
+- Current PropertyGrid display
+- Cards show "View on Map" button
+- Hovering card pulses map marker
 
-Features:
-- Collapsible sections with chevron icons
-- "Clear all" button
-- Active filter count badges
-- Sticky sidebar on desktop
-- Sheet/drawer on mobile
+### 2. Map View (Full)
+- Map takes full content area
+- Property list hidden on desktop
+- Mobile: Swipeable drawer from bottom
 
-### 3. ResultsHeader Component
+### 3. Split View (Desktop Only)
+- 50% list / 50% map side by side
+- Scrolling list updates map center
+- Clicking marker scrolls to card
+
+---
+
+## Synchronized Behaviors
+
+### List → Map Sync:
+1. **Hover card** → Pulse corresponding marker
+2. **Click "View on Map"** → Switch to map view, center on property, open info window
+3. **Scroll list** → Update map to show properties in view (debounced)
+
+### Map → List Sync:
+1. **Click marker** → Highlight card, scroll into view
+2. **Pan/zoom map** → Show "X properties in this area"
+3. **Search this area** → Filter to properties in bounds
+
+### Filter → Map Sync:
+1. Filters change → Update markers immediately
+2. Re-fit bounds to show all filtered properties
+3. Update property count display
+
+---
+
+## Data Changes
+
+### Add Coordinates to mockProperties.ts
 
 ```typescript
-interface ResultsHeaderProps {
-  totalCount: number;
-  sortBy: string;
-  onSortChange: (sort: string) => void;
-  viewMode: "grid" | "map";
-  onViewModeChange: (mode: "grid" | "map") => void;
-  onSaveSearch: () => void;
+// Hong Kong district coordinates
+const districtCoordinates = {
+  "Central": { lat: 22.2819, lng: 114.1587 },
+  "Mid-Levels": { lat: 22.2776, lng: 114.1477 },
+  "The Peak": { lat: 22.2759, lng: 114.1455 },
+  "Happy Valley": { lat: 22.2694, lng: 114.1839 },
+  "Causeway Bay": { lat: 22.2801, lng: 114.1842 },
+  // ... all districts
+};
+
+// Add to PropertyListing interface:
+coordinates: {
+  lat: number;
+  lng: number;
+};
+```
+
+---
+
+## Mobile Optimizations
+
+### Touch Interactions:
+- Tap marker → Show mini card at bottom
+- Tap mini card → Expand to full details panel
+- Swipe down → Dismiss panel
+- Pinch to zoom map
+- Two-finger pan
+
+### Performance:
+- Reduce marker detail at low zoom
+- Virtualized list in drawer
+- Lazy load images in details panel
+
+---
+
+## Performance Optimizations
+
+1. **Lazy load map component** - Only load Google Maps JS when map view is activated
+2. **Marker clustering** - Group markers at zoom level < 14
+3. **Debounced updates** - 150ms delay on pan/zoom events
+4. **Memo markers** - Prevent re-renders on filter change
+5. **Virtual scrolling** - For large property lists
+
+---
+
+## CSS Additions
+
+```css
+/* Custom map marker styles */
+.map-marker {
+  @apply transition-transform duration-200;
+}
+.map-marker:hover {
+  @apply scale-110;
+}
+.map-marker-pulse {
+  animation: marker-pulse 1.5s ease-in-out infinite;
+}
+
+/* Details panel slide animation */
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.details-panel {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Custom Google Maps styling */
+.gm-style .gm-style-iw {
+  @apply rounded-lg shadow-lg border-0;
 }
 ```
-
-Features:
-- Total count: "1,247 properties found"
-- Sort dropdown: Price (low to high), Price (high to low), Size, Newest, Most relevant
-- View toggle: Grid icon / Map icon buttons
-- Save Search button with heart/bookmark icon
-- Email alerts toggle
-
-### 4. MapView Component (Placeholder)
-
-Simple placeholder for map integration:
-- Shows area of Hong Kong
-- Message: "Map view coming soon"
-- Option to integrate with Google Maps or Mapbox later
-- Pin markers for property locations (mock positions)
-
-### 5. SaveSearchDialog Component
-
-Modal for saving search preferences:
-- Search name input
-- Email alerts checkbox
-- Frequency dropdown: Daily, Weekly, Immediately
-- Save button
-- List of saved searches (localStorage)
-
-### 6. BuyPage and RentPage
-
-Both pages use the shared `ListingsPageLayout` component with:
-- `transactionType` prop set to "sale" or "rent"
-- Page title and meta info
-- Pre-filtered data for the respective type
-- Price range adjusted:
-  - Buy: HK$0 - HK$200M
-  - Rent: HK$0 - HK$200K/month
-
-### 7. Enhanced Mock Data
-
-Update `mockProperties.ts` with:
-- 50+ properties for better pagination testing
-- New fields: `floorLevel`, `buildingAge`, `orientation`, `developer`, `nearMTR`
-- More realistic Hong Kong addresses
-- Developer names: Sun Hung Kai, Henderson Land, New World, Cheung Kong, Sino Land
-
----
-
-## Component Hierarchy
-
-```text
-BuyPage / RentPage
-└── ListingsPageLayout
-    ├── Header (existing)
-    ├── Breadcrumbs
-    ├── AdvancedFilterSidebar
-    │   ├── DistrictSelector
-    │   ├── PropertyTypeFilter
-    │   ├── PriceRangeSlider
-    │   ├── SizeRangeSlider
-    │   ├── BedroomSelector
-    │   ├── BathroomSelector
-    │   ├── FloorLevelFilter
-    │   ├── BuildingAgeFilter
-    │   ├── OrientationFilter
-    │   ├── DeveloperDropdown
-    │   ├── AmenitiesFilter
-    │   └── TransportationFilter
-    ├── ResultsHeader
-    │   ├── TotalCount
-    │   ├── SortDropdown
-    │   ├── ViewToggle
-    │   └── SaveSearchButton
-    ├── PropertyGrid (existing, reused)
-    │   └── PropertyCard (existing)
-    ├── MapView (when toggled)
-    ├── Pagination
-    └── SaveSearchDialog
-```
-
----
-
-## URL Parameters
-
-Support for shareable filtered URLs:
-
-```
-/buy?districts=central,mid-levels&bedrooms=2,3&price_max=50000000
-/rent?near_mtr=true&furnished=true&sort=price_asc
-```
-
-Use `react-router-dom` `useSearchParams` for:
-- Reading initial filters from URL
-- Updating URL on filter changes
-- Shareable search links
-
----
-
-## Mobile Responsiveness
-
-- **Desktop**: 280px sidebar + 3-column grid
-- **Tablet**: Collapsible top filter bar + 2-column grid
-- **Mobile**: 
-  - Full-width filter sheet (slide from left)
-  - Single column cards
-  - Sticky results header with filter button
-  - Swipe gestures for navigation
 
 ---
 
 ## Implementation Order
 
-1. Create `AdvancedFilterSidebar.tsx` with all filter options
-2. Create `ResultsHeader.tsx` with count, sort, and view toggle
-3. Create `MapView.tsx` placeholder component
-4. Create `SaveSearchDialog.tsx` modal
-5. Create `ListingsPageLayout.tsx` shared layout
-6. Create `BuyPage.tsx` and `RentPage.tsx`
-7. Update `mockProperties.ts` with new fields and more data
-8. Update `Header.tsx` navigation links to use react-router `Link`
-9. Add routes to `App.tsx`
-10. Add URL parameter support for filters
-11. Add pagination component
+1. **Setup & Dependencies**
+   - Install @react-google-maps/api
+   - Add Google Maps API key placeholder
+   - Add coordinates to mock data
+
+2. **Core Map Component**
+   - Create GoogleMapView with basic map
+   - Add custom styling
+   - Implement useMapState hook
+
+3. **Markers & Interactions**
+   - Create PropertyMarker component
+   - Add marker clustering
+   - Implement hover/selection states
+
+4. **Info Window & Details**
+   - Create PropertyInfoWindow
+   - Create PropertyDetailsPanel
+   - Add slide-up animation
+
+5. **View Mode Integration**
+   - Update ResultsHeader with split view toggle
+   - Modify ListingsPageLayout for all view modes
+   - Add PropertyCard map interactions
+
+6. **Synchronization**
+   - Implement list-map hover sync
+   - Add scroll-based map updates
+   - Create "Search this area" functionality
+
+7. **Mobile Optimization**
+   - Create MobileMapDrawer
+   - Add touch gestures
+   - Optimize for performance
+
+8. **Landing Page Integration**
+   - Add map view toggle to PropertyListingsSection
+   - Ensure consistent behavior across pages
 
 ---
 
-## Visual Design
+## API Key Note
 
-- Matches existing design system (warm beige/brown tones)
-- Filter sidebar: Light background with clear section dividers
-- Active filters: Yellow accent badges
-- Sort dropdown: Matches existing dropdown styling
-- View toggle: Outlined buttons with active state
-- Save search: Yellow accent button
-- Map placeholder: Gradient overlay with location pin icon
+The implementation will include a check for the Google Maps API key. If not configured, the map will show a friendly message prompting setup with a link to the Google Cloud Console. Once you're ready to add the API key, I can help you set it up through Lovable's secrets management.
 
