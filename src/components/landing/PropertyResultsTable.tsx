@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ArrowUpDown, ArrowUp, ArrowDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface PropertyResult {
   id: string;
@@ -94,6 +95,7 @@ export function PropertyResultsTable({
   highlightTerms = [],
   onRowClick,
 }: PropertyResultsTableProps) {
+  const { t } = useTranslation();
   const hasRanking = results.some(r => r.rank !== undefined);
   const [sortField, setSortField] = useState<SortField>(hasRanking ? "rank" : "price");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -168,7 +170,7 @@ export function PropertyResultsTable({
     return (
       <div className="flex h-40 items-center justify-center rounded-lg border border-dashed bg-muted/30">
         <p className="text-sm text-muted-foreground">
-          Search for properties to see results here
+          {t('search.emptyState')}
         </p>
       </div>
     );
@@ -205,7 +207,7 @@ export function PropertyResultsTable({
                 className="-ml-3 h-8 text-xs font-semibold"
                 onClick={() => handleSort("name")}
               >
-                Property Name
+                {t('table.propertyName')}
                 <SortIcon field="name" />
               </Button>
             </TableHead>
@@ -216,7 +218,7 @@ export function PropertyResultsTable({
                 className="-ml-3 h-8 text-xs font-semibold"
                 onClick={() => handleSort("location")}
               >
-                Location
+                {t('table.location')}
                 <SortIcon field="location" />
               </Button>
             </TableHead>
@@ -227,7 +229,7 @@ export function PropertyResultsTable({
                 className="-ml-3 h-8 text-xs font-semibold"
                 onClick={() => handleSort("price")}
               >
-                Price (HKD)
+                {t('table.priceHKD')}
                 <SortIcon field="price" />
               </Button>
             </TableHead>
@@ -238,7 +240,7 @@ export function PropertyResultsTable({
                 className="-ml-3 h-8 text-xs font-semibold"
                 onClick={() => handleSort("size")}
               >
-                Size (sqft)
+                {t('table.sizeSqft')}
                 <SortIcon field="size" />
               </Button>
             </TableHead>
@@ -249,7 +251,7 @@ export function PropertyResultsTable({
                 className="-ml-3 h-8 text-xs font-semibold"
                 onClick={() => handleSort("bedrooms")}
               >
-                Bedrooms
+                {t('table.bedrooms')}
                 <SortIcon field="bedrooms" />
               </Button>
             </TableHead>
@@ -261,12 +263,12 @@ export function PropertyResultsTable({
                   className="-ml-3 h-8 text-xs font-semibold"
                   onClick={() => handleSort("relevanceScore")}
                 >
-                  Match
+                  {t('table.match')}
                   <SortIcon field="relevanceScore" />
                 </Button>
               </TableHead>
             )}
-            <TableHead className="min-w-[200px]">Key Features</TableHead>
+            <TableHead className="min-w-[200px]">{t('table.keyFeatures')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

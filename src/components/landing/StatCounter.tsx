@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useAnimatedCounter } from "@/hooks/useAnimatedCounter";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface StatCounterProps {
   value?: number;
-  label?: string;
 }
 
 export function StatCounter({
   value = 45000,
-  label = "Active Listings",
 }: StatCounterProps) {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -48,14 +48,14 @@ export function StatCounter({
         <div className="inline-block">
           <p
             className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground tracking-tight"
-            aria-label={`${value.toLocaleString()} plus ${label}`}
+            aria-label={`${value.toLocaleString()} plus ${t('stats.activeListings')}`}
           >
             {formattedValue}+
           </p>
           <div className="mt-2 h-1 w-full bg-accent rounded-full" />
         </div>
         <p className="mt-4 text-xl md:text-2xl text-muted-foreground font-medium">
-          {label}
+          {t('stats.activeListings')}
         </p>
       </div>
     </div>
