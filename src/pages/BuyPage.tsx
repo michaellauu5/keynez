@@ -1,10 +1,13 @@
+import { Layout } from "@/components/layout/Layout";
 import { ListingsPageLayout } from "@/components/listings/ListingsPageLayout";
 
 export default function BuyPage() {
   return (
-    <ListingsPageLayout
-      transactionType="sale"
-      title="Properties for Sale"
-    />
+    <Layout>
+      <ListingsPageLayout
+        transactionType="sale"
+        title="Properties for Sale"
+      />
+    </Layout>
   );
 }
