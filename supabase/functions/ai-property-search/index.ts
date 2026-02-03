@@ -60,6 +60,19 @@ interface FilterState {
   developers: string[];
 }
 
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface FollowUpIntent {
+  type: 'show_more' | 'expand_price' | 'change_bedrooms' | 'property_detail' | 
+        'remove_filter' | 'cheaper_options' | 'change_location' | 'general_refinement' | 'new_search';
+  params: Record<string, any>;
+  acknowledgment: string;
+  filterUpdates?: Partial<FilterState>;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -67,7 +80,14 @@ serve(async (req) => {
   }
 
   try {
-    const { query, filters } = await req.json() as { query?: string; filters?: FilterState };
+    const { query, filters, conversationHistory, page, previousResults } = await req.json() as { 
+      query?: string; 
+      filters?: FilterState;
+      conversationHistory?: ConversationMessage[];
+      page?: number;
+      previousResults?: string[];
+    };
+    
     const QWEN_API_KEY = Deno.env.get("QWEN_API_KEY");
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
@@ -79,36 +99,26 @@ serve(async (req) => {
       throw new Error("No API key configured (QWEN_API_KEY or LOVABLE_API_KEY)");
     }
 
+    const currentPage = page || 1;
+    const resultsPerPage = 15;
+
     console.log("Processing search query:", query);
     console.log("Applied filters:", filters);
+    console.log("Conversation history length:", conversationHistory?.length || 0);
+    console.log("Page:", currentPage);
     console.log("Using API:", useQwen ? "Qwen" : "Lovable AI Gateway");
 
-    // Build extraction prompt
-    const extractionPrompt = `You are a Hong Kong property search assistant. Analyze the user's search query and extract structured property search criteria.
+    // Detect if this is a follow-up query
+    const hasHistory = conversationHistory && conversationHistory.length > 0;
+    let followUpIntent: FollowUpIntent | null = null;
+    
+    if (hasHistory && query) {
+      followUpIntent = detectFollowUpIntent(query, filters);
+      console.log("Detected follow-up intent:", followUpIntent);
+    }
 
-User query: "${query || "No specific query, use filters only"}"
-
-Extract the following criteria and return as JSON:
-{
-  "locations": ["array of Hong Kong district names mentioned, e.g., 'Mid-Levels', 'The Peak', 'Kowloon'"],
-  "priceMin": number or null (in HKD, convert millions to full number e.g., "50 million" = 50000000),
-  "priceMax": number or null (in HKD),
-  "sizeMin": number or null (in sqft),
-  "sizeMax": number or null (in sqft),
-  "bedrooms": [array of bedroom counts as numbers, e.g., [3] for "3 bedroom"],
-  "bathrooms": [array of bathroom counts as numbers],
-  "propertyTypes": ["Apartment", "House", "Studio", "Penthouse", "Commercial"],
-  "floorLevels": ["Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"],
-  "buildingAge": ["New Build", "<5 years", "<10 years", "<20 years", "20+ years"],
-  "orientations": ["North", "South", "East", "West"],
-  "developers": ["developer names mentioned"],
-  "features": ["array of features mentioned, e.g., 'sea view', 'pool', 'gym', 'parking', 'garden', 'pet friendly'"],
-  "specialRequirements": "any other specific requirements mentioned"
-}
-
-Common Hong Kong districts: Central, Mid-Levels, The Peak, Wan Chai, Causeway Bay, Happy Valley, Repulse Bay, Tsim Sha Tsui, Mong Kok, Kowloon Tong, Ho Man Tin, Hung Hom, Sha Tin, Tai Po, Sai Kung, Ma On Shan
-
-Return ONLY valid JSON, no markdown or explanation.`;
+    // Build extraction prompt with conversation context
+    const extractionPrompt = buildExtractionPrompt(query || "", conversationHistory || []);
 
     let aiContent = "{}";
     
@@ -392,34 +402,51 @@ Return ONLY valid JSON, no markdown or explanation.`;
       };
     });
 
-    // Sort by score and take top 15
-    const rankedProperties = scoredProperties
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 15)
-      .map((property, index) => ({
-        rank: index + 1,
-        id: property.id,
-        name: property.name,
-        location: property.location,
-        price: property.price,
-        size: property.size,
-        bedrooms: property.bedrooms >= 5 ? "5+" : property.bedrooms.toString(),
-        bathrooms: property.bathrooms.toString(),
-        propertyType: property.propertyType,
-        floorLevel: property.floorLevel,
-        buildingAge: property.buildingAge,
-        orientation: property.orientation,
-        developer: property.developer,
-        features: property.features,
-        relevanceScore: Math.round((property.score / 110) * 100), // Normalize to percentage
-        matchReason: property.matchReason,
-      }));
+    // Sort by score
+    const sortedProperties = scoredProperties.sort((a, b) => b.score - a.score);
+    
+    // Handle pagination
+    const startIndex = (currentPage - 1) * resultsPerPage;
+    const endIndex = startIndex + resultsPerPage;
+    const paginatedProperties = sortedProperties.slice(startIndex, endIndex);
+    
+    const rankedProperties = paginatedProperties.map((property, index) => ({
+      rank: startIndex + index + 1,
+      id: property.id,
+      name: property.name,
+      location: property.location,
+      price: property.price,
+      size: property.size,
+      bedrooms: property.bedrooms >= 5 ? "5+" : property.bedrooms.toString(),
+      bathrooms: property.bathrooms.toString(),
+      propertyType: property.propertyType,
+      floorLevel: property.floorLevel,
+      buildingAge: property.buildingAge,
+      orientation: property.orientation,
+      developer: property.developer,
+      features: property.features,
+      relevanceScore: Math.round((property.score / 110) * 100), // Normalize to percentage
+      matchReason: property.matchReason,
+    }));
 
     // Generate search summary
-    const searchSummary = generateSearchSummary(extractedCriteria, rankedProperties.length);
+    const searchSummary = generateSearchSummary(extractedCriteria, sortedProperties.length);
 
     // Generate filter summary for display
     const filterSummary = generateFilterSummary(extractedCriteria);
+    
+    // Generate suggestions for follow-up
+    const suggestions = generateSuggestions(extractedCriteria, rankedProperties.length);
+    
+    // Generate AI response message
+    let aiMessage = "";
+    if (followUpIntent && followUpIntent.acknowledgment) {
+      aiMessage = followUpIntent.acknowledgment + ` Here are ${rankedProperties.length} options:`;
+    } else if (rankedProperties.length > 0) {
+      aiMessage = `I found **${sortedProperties.length} properties** matching your criteria. Here are the top ${rankedProperties.length} results:`;
+    } else {
+      aiMessage = "I couldn't find any properties matching those exact criteria. Try broadening your search or adjusting the filters.";
+    }
 
     return new Response(
       JSON.stringify({
@@ -427,7 +454,13 @@ Return ONLY valid JSON, no markdown or explanation.`;
         results: rankedProperties,
         searchSummary,
         filterSummary,
-        totalCount: rankedProperties.length,
+        totalCount: sortedProperties.length,
+        currentPage,
+        totalPages: Math.ceil(sortedProperties.length / resultsPerPage),
+        hasMore: endIndex < sortedProperties.length,
+        suggestions,
+        aiMessage,
+        followUpIntent,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -495,4 +528,187 @@ function generateFilterSummary(criteria: ExtractedCriteria): string {
   }
   
   return parts.length > 0 ? `Showing properties: ${parts.join(", ")}` : "";
+}
+
+// Detect follow-up intent from user message
+function detectFollowUpIntent(message: string, filters?: FilterState): FollowUpIntent {
+  const lowerMessage = message.toLowerCase().trim();
+  
+  // Show more / pagination
+  if (/show\s*(me\s*)?(more|additional|next|another)/i.test(message) || 
+      /more\s*options/i.test(message) ||
+      /load\s*more/i.test(message)) {
+    return { 
+      type: 'show_more', 
+      params: {}, 
+      acknowledgment: "I'll show you more options from the search results." 
+    };
+  }
+  
+  // Expand price range
+  const expandPriceMatch = message.match(/expand.*(?:price|budget|rent).*?(\$?\d+[kKmM]?)/i) ||
+                           message.match(/(?:price|budget|rent).*?to\s*(\$?\d+[kKmM]?)/i) ||
+                           message.match(/up\s*to\s*(\$?\d+[kKmM]?)/i);
+  if (expandPriceMatch) {
+    const priceStr = expandPriceMatch[1].replace(/[$,]/g, '');
+    let price = parseFloat(priceStr);
+    if (/k/i.test(priceStr)) price *= 1000;
+    if (/m/i.test(priceStr)) price *= 1000000;
+    return { 
+      type: 'expand_price', 
+      params: { newMax: price }, 
+      acknowledgment: `I've expanded the price range to HK$${(price / 1000000).toFixed(0)}M.`,
+      filterUpdates: { priceRange: [0, price] as [number, number] }
+    };
+  }
+  
+  // Change bedrooms
+  const bedroomMatch = message.match(/(\d+)\s*bed(?:room)?s?\s*instead/i) ||
+                       message.match(/what\s*about\s*(\d+)\s*bed/i) ||
+                       message.match(/change.*to\s*(\d+)\s*bed/i) ||
+                       message.match(/show.*(\d+)\s*bed/i);
+  if (bedroomMatch) {
+    const bedrooms = parseInt(bedroomMatch[1]);
+    return { 
+      type: 'change_bedrooms', 
+      params: { bedrooms }, 
+      acknowledgment: `I've updated the search to show ${bedrooms}-bedroom units.`,
+      filterUpdates: { bedrooms: [bedrooms.toString()] }
+    };
+  }
+  
+  // Property detail request - by number
+  const detailByNumberMatch = message.match(/(?:tell\s*me\s*(?:more\s*)?about|details?\s*(?:on|for|about)?|show\s*me)\s*#?(\d+)/i) ||
+                               message.match(/#(\d+)/);
+  if (detailByNumberMatch) {
+    return { 
+      type: 'property_detail', 
+      params: { index: parseInt(detailByNumberMatch[1]) }, 
+      acknowledgment: `Here are the details for property #${detailByNumberMatch[1]}:` 
+    };
+  }
+  
+  // Cheaper options
+  if (/cheap(?:er)?/i.test(message) || 
+      /lower\s*price/i.test(message) ||
+      /less\s*expensive/i.test(message) ||
+      /budget/i.test(message)) {
+    const currentMax = filters?.priceRange?.[1] || 100000000;
+    const newMax = Math.floor(currentMax * 0.7);
+    return { 
+      type: 'cheaper_options', 
+      params: { newMax }, 
+      acknowledgment: `I've adjusted the search to show more affordable options under HK$${(newMax / 1000000).toFixed(0)}M.`,
+      filterUpdates: { priceRange: [0, newMax] as [number, number] }
+    };
+  }
+  
+  // Remove filter requirement
+  if (/remove.*(?:balcony|terrace|garden|pool|gym|parking|pet|view)/i.test(message) ||
+      /without.*(?:balcony|terrace|garden|pool|gym|parking|pet|view)/i.test(message) ||
+      /don'?t\s*need.*(?:balcony|terrace|garden|pool|gym|parking|pet|view)/i.test(message)) {
+    const featureMatch = message.match(/(balcony|terrace|garden|pool|gym|parking|pet|sea\s*view|mountain\s*view|city\s*view)/i);
+    const feature = featureMatch ? featureMatch[1] : 'the filter';
+    return { 
+      type: 'remove_filter', 
+      params: { feature }, 
+      acknowledgment: `I've removed the ${feature} requirement from your search.`
+    };
+  }
+  
+  // Change location
+  const locationMatch = message.match(/(?:any\s*(?:units?\s*)?in|what\s*about|show\s*me\s*(?:properties\s*)?in|search\s*in)\s+([A-Za-z\s]+?)(?:\?|$|,|\s+with|\s+under)/i);
+  if (locationMatch) {
+    const location = locationMatch[1].trim();
+    return { 
+      type: 'change_location', 
+      params: { location }, 
+      acknowledgment: `I've updated the search to include properties in ${location}.`,
+      filterUpdates: { locations: [location] }
+    };
+  }
+  
+  // General refinement
+  if (/more\s*expensive/i.test(message) ||
+      /larger|bigger/i.test(message) ||
+      /smaller/i.test(message) ||
+      /newer/i.test(message) ||
+      /higher\s*floor/i.test(message) ||
+      /lower\s*floor/i.test(message)) {
+    return { 
+      type: 'general_refinement', 
+      params: { refinement: message }, 
+      acknowledgment: "I've refined the search based on your request." 
+    };
+  }
+  
+  return { 
+    type: 'new_search', 
+    params: {}, 
+    acknowledgment: "" 
+  };
+}
+
+// Build extraction prompt with conversation context
+function buildExtractionPrompt(query: string, conversationHistory: ConversationMessage[]): string {
+  let contextPart = "";
+  
+  if (conversationHistory.length > 0) {
+    const recentHistory = conversationHistory.slice(-6);
+    contextPart = `\nPrevious conversation:\n${recentHistory.map(m => `${m.role}: ${m.content}`).join('\n')}\n\n`;
+  }
+  
+  return `You are a Hong Kong property search assistant. Analyze the user's search query and extract structured property search criteria.
+${contextPart}
+User query: "${query || "No specific query, use filters only"}"
+
+Extract the following criteria and return as JSON:
+{
+  "locations": ["array of Hong Kong district names mentioned, e.g., 'Mid-Levels', 'The Peak', 'Kowloon'"],
+  "priceMin": number or null (in HKD, convert millions to full number e.g., "50 million" = 50000000),
+  "priceMax": number or null (in HKD),
+  "sizeMin": number or null (in sqft),
+  "sizeMax": number or null (in sqft),
+  "bedrooms": [array of bedroom counts as numbers, e.g., [3] for "3 bedroom"],
+  "bathrooms": [array of bathroom counts as numbers],
+  "propertyTypes": ["Apartment", "House", "Studio", "Penthouse", "Commercial"],
+  "floorLevels": ["Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"],
+  "buildingAge": ["New Build", "<5 years", "<10 years", "<20 years", "20+ years"],
+  "orientations": ["North", "South", "East", "West"],
+  "developers": ["developer names mentioned"],
+  "features": ["array of features mentioned, e.g., 'sea view', 'pool', 'gym', 'parking', 'garden', 'pet friendly'"],
+  "specialRequirements": "any other specific requirements mentioned"
+}
+
+Common Hong Kong districts: Central, Mid-Levels, The Peak, Wan Chai, Causeway Bay, Happy Valley, Repulse Bay, Tsim Sha Tsui, Mong Kok, Kowloon Tong, Ho Man Tin, Hung Hom, Sha Tin, Tai Po, Sai Kung, Ma On Shan
+
+Return ONLY valid JSON, no markdown or explanation.`;
+}
+
+// Generate follow-up suggestions
+function generateSuggestions(criteria: ExtractedCriteria, resultCount: number): string[] {
+  const suggestions: string[] = [];
+  
+  if (resultCount >= 15) {
+    suggestions.push("Show me more options");
+  }
+  
+  if (criteria.priceMax && criteria.priceMax < 100000000) {
+    suggestions.push("I can show more expensive options if needed");
+  }
+  
+  if (resultCount > 0) {
+    suggestions.push("Would you like details on any specific building?");
+  }
+  
+  if (criteria.locations.length > 0) {
+    suggestions.push("Would you like to see units in nearby areas?");
+  }
+  
+  if (criteria.bedrooms.length > 0) {
+    const currentBed = criteria.bedrooms[0] || 2;
+    suggestions.push(`What about ${currentBed + 1} bedrooms instead?`);
+  }
+  
+  return suggestions.slice(0, 3);
 }

@@ -22,6 +22,12 @@ export interface PropertyResult {
   price: number;
   size: number;
   bedrooms: string;
+  bathrooms?: string;
+  propertyType?: string;
+  floorLevel?: string;
+  buildingAge?: string;
+  orientation?: string;
+  developer?: string;
   features: string[];
   rank?: number;
   relevanceScore?: number;
