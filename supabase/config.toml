@@ -2,3 +2,6 @@ project_id = "kfsemsacrjlvkzvewbqp"
 
 [functions.ai-property-search]
 verify_jwt = false
+
+[functions.property-web-search]
+verify_jwt = false
