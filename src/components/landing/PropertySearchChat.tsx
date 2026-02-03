@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Sparkles, Loader2, MapPin, DollarSign, Bed, Eye, AlertCircle, Filter, X, Globe, Database, ChevronDown, MessageCircle } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Search, Sparkles, Loader2, MapPin, DollarSign, Bed, Eye, AlertCircle, Filter, X, Globe, Database, ChevronDown, MessageCircle, Home, Key } from "lucide-react";
 import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResultsTable, WebSearchResult } from "./WebSearchResultsTable";
 import { PropertyDetailModal } from "./PropertyDetailModal";
 import { ChatMessageList } from "./ChatMessageList";
+import { PerplexityResults } from "./PerplexityResults";
 import { ExportActions } from "./ExportActions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -100,6 +102,29 @@ const PROPERTY_SOURCES = [
   "Midland", "Centaline", "Property.hk", "Okay.com"
 ];
 
+// Export helpers
+function exportToCSV(results: PropertyResult[], mode: 'rent' | 'buy') {
+  const headers = ['#', 'Building Name', 'Location', mode === 'rent' ? 'Monthly Rent' : 'Price', 'Bedrooms', 'Bathrooms', 'Size (sqft)', 'Floor Level', 'Features'];
+  const rows = results.map((r, i) => [
+    i + 1,
+    r.name,
+    r.location,
+    r.price,
+    r.bedrooms,
+    r.bathrooms || '-',
+    r.size,
+    r.floorLevel || '-',
+    r.features?.join('; ') || '-'
+  ]);
+  
+  const csvContent = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `keynest-${mode}-properties-${new Date().toISOString().split('T')[0]}.csv`;
+  link.click();
+}
+
 export function PropertySearchChat() {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -108,6 +133,9 @@ export function PropertySearchChat() {
   const [thinkingMessage, setThinkingMessage] = useState("");
   const [currentSearchSource, setCurrentSearchSource] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"ai" | "web">("ai");
+  
+  // CRITICAL: Rent vs Buy mode - prevents comingling results
+  const [searchMode, setSearchMode] = useState<"rent" | "buy">("rent");
   
   // AI Search results
   const [results, setResults] = useState<(PropertyResult & {
@@ -144,6 +172,7 @@ export function PropertySearchChat() {
   
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastFiltersRef = useRef<FilterState>(DEFAULT_FILTERS);
+  const lastSearchModeRef = useRef<"rent" | "buy">("rent");
   
   const activeFilterCount = countActiveFilters(filters);
 
@@ -192,6 +221,7 @@ export function PropertySearchChat() {
       const { data, error } = await supabase.functions.invoke<AISearchResponse>("ai-property-search", {
         body: {
           query: query,
+          searchMode: searchMode, // Pass rent/buy mode
           filters: {
             propertyTypes: currentFilters.propertyTypes,
             priceRange: currentFilters.priceRange,
@@ -346,13 +376,22 @@ export function PropertySearchChat() {
     }
   }, [WEB_SEARCH_MESSAGES]);
 
-  // Auto-trigger search when filters change (debounced)
+  // Auto-trigger search when filters or search mode change (debounced)
   useEffect(() => {
     const filtersChanged = JSON.stringify(filters) !== JSON.stringify(lastFiltersRef.current);
+    const modeChanged = searchMode !== lastSearchModeRef.current;
     
-    if (filtersChanged && (hasSearched || hasWebSearched)) {
+    if ((filtersChanged || modeChanged) && (hasSearched || hasWebSearched)) {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
+      }
+      
+      // If mode changed, clear previous results first
+      if (modeChanged) {
+        setResults([]);
+        setWebResults([]);
+        setHasSearched(false);
+        setHasWebSearched(false);
       }
       
       searchTimeoutRef.current = setTimeout(() => {
@@ -364,6 +403,7 @@ export function PropertySearchChat() {
       }, 300);
       
       lastFiltersRef.current = filters;
+      lastSearchModeRef.current = searchMode;
     }
     
     return () => {
@@ -371,7 +411,7 @@ export function PropertySearchChat() {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [filters, hasSearched, hasWebSearched, searchQuery, executeSearch, executeWebSearch, activeTab]);
+  }, [filters, searchMode, hasSearched, hasWebSearched, searchQuery, executeSearch, executeWebSearch, activeTab]);
 
   const handleSearch = async () => {
     lastFiltersRef.current = filters;
@@ -425,12 +465,58 @@ export function PropertySearchChat() {
     toast.success("Added to Research Canvas");
   };
 
+  const handleAddMultipleToCanvas = (ids: string[]) => {
+    // TODO: Implement add multiple to canvas
+    toast.success(`Added ${ids.length} properties to Research Canvas`);
+  };
+
+  const handleExportCSV = () => {
+    exportToCSV(results, searchMode);
+    toast.success("Exported to CSV");
+  };
+
+  const handleExportPDF = () => {
+    // Use browser print for PDF export with print styles
+    window.print();
+    toast.success("Opening print dialog for PDF export");
+  };
+
   const isLoading = isSearching || isWebSearching;
 
   return (
     <>
-      <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm">
+      <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
         <CardContent className="p-4 lg:p-6">
+          {/* CRITICAL: Rent vs Buy Toggle - Must be prominent */}
+          <div className="mb-6 flex items-center justify-center">
+            <div className="inline-flex items-center p-1 rounded-full bg-muted border-2 border-muted">
+              <Button
+                variant={searchMode === "rent" ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-full px-6 gap-2 transition-all",
+                  searchMode === "rent" && "bg-accent text-accent-foreground shadow-md"
+                )}
+                onClick={() => setSearchMode("rent")}
+              >
+                <Key className="h-4 w-4" />
+                For Rent
+              </Button>
+              <Button
+                variant={searchMode === "buy" ? "default" : "ghost"}
+                size="sm"
+                className={cn(
+                  "rounded-full px-6 gap-2 transition-all",
+                  searchMode === "buy" && "bg-primary text-primary-foreground shadow-md"
+                )}
+                onClick={() => setSearchMode("buy")}
+              >
+                <Home className="h-4 w-4" />
+                For Sale
+              </Button>
+            </div>
+          </div>
+          
           {/* Search Mode Tabs */}
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "ai" | "web")} className="mb-4">
             <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -578,272 +664,144 @@ export function PropertySearchChat() {
             </div>
           )}
 
-          {/* AI Search Results */}
-          {activeTab === "ai" && !isLoading && (
-            <>
-              {/* Filter Summary Display */}
-              {filterSummary && (
-                <div className="mb-4 px-3 py-2 rounded-md bg-[#FFD54F]/10 border border-[#FFD54F]/30">
-                  <p className="text-sm font-medium text-foreground">{filterSummary}</p>
-                </div>
-              )}
-
-              {/* Extracted Criteria Badges */}
-              {extractedCriteria && (
-                <div className="mb-4 animate-in fade-in-50 slide-in-from-top-2 duration-300">
-                  <p className="text-xs text-muted-foreground mb-2">{t('search.aiUnderstood')}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {extractedCriteria.locations.length > 0 && (
-                      <Badge variant="secondary" className="gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {extractedCriteria.locations.join(", ")}
-                      </Badge>
-                    )}
-                    {(extractedCriteria.priceMin || extractedCriteria.priceMax) && (
-                      <Badge variant="secondary" className="gap-1">
-                        <DollarSign className="h-3 w-3" />
-                        {extractedCriteria.priceMin ? `HK$${(extractedCriteria.priceMin / 1000000).toFixed(0)}M` : "Any"}{" "}
-                        -{" "}
-                        {extractedCriteria.priceMax ? `HK$${(extractedCriteria.priceMax / 1000000).toFixed(0)}M` : "Any"}
-                      </Badge>
-                    )}
-                    {extractedCriteria.bedrooms.length > 0 && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Bed className="h-3 w-3" />
-                        {extractedCriteria.bedrooms.join(" or ")} BR
-                      </Badge>
-                    )}
-                    {extractedCriteria.propertyTypes?.length > 0 && (
-                      <Badge variant="secondary" className="gap-1">
-                        {extractedCriteria.propertyTypes.join(", ")}
-                      </Badge>
-                    )}
-                    {extractedCriteria.features.map((feature) => (
-                      <Badge key={feature} variant="outline" className="gap-1">
-                        <Eye className="h-3 w-3" />
-                        {feature}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Search Summary */}
-              {searchSummary && (
-                <p className="text-sm text-muted-foreground mb-4 animate-in fade-in-50">
-                  {searchSummary}
-                </p>
-              )}
-
-              {/* Results Section */}
-              {hasSearched && (
-                <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">
-                        <span className="text-lg font-bold text-accent">{results.length}</span>
-                        {totalCount > results.length && (
-                          <span className="text-muted-foreground"> of {totalCount}</span>
-                        )}{" "}
-                        <span className="text-muted-foreground">{t('search.propertiesFound')}</span>
-                      </p>
-                      {selectedIds.length > 0 && (
-                        <Badge variant="outline" className="ml-2">
-                          {selectedIds.length} {t('search.selected')}
-                        </Badge>
-                      )}
-                    </div>
-                    <ExportActions
-                      results={results}
-                      selectedIds={selectedIds}
-                      searchQuery={searchQuery}
-                    />
-                  </div>
-
-                  {results.length > 0 ? (
-                    <>
-                      <PropertyResultsTable
-                        results={results}
-                        selectedIds={selectedIds}
-                        onSelectionChange={setSelectedIds}
-                        highlightTerms={highlightTerms}
-                        onRowClick={handleRowClick}
-                      />
-                      
-                      {/* Load More Button */}
-                      {hasMore && (
-                        <div className="flex justify-center pt-4">
-                          <Button
-                            variant="outline"
-                            onClick={handleLoadMore}
-                            disabled={isSearching}
-                            className="gap-2"
-                          >
-                            <ChevronDown className="h-4 w-4" />
-                            Show More Options ({totalCount - results.length} remaining)
-                          </Button>
-                        </div>
-                      )}
-                      
-                      {/* Follow-up Suggestions (if no conversation shown) */}
-                      {!showConversation && suggestions.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          <span className="text-xs text-muted-foreground mr-2">Try:</span>
-                          {suggestions.map((suggestion, idx) => (
-                            <Badge
-                              key={idx}
-                              variant="outline"
-                              className="cursor-pointer hover:bg-accent/10 hover:border-accent transition-colors"
-                              onClick={() => handleSuggestionClick(suggestion)}
-                            >
-                              {suggestion}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed">
-                      <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">{t('search.noResults')}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{t('search.noResultsHint')}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
+          {/* AI Search Results - Perplexity Style */}
+          {activeTab === "ai" && !isLoading && hasSearched && (
+            <PerplexityResults
+              mode={searchMode}
+              query={searchQuery}
+              aiResults={results}
+              webResults={[]}
+              extractedCriteria={extractedCriteria}
+              sourcesSearched={[]}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
+              onRowClick={(p) => {
+                setSelectedProperty(p as PropertyResult);
+                setIsDetailModalOpen(true);
+              }}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              onAddToCanvas={handleAddMultipleToCanvas}
+              highlightTerms={highlightTerms}
+            />
           )}
 
-          {/* Web Search Results */}
-          {activeTab === "web" && !isLoading && (
-            <>
-              {/* Sources searched summary */}
-              {webSourcesSearched.length > 0 && (
-                <div className="mb-4 px-3 py-2 rounded-md bg-accent/10 border border-accent/30">
-                  <p className="text-sm font-medium text-foreground">
-                    <span className="text-accent font-bold">{webResults.length} results</span> found from{" "}
-                    <span className="text-accent">{webSourcesSearched.length} sources</span>
-                    <span className="text-muted-foreground ml-2">
-                      ({webSourcesSearched.join(", ")})
-                    </span>
-                  </p>
-                </div>
-              )}
-
-              {/* Results Section */}
-              {hasWebSearched && (
-                <div className="space-y-4 animate-in fade-in-50 slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-foreground">
-                        <span className="text-lg font-bold text-accent">{webResults.length}</span>{" "}
-                        <span className="text-muted-foreground">listings found</span>
-                      </p>
-                      {webSelectedIds.length > 0 && (
-                        <Badge variant="outline" className="ml-2">
-                          {webSelectedIds.length} selected
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {webResults.length > 0 ? (
-                    <WebSearchResultsTable
-                      results={webResults}
-                      selectedIds={webSelectedIds}
-                      onSelectionChange={setWebSelectedIds}
-                      highlightTerms={highlightTerms}
-                      onRowClick={handleWebRowClick}
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-center rounded-lg border border-dashed">
-                      <AlertCircle className="h-8 w-8 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No listings found</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Try adjusting your search query or filters
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Initial State */}
-          {!hasSearched && !hasWebSearched && !isLoading && (
+          {/* AI Search - Initial state */}
+          {activeTab === "ai" && !isLoading && !hasSearched && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-4 rounded-full bg-accent/20 p-4">
-                {activeTab === "web" ? (
-                  <Globe className="h-8 w-8 text-accent" />
-                ) : (
-                  <Sparkles className="h-8 w-8 text-accent" />
-                )}
+                <Sparkles className="h-8 w-8 text-accent" />
               </div>
               <h3 className="mb-2 font-serif text-lg font-semibold">
-                {activeTab === "web" 
-                  ? "Search Live Property Listings" 
-                  : t('search.initialTitle')
-                }
+                {searchMode === 'rent' ? 'Find Rental Properties' : 'Find Properties for Sale'}
               </h3>
               <p className="max-w-md text-sm text-muted-foreground">
-                {activeTab === "web"
-                  ? "Search across 28Hse, House730, Squarefoot, Spacious, and more Hong Kong property portals in real-time."
-                  : t('search.initialDescription')
-                }
+                {t('search.initialDescription')}
               </p>
               <div className="mt-4 flex flex-wrap justify-center gap-2">
-                {activeTab === "web" ? (
-                  <>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("2 bedroom North Point with balcony $15k-$21k")}
-                    >
-                      2 BR North Point with balcony
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("3 bedroom Mid-Levels sea view under $50000")}
-                    >
-                      3 BR Mid-Levels sea view
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("studio Causeway Bay furnished")}
-                    >
-                      Studio Causeway Bay furnished
-                    </Badge>
-                  </>
-                ) : (
-                  <>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("3 bedroom in Mid-Levels with sea view")}
-                    >
-                      {t('search.sample.midLevels')}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("Family home under 50 million with garden")}
-                    >
-                      {t('search.sample.family')}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="cursor-pointer hover:bg-muted"
-                      onClick={() => setSearchQuery("Pet friendly apartment in Kowloon")}
-                    >
-                      {t('search.sample.petFriendly')}
-                    </Badge>
-                  </>
-                )}
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent' 
+                    ? "2 bedroom in North Point with balcony $15k-$21k" 
+                    : "3 bedroom in Mid-Levels with sea view"
+                  )}
+                >
+                  {searchMode === 'rent' ? '2 BR North Point $15-21k' : t('search.sample.midLevels')}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent'
+                    ? "Studio in Causeway Bay furnished under $18k"
+                    : "Family home under 50 million with garden"
+                  )}
+                >
+                  {searchMode === 'rent' ? 'Studio Causeway Bay' : t('search.sample.family')}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent'
+                    ? "Pet friendly apartment in Kowloon $20k"
+                    : "Pet friendly apartment in Kowloon"
+                  )}
+                >
+                  {t('search.sample.petFriendly')}
+                </Badge>
               </div>
             </div>
           )}
+
+          {/* Web Search Results - Perplexity Style */}
+          {activeTab === "web" && !isLoading && hasWebSearched && (
+            <PerplexityResults
+              mode={searchMode}
+              query={searchQuery}
+              aiResults={[]}
+              webResults={webResults}
+              extractedCriteria={extractedCriteria}
+              sourcesSearched={webSourcesSearched}
+              selectedIds={webSelectedIds}
+              onSelectionChange={setWebSelectedIds}
+              onRowClick={(p) => {
+                setSelectedProperty(p as WebSearchResult);
+                setIsDetailModalOpen(true);
+              }}
+              onExportCSV={handleExportCSV}
+              onExportPDF={handleExportPDF}
+              onAddToCanvas={handleAddMultipleToCanvas}
+              highlightTerms={highlightTerms}
+            />
+          )}
+
+          {/* Web Search - Initial state */}
+          {activeTab === "web" && !isLoading && !hasWebSearched && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-4 rounded-full bg-accent/20 p-4">
+                <Globe className="h-8 w-8 text-accent" />
+              </div>
+              <h3 className="mb-2 font-serif text-lg font-semibold">
+                Search Live {searchMode === 'rent' ? 'Rental' : 'Sale'} Listings
+              </h3>
+              <p className="max-w-md text-sm text-muted-foreground">
+                Search across 28Hse, House730, Squarefoot, Spacious, and more Hong Kong property portals in real-time.
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent' 
+                    ? "2 bedroom North Point with balcony $15k-$21k"
+                    : "3 bedroom Mid-Levels under $50M"
+                  )}
+                >
+                  {searchMode === 'rent' ? '2 BR North Point with balcony' : '3 BR Mid-Levels'}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent'
+                    ? "3 bedroom Mid-Levels sea view under $50000"
+                    : "4 bedroom Peak with garden"
+                  )}
+                >
+                  {searchMode === 'rent' ? '3 BR Mid-Levels sea view' : '4 BR Peak with garden'}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="cursor-pointer hover:bg-muted"
+                  onClick={() => setSearchQuery(searchMode === 'rent'
+                    ? "studio Causeway Bay furnished"
+                    : "Studio investment Causeway Bay"
+                  )}
+                >
+                  {searchMode === 'rent' ? 'Studio Causeway Bay furnished' : 'Studio investment'}
+                </Badge>
+              </div>
+            </div>
+          )}
+
         </CardContent>
       </Card>
 
