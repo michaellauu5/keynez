@@ -80,8 +80,9 @@ serve(async (req) => {
   }
 
   try {
-    const { query, filters, conversationHistory, page, previousResults } = await req.json() as { 
+    const { query, searchMode, filters, conversationHistory, page, previousResults } = await req.json() as { 
       query?: string; 
+      searchMode?: 'rent' | 'buy';
       filters?: FilterState;
       conversationHistory?: ConversationMessage[];
       page?: number;
@@ -101,8 +102,10 @@ serve(async (req) => {
 
     const currentPage = page || 1;
     const resultsPerPage = 15;
+    const mode = searchMode || 'rent';
 
     console.log("Processing search query:", query);
+    console.log("Search mode:", mode);
     console.log("Applied filters:", filters);
     console.log("Conversation history length:", conversationHistory?.length || 0);
     console.log("Page:", currentPage);
@@ -649,7 +652,7 @@ function detectFollowUpIntent(message: string, filters?: FilterState): FollowUpI
   };
 }
 
-// Build extraction prompt with conversation context
+// Build extraction prompt with conversation context and improved NLP
 function buildExtractionPrompt(query: string, conversationHistory: ConversationMessage[]): string {
   let contextPart = "";
   
@@ -658,29 +661,60 @@ function buildExtractionPrompt(query: string, conversationHistory: ConversationM
     contextPart = `\nPrevious conversation:\n${recentHistory.map(m => `${m.role}: ${m.content}`).join('\n')}\n\n`;
   }
   
-  return `You are a Hong Kong property search assistant. Analyze the user's search query and extract structured property search criteria.
+  return `You are a Hong Kong property search assistant specializing in understanding natural language queries about real estate. Analyze the user's search query and extract structured property search criteria.
+
+IMPORTANT: Handle both English and Chinese (Cantonese) queries.
+
 ${contextPart}
 User query: "${query || "No specific query, use filters only"}"
 
+NATURAL LANGUAGE UNDERSTANDING:
+- Parse prices: "$15k", "under $20,000", "around 18k", "budget 15-20k", "$15-21k" → priceMin/priceMax
+- Parse sizes: "2 bed", "3 bedrooms", "studio", "1BR", "三房" → bedrooms array
+- Parse features: "balcony", "terrace", "separate kitchen", "pet friendly", "明廁" → features array
+- Parse floors: "high floor", "low floor", "高層" → floorLevels
+- Expand locations: "North Point" includes "Fortress Hill", "Quarry Bay" is nearby
+
+CHINESE TERM MAPPINGS:
+- "地鐵站上蓋" → nearMTR: true, features: ["MTR Above Station"]
+- "明廁明廚" → features: ["Window Bathroom", "Window Kitchen"]
+- "業主盤" → features: ["Direct Owner"]
+- "東/南朝向" → orientations: ["East", "South"]
+- "有露台" → features: ["Balcony", "Terrace"]
+- "連車位" → features: ["Parking"]
+- "九龍城區校網" → locations: ["Kowloon City"], features: ["School Network"]
+- "有工人房" → features: ["Helper Room"]
+- "高樓層開揚景觀" → floorLevels: ["High (26-40)", "Ultra High (40+)"], features: ["Open View"]
+- "交通便利" → features: ["Convenient Transport"]
+- "<10年樓齡" → buildingAge: ["<10 years", "<5 years", "New Build"]
+- "近超市街市" → features: ["Near Supermarket", "Near Market"]
+- "低噪音污染" → features: ["Low Noise"]
+- "使用面積>7成" → features: ["High Efficiency"]
+
+FUZZY MATCHING:
+- "Causeway Bay" → also include "Tin Hau", "Fortress Hill" in similar area
+- "balcony" → include "terrace", "flat roof", "outdoor space"
+- "separate kitchen" → exclude "open kitchen", include "independent kitchen"
+
 Extract the following criteria and return as JSON:
 {
-  "locations": ["array of Hong Kong district names mentioned, e.g., 'Mid-Levels', 'The Peak', 'Kowloon'"],
-  "priceMin": number or null (in HKD, convert millions to full number e.g., "50 million" = 50000000),
+  "locations": ["array of Hong Kong district names mentioned"],
+  "priceMin": number or null (in HKD, convert: $15k = 15000, $50M = 50000000),
   "priceMax": number or null (in HKD),
   "sizeMin": number or null (in sqft),
   "sizeMax": number or null (in sqft),
-  "bedrooms": [array of bedroom counts as numbers, e.g., [3] for "3 bedroom"],
+  "bedrooms": [array of bedroom counts as numbers, studio = 0],
   "bathrooms": [array of bathroom counts as numbers],
   "propertyTypes": ["Apartment", "House", "Studio", "Penthouse", "Commercial"],
   "floorLevels": ["Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"],
   "buildingAge": ["New Build", "<5 years", "<10 years", "<20 years", "20+ years"],
   "orientations": ["North", "South", "East", "West"],
   "developers": ["developer names mentioned"],
-  "features": ["array of features mentioned, e.g., 'sea view', 'pool', 'gym', 'parking', 'garden', 'pet friendly'"],
+  "features": ["array of features mentioned"],
   "specialRequirements": "any other specific requirements mentioned"
 }
 
-Common Hong Kong districts: Central, Mid-Levels, The Peak, Wan Chai, Causeway Bay, Happy Valley, Repulse Bay, Tsim Sha Tsui, Mong Kok, Kowloon Tong, Ho Man Tin, Hung Hom, Sha Tin, Tai Po, Sai Kung, Ma On Shan
+Common Hong Kong districts: Central, Mid-Levels, The Peak, Wan Chai, Causeway Bay, Happy Valley, Repulse Bay, North Point, Quarry Bay, Tai Koo, Chai Wan, Sheung Wan, Sai Ying Pun, Kennedy Town, Aberdeen, Ap Lei Chau, Tsim Sha Tsui, Jordan, Mong Kok, Kowloon Tong, Ho Man Tin, Hung Hom, Kowloon City, Sha Tin, Tai Po, Sai Kung, Ma On Shan, Tseung Kwan O
 
 Return ONLY valid JSON, no markdown or explanation.`;
 }
