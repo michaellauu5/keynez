@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Accordion,
   AccordionContent,
@@ -20,16 +20,18 @@ import {
   Table as TableIcon,
   Printer,
   Plus,
-  MapPin
+  MapPin,
+  Check
 } from "lucide-react";
 import { PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
+import { MatchQualityBadge, calculateMatchQuality, MatchQuality } from "./MatchQualityBadge";
 import { cn } from "@/lib/utils";
 
 interface PerplexityResultsProps {
   mode: 'rent' | 'buy';
   query: string;
-  aiResults: PropertyResult[];
+  aiResults: (PropertyResult & { matchQuality?: MatchQuality; relevanceScore?: number })[];
   webResults: WebSearchResult[];
   extractedCriteria: {
     locations: string[];
@@ -349,6 +351,9 @@ export function PerplexityResults({
                 <th className="w-10 px-2 py-3 text-center text-xs font-semibold text-muted-foreground">
                   #
                 </th>
+                <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground">
+                  Match
+                </th>
                 <th 
                   className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground cursor-pointer hover:text-foreground"
                   onClick={() => handleSort('name')}
@@ -410,6 +415,24 @@ export function PerplexityResults({
                     </td>
                     <td className="px-2 py-3 text-center text-xs text-muted-foreground">
                       {index + 1}
+                    </td>
+                    <td className="px-4 py-3">
+                      {(() => {
+                        // Calculate match quality from relevanceScore if available
+                        const score = 'relevanceScore' in result ? result.relevanceScore : 50;
+                        const quality: MatchQuality = score >= 80 ? 'perfect' : score >= 60 ? 'good' : 'partial';
+                        const matchDetails = [
+                          { label: `${result.bedrooms} BR`, matched: extractedCriteria?.bedrooms?.includes(parseInt(result.bedrooms as string)) ?? true },
+                          { label: result.location || 'Location', matched: extractedCriteria?.locations?.some(l => result.location?.toLowerCase().includes(l.toLowerCase())) ?? true },
+                          { label: 'Budget', matched: (!extractedCriteria?.priceMax || result.price <= extractedCriteria.priceMax) }
+                        ];
+                        return (
+                          <MatchQualityBadge 
+                            quality={quality} 
+                            criteria={matchDetails}
+                          />
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-foreground">
