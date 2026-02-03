@@ -85,12 +85,18 @@ function MultiSelectFilter({ label, options, selected, onChange, clearLabel }: M
           size="sm"
           className={cn(
             "h-8 gap-1 rounded-full text-xs font-medium transition-all",
-            hasSelection && "bg-accent text-accent-foreground hover:bg-accent/90"
+            hasSelection && "bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 border-[#FFD54F]"
           )}
         >
           {label}
           {hasSelection && (
-            <Badge variant="secondary" className="ml-1 h-5 min-w-5 rounded-full px-1.5 text-xs">
+            <Badge 
+              variant="secondary" 
+              className={cn(
+                "ml-1 h-5 min-w-5 rounded-full px-1.5 text-xs",
+                hasSelection && "bg-black/20 text-black"
+              )}
+            >
               {selected.length}
             </Badge>
           )}
@@ -155,12 +161,12 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue, rese
           size="sm"
           className={cn(
             "h-8 gap-1 rounded-full text-xs font-medium transition-all",
-            hasCustomRange && "bg-accent text-accent-foreground hover:bg-accent/90"
+            hasCustomRange && "bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 border-[#FFD54F]"
           )}
         >
           {label}
           {hasCustomRange && (
-            <span className="ml-1 text-xs opacity-80">
+            <span className="ml-1 text-xs text-black/80">
               {formatValue(value[0])} - {formatValue(value[1])}
             </span>
           )}
