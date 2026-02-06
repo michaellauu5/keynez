@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Language, languageNames } from '@/translations';
-import keynestLogo from '@/assets/keynest-logo.png';
+import keynezLogo from '@/assets/keynez-logo.jpg';
 
 const navLinks = [
   { labelKey: 'nav.home', href: '/' },
@@ -48,8 +48,8 @@ export function Header() {
         {/* Logo */}
         <Link to="/" className="flex items-center">
           <img
-            src={keynestLogo}
-            alt="Keynest AI"
+            src={keynezLogo}
+            alt="Keynez AI"
             className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain"
           />
         </Link>

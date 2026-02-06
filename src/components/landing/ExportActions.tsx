@@ -39,7 +39,7 @@ export function ExportActions({
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = "keynest-properties.csv";
+    link.download = "keynez-properties.csv";
     link.click();
   };
 
@@ -53,7 +53,7 @@ export function ExportActions({
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Keynest AI - Property Report</title>
+        <title>Keynez AI - Property Report</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; }
           h1 { color: #5c4033; margin-bottom: 10px; }
@@ -67,7 +67,7 @@ export function ExportActions({
         </style>
       </head>
       <body>
-        <h1>Keynest AI Property Report</h1>
+        <h1>Keynez AI Property Report</h1>
         <p class="subtitle">Generated on ${new Date().toLocaleDateString()}</p>
         <table>
           <thead>
@@ -109,7 +109,7 @@ export function ExportActions({
   const handleExportToResearchCanvas = () => {
     const dataToExport = selectedIds.length > 0 ? selectedResults : results.slice(0, 4);
     // Store in localStorage for cross-page access
-    localStorage.setItem('keynest_canvas_import', JSON.stringify(dataToExport));
+    localStorage.setItem('keynez_canvas_import', JSON.stringify(dataToExport));
     navigate('/research-canvas');
   };
 

@@ -52,7 +52,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "Subscribe",
     "footer.subscribeSuccess": "Thank you for subscribing!",
     "footer.copyright": "All rights reserved",
-    "footer.description": "Keynest AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
+    "footer.description": "Keynez AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
     "footer.quickLinks": "Quick Links",
     "footer.connect": "Connect With Us",
 
@@ -156,7 +156,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "map.filters": "filters",
 
     // Video Demo
-    "video.title": "See How Keynest AI Works",
+    "video.title": "See How Keynez AI Works",
     "video.subtitle": "AI-powered property search for Hong Kong",
     "video.caption": "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
     "video.tapToPause": "Tap to pause",
@@ -214,7 +214,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "訂閱",
     "footer.subscribeSuccess": "感謝您的訂閱！",
     "footer.copyright": "版權所有",
-    "footer.description": "Keynest AI 是香港首屈一指的人工智能物業搜尋平台。我們運用先進的人工智能技術，助您找到理想的家。",
+    "footer.description": "Keynez AI 是香港首屈一指的人工智能物業搜尋平台。我們運用先進的人工智能技術，助您找到理想的家。",
     "footer.quickLinks": "快速連結",
     "footer.connect": "關注我們",
 
@@ -318,7 +318,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "map.filters": "個篩選器",
 
     // Video Demo
-    "video.title": "了解 Keynest AI 如何運作",
+    "video.title": "了解 Keynez AI 如何運作",
     "video.subtitle": "香港 AI 智能物業搜尋",
     "video.caption": "我們的 AI 能理解您以自然語言表達的偏好，並在數秒內為您找到完美的物業。",
     "video.tapToPause": "點擊暫停",
@@ -376,7 +376,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "订阅",
     "footer.subscribeSuccess": "感谢您的订阅！",
     "footer.copyright": "版权所有",
-    "footer.description": "Keynest AI 是香港首屈一指的人工智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
+    "footer.description": "Keynez AI 是香港首屈一指的人工智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
     "footer.quickLinks": "快速链接",
     "footer.connect": "关注我们",
 
@@ -480,7 +480,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "map.filters": "个筛选器",
 
     // Video Demo
-    "video.title": "了解 Keynest AI 如何运作",
+    "video.title": "了解 Keynez AI 如何运作",
     "video.subtitle": "香港 AI 智能房产搜索",
     "video.caption": "我们的 AI 能理解您以自然语言表达的偏好，并在数秒内为您找到完美的房产。",
     "video.tapToPause": "点击暂停",

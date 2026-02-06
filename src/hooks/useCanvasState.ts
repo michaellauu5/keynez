@@ -11,8 +11,8 @@ import {
 } from '@/types/canvas';
 import { PropertyResult } from '@/components/landing/PropertyResultsTable';
 
-const STORAGE_KEY = 'keynest_research_canvas';
-const IMPORT_KEY = 'keynest_canvas_import';
+const STORAGE_KEY = 'keynez_research_canvas';
+const IMPORT_KEY = 'keynez_canvas_import';
 
 interface HistoryState {
   elements: CanvasElement[];
@@ -290,7 +290,7 @@ export function useCanvasState() {
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Keynest AI - Research Canvas</title>
+        <title>Keynez AI - Research Canvas</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; max-width: 1200px; margin: 0 auto; }
           h1 { color: #5c4033; margin-bottom: 10px; }
@@ -309,7 +309,7 @@ export function useCanvasState() {
         </style>
       </head>
       <body>
-        <h1>Keynest AI Research Canvas</h1>
+        <h1>Keynez AI Research Canvas</h1>
         <p class="subtitle">Exported on ${new Date().toLocaleDateString()}</p>
         
         <h2>Properties (${propertyElements.length})</h2>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
-import keynestLogo from '@/assets/keynest-logo.png';
+import keynezLogo from '@/assets/keynez-logo.jpg';
 const emailSchema = z.string().email();
 const quickLinks = [{
   labelKey: 'footer.about',
@@ -60,10 +60,10 @@ export function Footer() {
     setIsLoading(true);
 
     // Store to localStorage for now (can migrate to Supabase later)
-    const subscribers = JSON.parse(localStorage.getItem('keynest-subscribers') || '[]');
+    const subscribers = JSON.parse(localStorage.getItem('keynez-subscribers') || '[]');
     if (!subscribers.includes(email)) {
       subscribers.push(email);
-      localStorage.setItem('keynest-subscribers', JSON.stringify(subscribers));
+      localStorage.setItem('keynez-subscribers', JSON.stringify(subscribers));
     }
     toast({
       title: t('footer.subscribeSuccess')
@@ -78,7 +78,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img alt="Keynest AI" className="h-10 w-auto brightness-0 invert opacity-100 object-fill border-primary-foreground" src="/lovable-uploads/cc98441b-879d-49b8-a5ae-e5177fbdbf52.jpg" />
+              <img alt="Keynez AI" className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain brightness-0 invert" src={keynezLogo} />
             </Link>
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               {t('footer.description')}
@@ -124,12 +124,12 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo at bottom left */}
             <Link to="/" className="flex items-center">
-              <img src={keynestLogo} alt="Keynest AI" className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain brightness-0 invert" />
+              <img src={keynezLogo} alt="Keynez AI" className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain brightness-0 invert" />
             </Link>
             
             {/* Copyright */}
             <p className="text-sm text-primary-foreground/60">
-              © {currentYear} Keynest AI. {t('footer.copyright')}.
+              © {currentYear} Keynez AI. {t('footer.copyright')}.
             </p>
           </div>
         </div>

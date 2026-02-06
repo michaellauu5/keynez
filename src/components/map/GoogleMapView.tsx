@@ -18,7 +18,7 @@ interface GoogleMapViewProps {
   className?: string;
 }
 
-// Custom map styles matching Keynest palette
+// Custom map styles matching Keynez palette
 const mapStyles = [
   {
     featureType: "water",
