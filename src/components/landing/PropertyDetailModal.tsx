@@ -80,7 +80,7 @@ export function PropertyDetailModal({
   const agentContact = isWeb ? property.agentContact : '-';
   const refNumber = isWeb ? property.refNumber : property.id;
   const sourceUrl = isWeb ? property.sourceUrl : null;
-  const sourceName = isWeb ? property.sourceDisplayName : 'KeyNest Database';
+  const sourceName = isWeb ? property.sourceDisplayName : 'Keynez Database';
   const matchScore = isWeb ? property.matchScore : (property as any).relevanceScore;
   const matchReason = isWeb ? property.rawSnippet : (property as any).matchReason;
 

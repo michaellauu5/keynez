@@ -40,7 +40,7 @@ interface SaveSearchDialogProps {
   transactionType: "sale" | "rent";
 }
 
-const STORAGE_KEY = "keynest_saved_searches";
+const STORAGE_KEY = "keynez_saved_searches";
 
 function getSavedSearches(): SavedSearch[] {
   try {

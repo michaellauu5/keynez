@@ -627,7 +627,7 @@ export function PerplexityResults({
               Information compiled from {sourcesSearched.length + 1} sources
             </p>
             <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
-              <li>KeyNest Property Database (internal)</li>
+              <li>Keynez Property Database (internal)</li>
               {sourcesSearched.map((source, index) => (
                 <li key={index}>{source}</li>
               ))}

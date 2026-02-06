@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Sparkles, Loader2, Filter, X, MessageCircle, Home, Key, RefreshCw } from "lucide-react";
+import { Search, Sparkles, Loader2, Filter, X, MessageCircle, Home, Key, RefreshCw, RotateCcw } from "lucide-react";
 import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
@@ -11,11 +11,11 @@ import { PropertyDetailModal } from "./PropertyDetailModal";
 import { ChatMessageList } from "./ChatMessageList";
 import { PerplexityResults } from "./PerplexityResults";
 import { SearchProgressIndicator, SearchSource } from "./SearchProgressIndicator";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useConversation, ChatMessage } from "@/hooks/useConversation";
 import { getRandomSuggestions } from "@/data/suggestionsPool";
+import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
 
 interface ExtractedCriteria {
@@ -35,38 +35,9 @@ interface ExtractedCriteria {
   specialRequirements: string;
 }
 
-interface AISearchResponse {
-  extractedCriteria: ExtractedCriteria;
-  results: (PropertyResult & {
-    rank: number;
-    relevanceScore: number;
-    matchReason: string;
-  })[];
-  searchSummary: string;
-  filterSummary: string;
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
-  hasMore: boolean;
-  suggestions: string[];
-  aiMessage: string;
-  followUpIntent?: {
-    type: string;
-    params: Record<string, any>;
-    acknowledgment: string;
-    filterUpdates?: Partial<FilterState>;
-  };
-}
-
-interface WebSearchResponse {
-  success: boolean;
-  results: WebSearchResult[];
-  sourcesSearched: string[];
-  totalFound: number;
-  query: string;
-  errors?: string[];
-  error?: string;
-}
+// N8N Webhook configuration
+const N8N_WEBHOOK_URL = 'https://properly.app.n8n.cloud/webhook-test/keynez_agent_input';
+const WEBHOOK_TIMEOUT_MS = 60000;
 
 const DEFAULT_FILTERS: FilterState = {
   propertyTypes: [],
@@ -120,12 +91,12 @@ function exportToCSV(results: PropertyResult[], mode: 'rent' | 'buy') {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
-  link.download = `keynest-${mode}-properties-${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `keynez-${mode}-properties-${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
 }
 
 export function PropertySearchChat() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [thinkingMessage, setThinkingMessage] = useState("");
@@ -162,6 +133,10 @@ export function PropertySearchChat() {
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   
+  // Webhook-specific state
+  const [agentRecommendations, setAgentRecommendations] = useState<AgentRecommendation[]>([]);
+  const [webhookInsights, setWebhookInsights] = useState<string[]>([]);
+  
   // Rotating suggestions
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>(() => 
     getRandomSuggestions('rent', 4)
@@ -190,14 +165,19 @@ export function PropertySearchChat() {
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
   }, [searchMode]);
 
-  const THINKING_MESSAGES = [
-    t('search.thinking.analyzing'),
-    t('search.thinking.searching'),
-    t('search.thinking.ranking'),
-    t('search.thinking.preparing')
+  // Loading messages for webhook search
+  const LOADING_MESSAGES = [
+    "🔍 Searching 28hse.com for listings...",
+    "🔍 Checking Squarefoot database...",
+    "🔍 Scanning Spacious listings...",
+    "🔍 Searching Midland Realty...",
+    "🔍 Checking Centaline properties...",
+    "🔍 Gathering results from OneDay...",
+    "📊 Analyzing and ranking properties...",
+    "✨ Preparing your personalized results...",
   ];
 
-  // Unified search that combines AI database + Web search
+  // Webhook-based unified search using n8n
   const executeSearch = useCallback(async (
     query: string, 
     currentFilters: FilterState,
@@ -219,11 +199,11 @@ export function PropertySearchChat() {
     }
 
     let messageIndex = 0;
-    setThinkingMessage(THINKING_MESSAGES[0]);
+    setThinkingMessage(LOADING_MESSAGES[0]);
     const thinkingInterval = setInterval(() => {
-      messageIndex = (messageIndex + 1) % THINKING_MESSAGES.length;
-      setThinkingMessage(THINKING_MESSAGES[messageIndex]);
-    }, 800);
+      messageIndex = (messageIndex + 1) % LOADING_MESSAGES.length;
+      setThinkingMessage(LOADING_MESSAGES[messageIndex]);
+    }, 2500); // Rotate every 2.5 seconds
 
     // Animate source progress
     const sourceInterval = setInterval(() => {
@@ -247,155 +227,193 @@ export function PropertySearchChat() {
       });
     }, 600);
 
+    // Build webhook payload
+    const conversationHistory = conversation.getConversationContext();
+    const webhookPayload = {
+      user_message: query,
+      filters: {
+        property_type: currentFilters.propertyTypes,
+        transaction_type: searchMode === 'rent' ? 'Rent' : 'Buy',
+        location: currentFilters.locations,
+        price_range: {
+          min: currentFilters.priceRange[0] > 0 ? currentFilters.priceRange[0] : null,
+          max: currentFilters.priceRange[1] < 200000000 ? currentFilters.priceRange[1] : null,
+          currency: 'HKD' as const,
+        },
+        bedrooms: currentFilters.bedrooms.length > 0 
+          ? (currentFilters.bedrooms[0] === "Studio" ? 0 : parseInt(currentFilters.bedrooms[0])) 
+          : null,
+        bathrooms: currentFilters.bathrooms.length > 0 
+          ? parseInt(currentFilters.bathrooms[0]) 
+          : null,
+        size_sqft: {
+          min: currentFilters.sizeRange[0] > 0 ? currentFilters.sizeRange[0] : null,
+          max: currentFilters.sizeRange[1] < 5000 ? currentFilters.sizeRange[1] : null,
+        },
+        floor_level: currentFilters.floorLevels,
+        building_age: currentFilters.buildingAge,
+        orientation: currentFilters.orientations,
+        developer: currentFilters.developers,
+        special_features: [] as string[],
+        furnished: null,
+        pet_friendly: null,
+        parking: null,
+      },
+      language: language,
+      conversation_id: sessionStorage.getItem('keynez_conversation_id') || crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      is_followup: isFollowUp,
+      previous_results_count: results.length,
+      conversation_history: conversationHistory.map(msg => ({
+        role: msg.role,
+        message: msg.content,
+      })),
+    };
+
+    // Store conversation ID
+    if (!sessionStorage.getItem('keynez_conversation_id')) {
+      sessionStorage.setItem('keynez_conversation_id', webhookPayload.conversation_id);
+    }
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+
     try {
-      const conversationHistory = conversation.getConversationContext();
-      
-      // Execute both searches in parallel
-      const [aiResult, webResult] = await Promise.allSettled([
-        // AI Database Search
-        supabase.functions.invoke<AISearchResponse>("ai-property-search", {
-          body: {
-            query: query,
-            searchMode: searchMode,
-            filters: {
-              propertyTypes: currentFilters.propertyTypes,
-              priceRange: currentFilters.priceRange,
-              sizeRange: currentFilters.sizeRange,
-              bedrooms: currentFilters.bedrooms,
-              bathrooms: currentFilters.bathrooms,
-              locations: currentFilters.locations,
-              floorLevels: currentFilters.floorLevels,
-              buildingAge: currentFilters.buildingAge,
-              orientations: currentFilters.orientations,
-              developers: currentFilters.developers,
-            },
-            conversationHistory,
-            page,
-          }
-        }),
-        // Web Search
-        supabase.functions.invoke<WebSearchResponse>("property-web-search", {
-          body: {
-            query: query,
-            searchMode: searchMode,
-            filters: {
-              location: currentFilters.locations[0] || null,
-              bedrooms: currentFilters.bedrooms.length > 0 
-                ? (currentFilters.bedrooms[0] === "Studio" ? 0 : parseInt(currentFilters.bedrooms[0])) 
-                : null,
-              priceMin: currentFilters.priceRange[0] > 0 ? currentFilters.priceRange[0] : null,
-              priceMax: currentFilters.priceRange[1] < 200000000 ? currentFilters.priceRange[1] : null,
-            }
-          }
-        })
-      ]);
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
 
       // Mark all sources as done
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'done' as const })));
 
-      let combinedResults: (PropertyResult & {
+      if (!response.ok) {
+        throw new Error(`Search failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success && data.error) {
+        throw new Error(data.error);
+      }
+
+      // Map webhook response to existing result format
+      const webhookResults: (PropertyResult & {
         rank?: number;
         relevanceScore?: number;
         matchReason?: string;
         matchQuality?: 'perfect' | 'good' | 'partial';
-      })[] = [];
-      let webResultsList: WebSearchResult[] = [];
-      const errors: string[] = [];
+      })[] = (data.results || []).map((r: any, index: number) => ({
+        id: r.reference || `webhook-${index}`,
+        name: r.building_name,
+        location: r.location || '',
+        price: searchMode === 'rent' ? (r.monthly_rent || 0) : (r.sale_price || 0),
+        size: r.size_sqft || 0,
+        bedrooms: r.bedrooms || '-',
+        bathrooms: r.bathrooms || '-',
+        features: r.special_features || [],
+        floorLevel: r.floor_level || '-',
+        propertyType: 'Apartment',
+        buildingAge: '-',
+        orientation: '-',
+        developer: '-',
+        agentName: r.agent_name,
+        agentContact: r.agent_contact,
+        refNumber: r.reference,
+        sourceUrl: r.source_url,
+        sourceName: r.source_name || 'n8n',
+        rank: index + 1,
+        relevanceScore: r.match_score || 50,
+        matchReason: r.match_reason || '',
+        matchQuality: ((r.match_score || 50) >= 80 ? 'perfect' : 
+                      (r.match_score || 50) >= 60 ? 'good' : 'partial') as 'perfect' | 'good' | 'partial',
+      }));
 
-      // Process AI results
-      if (aiResult.status === 'fulfilled' && aiResult.value.data) {
-        const data = aiResult.value.data;
-        setExtractedCriteria(data.extractedCriteria);
-        
-        // Calculate match quality for each result
-        const withQuality = data.results.map(r => ({
-          ...r,
-          matchQuality: (r.relevanceScore >= 80 ? 'perfect' : 
-                        r.relevanceScore >= 60 ? 'good' : 'partial') as 'perfect' | 'good' | 'partial'
-        }));
-        
-        combinedResults = [...combinedResults, ...withQuality];
-        
-        setSearchSummary(data.searchSummary);
-        setFilterSummary(data.filterSummary || "");
-        setSuggestions(data.suggestions || []);
-        setCurrentPage(data.currentPage);
-        setHasMore(data.hasMore);
-        setTotalCount(data.totalCount);
-
-        // Apply filter updates from follow-up intent
-        if (data.followUpIntent?.filterUpdates) {
-          setFilters(prev => ({ ...prev, ...data.followUpIntent!.filterUpdates }));
-        }
-
-        // Build highlight terms
-        const terms: string[] = [];
-        if (data.extractedCriteria.locations) {
-          terms.push(...data.extractedCriteria.locations);
-        }
-        if (data.extractedCriteria.features) {
-          terms.push(...data.extractedCriteria.features);
-        }
-        setHighlightTerms(terms);
-
-        // Add AI response to conversation
-        if (data.aiMessage) {
-          conversation.addAssistantMessage(data.aiMessage, data.results.length);
-          setShowConversation(true);
-        }
-      } else if (aiResult.status === 'rejected') {
-        errors.push("AI database temporarily unavailable");
-        setSearchSources(prev => {
-          const updated = [...prev];
-          updated[0] = { ...updated[0], status: 'error' };
-          return updated;
-        });
+      // Store agent recommendations if provided
+      if (data.agent_recommendations) {
+        // Store in state for PerplexityResults to display
+        setAgentRecommendations(data.agent_recommendations);
       }
 
-      // Process Web results
-      if (webResult.status === 'fulfilled' && webResult.value.data?.success) {
-        webResultsList = webResult.value.data.results;
-        setWebResults(webResultsList);
-        
-        // Update source statuses with result counts
-        const sourcesWithCounts = webResult.value.data.sourcesSearched;
-        setSearchSources(prev => prev.map(s => ({
-          ...s,
-          status: sourcesWithCounts.includes(s.name) ? 'done' : 'error',
-          resultCount: webResultsList.filter(r => r.sourceDisplayName === s.name).length
-        })));
-      } else if (webResult.status === 'rejected') {
-        errors.push("Web search temporarily unavailable, showing database results");
+      // Store insights if provided
+      if (data.insights) {
+        setWebhookInsights(data.insights);
       }
 
-      setSearchErrors(errors);
+      // Extract criteria from results for highlighting
+      const extractedCriteria: ExtractedCriteria = {
+        locations: currentFilters.locations,
+        priceMin: currentFilters.priceRange[0] > 0 ? currentFilters.priceRange[0] : null,
+        priceMax: currentFilters.priceRange[1] < 200000000 ? currentFilters.priceRange[1] : null,
+        sizeMin: currentFilters.sizeRange[0] > 0 ? currentFilters.sizeRange[0] : null,
+        sizeMax: currentFilters.sizeRange[1] < 5000 ? currentFilters.sizeRange[1] : null,
+        bedrooms: currentFilters.bedrooms.map(b => b === 'Studio' ? 0 : parseInt(b)),
+        bathrooms: currentFilters.bathrooms.map(b => parseInt(b)),
+        propertyTypes: currentFilters.propertyTypes,
+        floorLevels: currentFilters.floorLevels,
+        buildingAge: currentFilters.buildingAge,
+        orientations: currentFilters.orientations,
+        developers: currentFilters.developers,
+        features: [],
+        specialRequirements: query,
+      };
+      setExtractedCriteria(extractedCriteria);
 
-      // Merge and dedupe results (prioritize AI results, add unique web results)
+      // Build highlight terms
+      const terms: string[] = [...currentFilters.locations];
+      setHighlightTerms(terms);
+
+      // Set results
       if (page > 1) {
-        setResults(prev => [...prev, ...combinedResults]);
+        setResults(prev => [...prev, ...webhookResults]);
       } else {
-        setResults(combinedResults);
+        setResults(webhookResults);
       }
+      
+      setTotalCount(data.results_count || webhookResults.length);
+      setCurrentPage(page);
+      setHasMore(false); // Webhook returns all results at once
 
-      const totalFound = combinedResults.length + webResultsList.length;
-      if (totalFound > 0) {
-        toast.success(`${t('search.found')} ${totalFound} ${t('search.matchingProperties')}`);
+      // Add AI response to conversation
+      const resultCount = data.results_count || webhookResults.length;
+      if (resultCount > 0) {
+        conversation.addAssistantMessage(
+          `Found ${resultCount} properties matching your criteria.`,
+          resultCount
+        );
+        setShowConversation(true);
+        toast.success(`${t('search.found')} ${resultCount} ${t('search.matchingProperties')}`);
       } else {
-        toast.info("No exact matches found. Try adjusting your criteria.");
+        toast.info("No properties found matching your criteria. Try adjusting your filters or expanding your search area.");
       }
       
     } catch (error) {
-      console.error("Search error:", error);
+      clearTimeout(timeoutId);
+      console.error("Webhook search error:", error);
+
+      // Mark sources as error
+      setSearchSources(prev => prev.map(s => ({ ...s, status: 'error' as const })));
 
       if (error instanceof Error) {
-        if (error.message.includes("429") || error.message.includes("rate limit")) {
-          toast.error("Too many requests. Please wait a moment and try again.");
-        } else if (error.message.includes("402")) {
-          toast.error("AI credits exhausted. Please add credits to continue.");
+        if (error.name === 'AbortError') {
+          setSearchErrors(["Search is taking longer than expected. Please try again or refine your filters."]);
+          toast.error("Search timed out. Please try again.");
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          setSearchErrors(["Unable to connect to search service. Please check your connection and try again."]);
+          toast.error("Unable to connect to search service.");
         } else {
+          setSearchErrors([error.message]);
           toast.error("Search failed. Please try again.");
         }
       } else {
+        setSearchErrors(["An unexpected error occurred."]);
         toast.error("Search failed. Please try again.");
       }
     } finally {
@@ -404,7 +422,7 @@ export function PropertySearchChat() {
       setIsSearching(false);
       setHasSearched(true);
     }
-  }, [t, THINKING_MESSAGES, conversation, searchMode]);
+  }, [t, conversation, searchMode, language, results.length]);
 
   // Auto-trigger search when filters or search mode change (debounced)
   useEffect(() => {
@@ -493,7 +511,7 @@ export function PropertySearchChat() {
   // Combine AI and web sources for display
   const allSourcesSearched = useMemo(() => {
     const sources = new Set<string>();
-    sources.add("KeyNest AI Database");
+    sources.add("Keynez AI Database");
     searchSources.filter(s => s.status === 'done').forEach(s => sources.add(s.name));
     return Array.from(sources);
   }, [searchSources]);
@@ -625,6 +643,8 @@ export function PropertySearchChat() {
                 isSearching={isSearching}
                 totalFound={results.length}
                 errors={searchErrors}
+                loadingMessage={thinkingMessage}
+                estimatedTime="10-30 seconds"
               />
             </div>
           )}

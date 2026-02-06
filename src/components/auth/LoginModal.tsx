@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from './AuthContext';
 import { useTranslation } from '@/hooks/useTranslation';
-import keynestLogo from '@/assets/keynest-logo.png';
+import keynezLogo from '@/assets/keynez-logo.jpg';
 
 const loginSchema = z.object({
   email: z.string().email('auth.invalidEmail'),
@@ -120,7 +120,7 @@ export function LoginModal() {
     <Dialog open={isLoginModalOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader className="flex flex-col items-center gap-4">
-          <img src={keynestLogo} alt="Keynest AI" className="h-10 w-auto" />
+          <img src={keynezLogo} alt="Keynez AI" className="h-10 w-auto" />
           <DialogTitle className="sr-only">
             {activeTab === 'login' ? t('auth.login') : t('auth.signup')}
           </DialogTitle>
