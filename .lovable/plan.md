@@ -1,281 +1,191 @@
 
-# Landing Page Images, Logo Enhancement & Color Theme Update
+# Implementation Plan: Keynez Rebrand + n8n Webhook Integration
 
 ## Overview
-This plan implements four key visual changes:
-1. **Hong Kong skyline photo** as landing page backdrop (first uploaded image)
-2. **Google Maps screenshot** replacing the current dummy SVG map (second uploaded image)
-3. **Enlarged logo** in header and **add logo** to footer bottom-left
-4. **Light blue primary / Yellow secondary** color theme adjustment
+
+This plan covers three major changes:
+1. Rebrand from "Keynest" to "Keynez" across the entire application
+2. Replace the logo with the new uploaded image
+3. Integrate the AI chatbot with an external n8n workflow via webhook
 
 ---
 
-## File Changes Summary
+## Part 1: Company Rebrand (Keynest → Keynez)
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/assets/hong-kong-backdrop.jpg` | Create (copy) | Landing page hero background image |
-| `src/assets/hong-kong-map.png` | Create (copy) | Dummy Google Maps image |
-| `src/index.css` | Modify | Update color scheme to light blue primary, yellow secondary |
-| `src/components/landing/HeroSection.tsx` | Modify | Add backdrop image with overlay |
-| `src/components/map/DummyHongKongMap.tsx` | Modify | Replace SVG with actual map image |
-| `src/components/layout/Header.tsx` | Modify | Enlarge logo (from h-8/h-10 to h-12/h-14) |
-| `src/components/layout/Footer.tsx` | Modify | Add logo in bottom-left of copyright section |
+### Files to Update
+
+| File | Change Type |
+|------|-------------|
+| `src/assets/` | Add new logo file (copy from upload) |
+| `src/components/layout/Header.tsx` | Update logo import, alt text |
+| `src/components/layout/Footer.tsx` | Update logo references, alt text, localStorage key |
+| `src/translations/index.ts` | Replace "Keynest" → "Keynez" in all 3 languages |
+| `src/contexts/LanguageContext.tsx` | Update storage key (`keynest-language` → `keynez-language`) |
+| `src/hooks/useCanvasState.ts` | Update storage keys (`keynest_*` → `keynez_*`) |
+| `src/components/landing/PropertySearchChat.tsx` | Update export filename, references |
+| `src/components/landing/ExportActions.tsx` | Update PDF title, filenames |
+| `src/components/landing/PerplexityResults.tsx` | Update "KeyNest" → "Keynez" |
+| `src/components/landing/PropertyDetailModal.tsx` | Update source name |
+| `src/components/map/GoogleMapView.tsx` | Update comment reference |
+| `index.html` | Update page title and meta tags |
+
+### Total Occurrences
+Approximately 20+ occurrences across 12 files need updating.
 
 ---
 
-## Part 1: Asset Management
+## Part 2: Logo Replacement
 
-### Copy Images to Project
+1. Copy uploaded logo to `src/assets/keynez-logo.jpg`
+2. Update import statements in Header.tsx and Footer.tsx
+3. Adjust logo styling if needed for the new dimensions
+
+---
+
+## Part 3: n8n Webhook Integration
+
+### Overview
+Replace the current dual-search (AI database + Firecrawl) with a single n8n webhook call that handles all search orchestration externally.
+
+### Webhook Configuration
 ```text
-user-uploads://Hong_Kong.jpg → src/assets/hong-kong-backdrop.jpg
-user-uploads://Screenshot_2026-02-02_at_23.55.36.png → src/assets/hong-kong-map.png
+URL: https://properly.app.n8n.cloud/webhook-test/keynez_agent_input
+Method: POST
+Content-Type: application/json
+Timeout: 60 seconds
 ```
 
----
+### Technical Implementation
 
-## Part 2: Color Theme Update
+#### A. Create Webhook Service Hook (`src/hooks/useWebhookSearch.ts`)
 
-### Updated CSS Variables (`src/index.css`)
+New hook to manage webhook communication:
 
-Transform the color scheme to use **light blue as primary** and **yellow/gold as secondary accent**:
+- Generate and persist `conversation_id` (UUID) in session storage
+- Handle request timeout with AbortController (60 seconds)
+- Manage loading states with rotating messages
+- Process response and error handling
+- Support follow-up conversations with history
 
-```css
-:root {
-  /* Background: light off-white (keep) */
-  --background: 60 20% 98%;
-  --foreground: 36 38% 13%;
+#### B. Request Payload Structure
 
-  /* Card: pure white (keep) */
-  --card: 0 0% 100%;
-  --card-foreground: 36 38% 13%;
-
-  /* Primary: Light Blue (NEW - was warm brown) */
-  --primary: 199 93% 45%;           /* #0EA5E9 - bright sky blue */
-  --primary-foreground: 0 0% 100%;  /* White text on blue */
-
-  /* Secondary: Golden Yellow (NEW - elevated from accent) */
-  --secondary: 45 100% 51%;         /* #FFC107 - rich gold */
-  --secondary-foreground: 36 38% 13%; /* Dark text on yellow */
-
-  /* Muted: light beige (keep) */
-  --muted: 38 40% 92%;
-  --muted-foreground: 32 19% 36%;
-
-  /* Accent: Yellow/Gold (CTAs, highlights) - keep */
-  --accent: 45 100% 65%;            /* #FFD54F */
-  --accent-foreground: 36 38% 13%;
-
-  /* Border: warm beige (keep) */
-  --border: 38 40% 85%;
-  --input: 38 40% 85%;
-  --ring: 199 93% 45%;              /* Blue ring (updated) */
-
-  /* Sky color for reference */
-  --sky: 199 93% 74%;               /* Light sky blue */
-}
-```
-
-### Visual Color Mapping
 ```text
-+----------------------------------+
-|  BEFORE           →    AFTER     |
-+----------------------------------+
-|  Primary: Brown   →    Blue      |
-|  Secondary: Beige →    Yellow    |
-|  Accent: Yellow   →    Yellow    |
-|  CTA Buttons      →    Yellow bg |
-|  Headers/Links    →    Blue      |
-+----------------------------------+
-```
-
----
-
-## Part 3: Hero Section with Backdrop
-
-### Changes to `HeroSection.tsx`
-
-Add the Hong Kong skyline as a full-bleed background with dark overlay for text readability:
-
-```typescript
-import hongKongBackdrop from '@/assets/hong-kong-backdrop.jpg';
-
-export function HeroSection() {
-  return (
-    <section 
-      className="relative bg-cover bg-center bg-no-repeat min-h-[90vh]"
-      style={{ backgroundImage: `url(${hongKongBackdrop})` }}
-    >
-      {/* Dark gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
-      
-      {/* Content with relative positioning */}
-      <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
-        {/* Title - white text for contrast */}
-        <h1 className="text-white text-shadow-lg ...">
-          {renderTitle()}
-        </h1>
-        
-        {/* ... rest of content */}
-      </div>
-    </section>
-  );
+{
+  user_message: string,
+  filters: {
+    property_type: string[],
+    transaction_type: "Rent" | "Buy",
+    location: string[],
+    price_range: { min, max, currency: "HKD" },
+    bedrooms: number | null,
+    bathrooms: number | null,
+    size_sqft: { min, max },
+    floor_level: string[],
+    building_age: string[],
+    orientation: string[],
+    developer: string[],
+    special_features: string[],
+    furnished: boolean | null,
+    pet_friendly: boolean | null,
+    parking: boolean | null
+  },
+  language: "en" | "zh-HK" | "zh-CN",
+  conversation_id: string,
+  timestamp: ISO string,
+  is_followup?: boolean,
+  previous_results_count?: number,
+  followup_intent?: string,
+  conversation_history?: [{role, message}]
 }
 ```
 
-### Title Text Styling
-- Change from `text-primary` to `text-white` for contrast against backdrop
-- Add `text-accent` for "Hong Kong" highlight (yellow pops on dark bg)
-- Add subtle text shadow for legibility
+#### C. Expected Response Structure
 
----
-
-## Part 4: Dummy Map with Real Image
-
-### Changes to `DummyHongKongMap.tsx`
-
-Replace the SVG-based map with the uploaded Google Maps screenshot:
-
-```typescript
-import hongKongMapImage from '@/assets/hong-kong-map.png';
-
-export function DummyHongKongMap({ ... }) {
-  return (
-    <div className={cn("relative h-[500px] rounded-lg overflow-hidden", className)}>
-      {/* Map Image Background */}
-      <img
-        src={hongKongMapImage}
-        alt="Hong Kong Map"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      
-      {/* Overlay for property markers */}
-      <div className="absolute inset-0">
-        {/* Property markers positioned over the image */}
-        {/* ... marker logic remains similar */}
-      </div>
-      
-      {/* Controls, Legend, etc. remain the same */}
-    </div>
-  );
+```text
+{
+  success: boolean,
+  results_count: number,
+  results: [{
+    building_name, monthly_rent, bedrooms, bathrooms,
+    size_sqft, floor_level, outdoor_space,
+    special_features[], agent_name, agent_contact,
+    reference, source_url, match_score
+  }],
+  insights: string[],
+  agent_recommendations: [{name, specialization, contact}]
 }
 ```
+
+#### D. Update PropertySearchChat Component
 
 Key changes:
-- Remove the SVG `<path>` region shapes
-- Remove the water pattern background
-- Use the uploaded map image as the base layer
-- Keep zoom/pan controls (they'll zoom the image)
-- Keep the legend and property markers overlay
-- Markers will be positioned absolutely over the image
+1. Replace `executeSearch` function to call webhook instead of Edge Functions
+2. Implement enhanced loading state with rotating messages
+3. Add indeterminate progress bar animation
+4. Handle response mapping to existing display components
+5. Disable input during search, enable on completion
+6. Implement 60-second timeout with retry button
+7. Map webhook response to PerplexityResults format
+
+#### E. Loading State Messages
+
+Rotating messages every 2-3 seconds:
+- "Searching 28hse.com for listings..."
+- "Checking Squarefoot database..."
+- "Scanning Spacious listings..."
+- "Searching Midland Realty..."
+- "Checking Centaline properties..."
+- "Gathering results from OneDay..."
+- "Analyzing and ranking properties..."
+- "Preparing your personalized results..."
+
+#### F. Error Handling
+
+| Scenario | User Message |
+|----------|--------------|
+| Timeout (60s) | "Search is taking longer than expected. Please try again or refine your filters." |
+| Network error | "Unable to connect to search service. Please check your connection and try again." |
+| No results | "No properties found matching your criteria. Try adjusting your filters or expanding your search area." |
+
+All errors show a "Retry Search" button.
 
 ---
 
-## Part 5: Logo Size Adjustments
+## Technical Details
 
-### Header Logo (Enlarge)
+### Files to Create
+| File | Purpose |
+|------|---------|
+| `src/hooks/useWebhookSearch.ts` | Webhook communication logic |
 
-```typescript
-// In Header.tsx
-<img
-  src={keynestLogo}
-  alt="Keynest AI"
-  className="h-12 w-auto md:h-14"  // Changed from h-8/h-10
-/>
-```
+### Files to Modify
+| File | Changes |
+|------|---------|
+| `src/components/landing/PropertySearchChat.tsx` | Replace search logic with webhook call, enhanced loading UI |
+| `src/components/landing/SearchProgressIndicator.tsx` | Add indeterminate progress bar, rotating messages |
+| `src/components/landing/PerplexityResults.tsx` | Add agent_recommendations section display |
 
-### Footer Logo (Add to Copyright Section)
+### Dependencies
+No new dependencies required - using native `fetch` API with AbortController.
 
-```typescript
-// In Footer.tsx - Update copyright section
-<div className="mt-12 pt-8 border-t border-primary-foreground/20">
-  <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-    {/* Logo at bottom left */}
-    <Link to="/" className="flex items-center">
-      <img
-        src={keynestLogo}
-        alt="Keynest AI"
-        className="h-10 w-auto brightness-0 invert"
-      />
-    </Link>
-    
-    {/* Copyright at center/right */}
-    <p className="text-sm text-primary-foreground/60">
-      © {currentYear} Keynest AI. {t('footer.copyright')}.
-    </p>
-  </div>
-</div>
-```
+### UI/UX Considerations
+- Search button and input disabled during search
+- Yellow accent (#FFD54F) spinner animation
+- Fade transitions between loading messages
+- Gradient animation on progress bar
+- Smooth fade-in on results appearance
 
 ---
 
-## Visual Layout Summary
+## Testing Considerations
 
-### Hero Section
-```text
-+------------------------------------------------------------------+
-|  [Hong Kong Skyline Photo - Full Width Background]                |
-|  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ Dark Overlay ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓               |
-|                                                                   |
-|      "Find Your Perfect Property in HONG KONG"                    |
-|      (White text with yellow accent)                              |
-|                                                                   |
-|  +--------------------------+  +------------------------+         |
-|  |     AI Chat Box          |  |     Video Demo         |        |
-|  |     (white card)         |  |     (white card)       |        |
-|  +--------------------------+  +------------------------+         |
-|                                                                   |
-|  +----------------------------------------------------------+    |
-|  |                                                          |    |
-|  |          [Google Maps Screenshot]                        |    |
-|  |          with property markers overlay                   |    |
-|  |                                                          |    |
-|  +----------------------------------------------------------+    |
-+------------------------------------------------------------------+
-```
+After implementation, verify:
+1. All "Keynest" → "Keynez" replacements are complete
+2. New logo displays correctly in header and footer
+3. Webhook request sends correct payload structure
+4. Loading states cycle through messages properly
+5. 60-second timeout works correctly
+6. Results display in Perplexity-style format
+7. Follow-up conversations include history
+8. Error states show appropriate messages and retry button
 
-### Footer
-```text
-+------------------------------------------------------------------+
-|  FOOTER CONTENT (4 columns as before)                             |
-+------------------------------------------------------------------+
-|  [Logo]                              © 2026 Keynest AI...         |
-+------------------------------------------------------------------+
-```
-
----
-
-## Implementation Order
-
-1. **Copy assets** - Copy both uploaded images to `src/assets/`
-
-2. **Update color scheme** - Modify `src/index.css` CSS variables
-
-3. **Update HeroSection** - Add backdrop image and overlay styling
-
-4. **Update DummyHongKongMap** - Replace SVG with map image
-
-5. **Update Header** - Enlarge logo
-
-6. **Update Footer** - Add logo to copyright section
-
----
-
-## Technical Notes
-
-### Text Shadow for Hero
-Add a utility class in `src/index.css`:
-```css
-.text-shadow-lg {
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
-```
-
-### Image Optimization
-- The backdrop image will be imported via ES6 modules for proper bundling
-- Vite will optimize the images during build
-
-### Responsive Considerations
-- Backdrop uses `bg-cover bg-center` for proper scaling
-- Map image uses `object-cover` for consistent display
-- Logo sizes adjust at `md:` breakpoint
