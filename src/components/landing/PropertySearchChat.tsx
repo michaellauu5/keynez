@@ -8,9 +8,8 @@ import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
 import { PropertyDetailModal } from "./PropertyDetailModal";
-import { ChatMessageList } from "./ChatMessageList";
-import { PerplexityResults } from "./PerplexityResults";
-import { SearchProgressIndicator, SearchSource } from "./SearchProgressIndicator";
+import { ChatMessageList, WebhookResultData } from "./ChatMessageList";
+import { SearchSource } from "./SearchProgressIndicator";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useConversation, ChatMessage } from "@/hooks/useConversation";
@@ -136,6 +135,9 @@ export function PropertySearchChat() {
   // Webhook-specific state
   const [agentRecommendations, setAgentRecommendations] = useState<AgentRecommendation[]>([]);
   const [webhookInsights, setWebhookInsights] = useState<string[]>([]);
+  
+  // Results data per message (for embedding in chat bubbles)
+  const [messageResults, setMessageResults] = useState<Record<string, WebhookResultData>>({});
   
   // Rotating suggestions
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>(() => 
@@ -381,17 +383,33 @@ export function PropertySearchChat() {
       setCurrentPage(page);
       setHasMore(false); // Webhook returns all results at once
 
-      // Add AI response to conversation
+      // Add AI response to conversation and attach results to it
       const resultCount = data.results_count || webhookResults.length;
       if (resultCount > 0) {
-        conversation.addAssistantMessage(
-          `Found ${resultCount} properties matching your criteria.`,
+        const assistantMsg = conversation.addAssistantMessage(
+          `I found **${resultCount} properties** matching your criteria. Here are the top results:`,
           resultCount
         );
+        
+        // Attach results to this message
+        setMessageResults(prev => ({
+          ...prev,
+          [assistantMsg.id]: {
+            mode: searchMode,
+            results: webhookResults,
+            insights: data.insights || [],
+            agentRecommendations: data.agent_recommendations || [],
+            highlightTerms: terms,
+          }
+        }));
+        
         setShowConversation(true);
         toast.success(`${t('search.found')} ${resultCount} ${t('search.matchingProperties')}`);
       } else {
-        toast.info("No properties found matching your criteria. Try adjusting your filters or expanding your search area.");
+        conversation.addAssistantMessage(
+          "No properties found matching your criteria. Try adjusting your filters or expanding your search area."
+        );
+        setShowConversation(true);
       }
       
     } catch (error) {
@@ -519,158 +537,91 @@ export function PropertySearchChat() {
   return (
     <>
       <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
-        <CardContent className="p-4 lg:p-6">
-          {/* CRITICAL: Rent vs Buy Toggle - Must be prominent */}
-          <div className="mb-6 flex items-center justify-center">
-            <div className="inline-flex items-center p-1 rounded-full bg-muted border-2 border-muted">
-              <Button
-                variant={searchMode === "rent" ? "default" : "ghost"}
-                size="sm"
-                className={cn(
-                  "rounded-full px-6 gap-2 transition-all",
-                  searchMode === "rent" && "bg-accent text-accent-foreground shadow-md"
-                )}
-                onClick={() => setSearchMode("rent")}
-              >
-                <Key className="h-4 w-4" />
-                For Rent
-              </Button>
-              <Button
-                variant={searchMode === "buy" ? "default" : "ghost"}
-                size="sm"
-                className={cn(
-                  "rounded-full px-6 gap-2 transition-all",
-                  searchMode === "buy" && "bg-primary text-primary-foreground shadow-md"
-                )}
-                onClick={() => setSearchMode("buy")}
-              >
-                <Home className="h-4 w-4" />
-                For Sale
-              </Button>
+        <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px', maxHeight: '80vh' }}>
+          {/* Header: Rent/Buy Toggle + Filters */}
+          <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
+            {/* CRITICAL: Rent vs Buy Toggle */}
+            <div className="mb-4 flex items-center justify-center">
+              <div className="inline-flex items-center p-1 rounded-full bg-muted border-2 border-muted">
+                <Button
+                  variant={searchMode === "rent" ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "rounded-full px-6 gap-2 transition-all",
+                    searchMode === "rent" && "bg-accent text-accent-foreground shadow-md"
+                  )}
+                  onClick={() => setSearchMode("rent")}
+                >
+                  <Key className="h-4 w-4" />
+                  For Rent
+                </Button>
+                <Button
+                  variant={searchMode === "buy" ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "rounded-full px-6 gap-2 transition-all",
+                    searchMode === "buy" && "bg-primary text-primary-foreground shadow-md"
+                  )}
+                  onClick={() => setSearchMode("buy")}
+                >
+                  <Home className="h-4 w-4" />
+                  For Sale
+                </Button>
+              </div>
             </div>
-          </div>
 
-          {/* Conversation History */}
-          {showConversation && conversation.messages.length > 0 && (
-            <div className="mb-4 border rounded-lg p-3 bg-muted/30">
+            {/* Filter Section */}
+            <div className="mb-3">
               <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Conversation ({conversation.messages.length} messages)</span>
+                <div className="flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">{t('filter.filters')}</span>
+                  {activeFilterCount > 0 && (
+                    <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold">
+                      {activeFilterCount} {t('filter.filtersActive')}
+                    </Badge>
+                  )}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 text-xs"
-                  onClick={() => {
-                    conversation.clearConversation();
-                    setShowConversation(false);
-                  }}
-                >
-                  Clear
-                </Button>
-              </div>
-              <ChatMessageList
-                messages={conversation.messages}
-                suggestions={suggestions}
-                onSuggestionClick={handleSuggestionClick}
-                isLoading={isSearching}
-              />
-            </div>
-          )}
-
-          {/* Filter Section with Active Count Badge */}
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-foreground">{t('filter.filters')}</span>
                 {activeFilterCount > 0 && (
-                  <Badge 
-                    className="bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 text-xs font-semibold"
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={handleClearAllFilters}
                   >
-                    {activeFilterCount} {t('filter.filtersActive')}
-                  </Badge>
+                    <X className="h-3 w-3" />
+                    {t('filter.clearAll')}
+                  </Button>
                 )}
               </div>
-              {activeFilterCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                  onClick={handleClearAllFilters}
-                >
-                  <X className="h-3 w-3" />
-                  {t('filter.clearAll')}
-                </Button>
-              )}
+              <FilterToggleBar filters={filters} onFiltersChange={setFilters} />
             </div>
-            <FilterToggleBar filters={filters} onFiltersChange={setFilters} />
           </div>
 
-          {/* Search Input Section */}
-          <div className="mb-6 flex gap-2">
-            <div className="relative flex-1">
-              <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
-              <Input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={
-                  conversation.hasHistory
-                    ? 'Ask a follow-up: "show more", "3 bedrooms instead", "tell me about #3"...'
-                    : t('search.placeholder')
-                }
-                className="h-12 pl-10 pr-4 text-base"
-                disabled={isSearching}
-              />
-            </div>
-            <Button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="h-12 gap-2 bg-accent px-6 text-accent-foreground hover:bg-accent/90"
-            >
-              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              {t('search.button')}
-            </Button>
-          </div>
+          {/* Chat Messages Area - Scrollable */}
+          <ChatMessageList
+            messages={conversation.messages}
+            suggestions={suggestions}
+            onSuggestionClick={handleSuggestionClick}
+            isLoading={isSearching}
+            searchSources={searchSources}
+            loadingMessage={thinkingMessage}
+            messageResults={messageResults}
+            onRowClick={handleRowClick}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            onAddToCanvas={() => handleAddMultipleToCanvas(selectedIds)}
+            onSearchAgain={() => {
+              setSearchQuery("");
+              setHasSearched(false);
+              conversation.clearConversation();
+              setMessageResults({});
+            }}
+          />
 
-          {/* Search Progress Indicator */}
-          {isSearching && (
-            <div className="mb-6">
-              <SearchProgressIndicator
-                sources={searchSources}
-                isSearching={isSearching}
-                totalFound={results.length}
-                errors={searchErrors}
-                loadingMessage={thinkingMessage}
-                estimatedTime="10-30 seconds"
-              />
-            </div>
-          )}
-
-          {/* Search Results - Perplexity Style */}
-          {!isSearching && hasSearched && (
-            <PerplexityResults
-              mode={searchMode}
-              query={searchQuery}
-              aiResults={results}
-              webResults={webResults}
-              extractedCriteria={extractedCriteria}
-              sourcesSearched={allSourcesSearched}
-              selectedIds={selectedIds}
-              onSelectionChange={setSelectedIds}
-              onRowClick={handleRowClick}
-              onExportCSV={handleExportCSV}
-              onExportPDF={handleExportPDF}
-              onAddToCanvas={handleAddMultipleToCanvas}
-              highlightTerms={highlightTerms}
-            />
-          )}
-
-          {/* Initial state - Show rotating suggestions */}
-          {!isSearching && !hasSearched && (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
+          {/* Initial state - Show when no messages */}
+          {!isSearching && !hasSearched && conversation.messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center flex-1 py-8 text-center px-4">
               <div className="mb-4 rounded-full bg-accent/20 p-4">
                 <Sparkles className="h-8 w-8 text-accent" />
               </div>
@@ -701,7 +652,6 @@ export function PropertySearchChat() {
                 ))}
               </div>
               
-              {/* Refresh suggestions button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -714,22 +664,34 @@ export function PropertySearchChat() {
             </div>
           )}
 
-          {/* Load More Button */}
-          {hasMore && !isSearching && hasSearched && (
-            <div className="mt-6 flex justify-center">
+          {/* Search Input - Pinned at bottom */}
+          <div className="p-4 lg:p-6 pt-3 border-t flex-shrink-0">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
+                <Input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={
+                    conversation.hasHistory
+                      ? 'Ask a follow-up: "show more", "3 bedrooms instead", "tell me about #3"...'
+                      : t('search.placeholder')
+                  }
+                  className="h-12 pl-10 pr-4 text-base"
+                  disabled={isSearching}
+                />
+              </div>
               <Button
-                variant="outline"
-                onClick={handleLoadMore}
-                className="gap-2"
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="h-12 gap-2 bg-accent px-6 text-accent-foreground hover:bg-accent/90"
               >
-                Load More Results
-                <Badge variant="secondary" className="ml-1">
-                  {results.length} / {totalCount}
-                </Badge>
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {t('search.button')}
               </Button>
             </div>
-          )}
-
+          </div>
         </CardContent>
       </Card>
 
