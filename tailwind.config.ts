@@ -72,7 +72,7 @@ export default {
   		},
   		fontFamily: {
   			sans: [
-  				'Inter',
+  				'Work Sans',
   				'ui-sans-serif',
   				'system-ui',
   				'-apple-system',
@@ -85,13 +85,16 @@ export default {
   				'sans-serif'
   			],
   			serif: [
-  				'Inter',
-  				'ui-sans-serif',
-  				'system-ui',
-  				'-apple-system',
-  				'sans-serif'
+  				'Lora',
+  				'ui-serif',
+  				'Georgia',
+  				'Cambria',
+  				'Times New Roman',
+  				'Times',
+  				'serif'
   			],
   			mono: [
+  				'Inconsolata',
   				'ui-monospace',
   				'SFMono-Regular',
   				'Menlo',
@@ -103,22 +106,59 @@ export default {
   			]
   		},
   		fontSize: {
-  			'xs': ['0.75rem', { lineHeight: '1.05rem', letterSpacing: '0.05em' }],
-  			'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-  			'base': ['1.125rem', { lineHeight: '1.8rem' }],
-  			'lg': ['1.25rem', { lineHeight: '1.75rem' }],
-  			'xl': ['1.5rem', { lineHeight: '2rem', fontWeight: '600', letterSpacing: '-0.01em' }],
-  			'2xl': ['2rem', { lineHeight: '2.4rem', fontWeight: '700', letterSpacing: '-0.01em' }],
-  			'3xl': ['2.5rem', { lineHeight: '3rem', fontWeight: '700', letterSpacing: '-0.02em' }],
-  			'4xl': ['3rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.02em' }],
-  			'5xl': ['4rem', { lineHeight: '1.1', fontWeight: '700', letterSpacing: '-0.02em' }],
+  			xs: [
+  				'0.875rem',
+  				{
+  					lineHeight: '1.25rem'
+  				}
+  			],
+  			sm: [
+  				'1rem',
+  				{
+  					lineHeight: '1.5rem'
+  				}
+  			],
+  			base: [
+  				'1.125rem',
+  				{
+  					lineHeight: '1.75rem'
+  				}
+  			],
+  			lg: [
+  				'1.25rem',
+  				{
+  					lineHeight: '1.75rem'
+  				}
+  			],
+  			xl: [
+  				'1.5rem',
+  				{
+  					lineHeight: '2rem'
+  				}
+  			],
+  			'2xl': [
+  				'2rem',
+  				{
+  					lineHeight: '2.25rem'
+  				}
+  			],
+  			'3xl': [
+  				'2.5rem',
+  				{
+  					lineHeight: '2.75rem'
+  				}
+  			],
+  			'4xl': [
+  				'3rem',
+  				{
+  					lineHeight: '1.1'
+  				}
+  			]
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)',
-  			xl: '1rem',
-  			'2xl': '1.5rem',
+  			sm: 'calc(var(--radius) - 4px)'
   		},
   		boxShadow: {
   			card: '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.06)',
@@ -129,25 +169,24 @@ export default {
   			md: 'var(--shadow-md)',
   			lg: 'var(--shadow-lg)',
   			xl: 'var(--shadow-xl)',
-  			'2xl': 'var(--shadow-2xl)',
-  			'glow': '0 4px 12px hsl(45 97% 65% / 0.3)',
-  		},
-  		spacing: {
-  			'18': '4.5rem',
-  			'22': '5.5rem',
-  			'26': '6.5rem',
-  			'30': '7.5rem',
-  			'section': '6rem',
-  			'section-lg': '8rem',
+  			'2xl': 'var(--shadow-2xl)'
   		},
   		keyframes: {
   			'accordion-down': {
-  				from: { height: '0' },
-  				to: { height: 'var(--radix-accordion-content-height)' }
+  				from: {
+  					height: '0'
+  				},
+  				to: {
+  					height: 'var(--radix-accordion-content-height)'
+  				}
   			},
   			'accordion-up': {
-  				from: { height: 'var(--radix-accordion-content-height)' },
-  				to: { height: '0' }
+  				from: {
+  					height: 'var(--radix-accordion-content-height)'
+  				},
+  				to: {
+  					height: '0'
+  				}
   			}
   		},
   		animation: {
