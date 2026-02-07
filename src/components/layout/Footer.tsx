@@ -78,7 +78,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              <img alt="Keynez AI" className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain brightness-0 invert" src={keynezLogo} />
+              
             </Link>
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               {t('footer.description')}
