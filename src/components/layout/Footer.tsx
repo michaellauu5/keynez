@@ -124,7 +124,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo at bottom left */}
             <Link to="/" className="flex items-center">
-              <img src={keynezLogo} alt="Keynez AI" className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain brightness-0 invert" />
+              
             </Link>
             
             {/* Copyright */}
