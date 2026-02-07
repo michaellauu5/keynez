@@ -4,6 +4,7 @@ import { Play, Pause } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { useTranslation } from "@/hooks/useTranslation";
+import demoVideoBg from "@/assets/demo-video-bg.jpg";
 export function VideoDemo() {
   const {
     t
@@ -57,7 +58,7 @@ export function VideoDemo() {
       <div className="relative overflow-hidden rounded-xl shadow-lg">
         <AspectRatio ratio={16 / 9}>
           {/* Video Element */}
-          <video ref={videoRef} className="h-full w-full object-cover" poster="/placeholder.svg" preload="metadata">
+          <video ref={videoRef} className="h-full w-full object-cover" poster={demoVideoBg} preload="metadata">
             {/* Add video source when available */}
             <source src="" type="video/mp4" />
             Your browser does not support the video tag.
