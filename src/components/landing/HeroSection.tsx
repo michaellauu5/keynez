@@ -3,7 +3,7 @@ import { VideoDemo } from "./VideoDemo";
 import { DummyHongKongMap } from "@/components/map/DummyHongKongMap";
 import { mockProperties } from "@/data/mockProperties";
 import { useTranslation } from "@/hooks/useTranslation";
-import hongKongBackdrop from "@/assets/hong-kong-backdrop.jpg";
+import heroLivingRoom from "@/assets/hero-living-room.png";
 export function HeroSection() {
   const {
     t,
@@ -26,10 +26,10 @@ export function HeroSection() {
       </>;
   };
   return <section className="relative bg-cover bg-center bg-no-repeat" style={{
-    backgroundImage: `url(${hongKongBackdrop})`
+    backgroundImage: `url(${heroLivingRoom})`
   }}>
       {/* Dark gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70 bg-[#bee0e0]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
       
       {/* Content with relative positioning */}
       <div className="relative z-10 container mx-auto px-4 py-8 lg:py-12">
