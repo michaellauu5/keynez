@@ -28,6 +28,7 @@ export interface FilterState {
 interface FilterToggleBarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
+  searchMode?: 'rent' | 'buy';
 }
 
 const PROPERTY_TYPES = ["Apartment", "House", "Commercial", "Studio", "Penthouse"];
@@ -139,6 +140,11 @@ function MultiSelectFilter({ label, options, selected, onChange, clearLabel }: M
   );
 }
 
+interface QuickPreset {
+  label: string;
+  value: [number, number];
+}
+
 interface RangeFilterProps {
   label: string;
   min: number;
@@ -148,9 +154,10 @@ interface RangeFilterProps {
   onChange: (value: [number, number]) => void;
   formatValue: (value: number) => string;
   resetLabel: string;
+  quickPresets?: QuickPreset[];
 }
 
-function RangeFilter({ label, min, max, step, value, onChange, formatValue, resetLabel }: RangeFilterProps) {
+function RangeFilter({ label, min, max, step, value, onChange, formatValue, resetLabel, quickPresets }: RangeFilterProps) {
   const hasCustomRange = value[0] !== min || value[1] !== max;
 
   return (
@@ -173,7 +180,7 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue, rese
           <ChevronDown className="h-3 w-3" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-4" align="start">
+      <PopoverContent className="w-80 p-4" align="start">
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm">
             <span>{formatValue(value[0])}</span>
@@ -187,6 +194,24 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue, rese
             onValueChange={(v) => onChange(v as [number, number])}
             className="w-full"
           />
+          {quickPresets && quickPresets.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {quickPresets.map((preset) => (
+                <Button
+                  key={preset.label}
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-7 text-xs rounded-full px-2.5",
+                    value[0] === preset.value[0] && value[1] === preset.value[1] && "bg-[#FFD54F] text-black border-[#FFD54F]"
+                  )}
+                  onClick={() => onChange(preset.value)}
+                >
+                  {preset.label}
+                </Button>
+              ))}
+            </div>
+          )}
           {hasCustomRange && (
             <Button
               variant="ghost"
@@ -203,12 +228,42 @@ function RangeFilter({ label, min, max, step, value, onChange, formatValue, rese
   );
 }
 
-export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarProps) {
+const PRICE_CONFIG = {
+  rent: {
+    min: 2000,
+    max: 100000,
+    step: 1000,
+    format: (v: number) => `HK$${v.toLocaleString()}`,
+    presets: [
+      { label: '< HK$10,000', value: [2000, 10000] as [number, number] },
+      { label: 'HK$10k-20k', value: [10000, 20000] as [number, number] },
+      { label: 'HK$20k-30k', value: [20000, 30000] as [number, number] },
+      { label: 'HK$30k-50k', value: [30000, 50000] as [number, number] },
+      { label: '> HK$50,000', value: [50000, 100000] as [number, number] },
+    ],
+  },
+  buy: {
+    min: 1000000,
+    max: 90000000,
+    step: 500000,
+    format: (v: number) => `HK$${(v / 10000).toLocaleString()}万`,
+    presets: [
+      { label: '< HK$500万', value: [1000000, 5000000] as [number, number] },
+      { label: '500万-1000万', value: [5000000, 10000000] as [number, number] },
+      { label: '1000万-2000万', value: [10000000, 20000000] as [number, number] },
+      { label: '2000万-5000万', value: [20000000, 50000000] as [number, number] },
+      { label: '> HK$5000万', value: [50000000, 90000000] as [number, number] },
+    ],
+  },
+};
+
+export function FilterToggleBar({ filters, onFiltersChange, searchMode = 'rent' }: FilterToggleBarProps) {
   const { t } = useTranslation();
+  const priceConfig = PRICE_CONFIG[searchMode];
   
   const activeFiltersCount = [
     filters.propertyTypes.length > 0,
-    filters.priceRange[0] !== 0 || filters.priceRange[1] !== 200000000,
+    filters.priceRange[0] !== priceConfig.min || filters.priceRange[1] !== priceConfig.max,
     filters.locations.length > 0,
     filters.bedrooms.length > 0,
     filters.bathrooms.length > 0,
@@ -222,7 +277,7 @@ export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarPro
   const clearAllFilters = () => {
     onFiltersChange({
       propertyTypes: [],
-      priceRange: [0, 200000000],
+      priceRange: [priceConfig.min, priceConfig.max],
       locations: [],
       bedrooms: [],
       bathrooms: [],
@@ -245,14 +300,15 @@ export function FilterToggleBar({ filters, onFiltersChange }: FilterToggleBarPro
           clearLabel={t('filter.clearSelection')}
         />
         <RangeFilter
-          label={t('filter.price')}
-          min={0}
-          max={200000000}
-          step={1000000}
+          label={searchMode === 'rent' ? '月租' : '售价'}
+          min={priceConfig.min}
+          max={priceConfig.max}
+          step={priceConfig.step}
           value={filters.priceRange}
           onChange={(v) => onFiltersChange({ ...filters, priceRange: v })}
-          formatValue={(v) => `HK$${(v / 1000000).toFixed(0)}M`}
+          formatValue={priceConfig.format}
           resetLabel={t('filter.resetRange')}
+          quickPresets={priceConfig.presets}
         />
         <MultiSelectFilter
           label={t('filter.location')}
