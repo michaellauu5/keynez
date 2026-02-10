@@ -38,9 +38,14 @@ interface ExtractedCriteria {
 const N8N_WEBHOOK_URL = 'https://properly.app.n8n.cloud/webhook-test/keynez_agent_input';
 const WEBHOOK_TIMEOUT_MS = 60000;
 
-const DEFAULT_FILTERS: FilterState = {
+const PRICE_DEFAULTS = {
+  rent: [2000, 100000] as [number, number],
+  buy: [1000000, 90000000] as [number, number],
+};
+
+const getDefaultFilters = (mode: 'rent' | 'buy'): FilterState => ({
   propertyTypes: [],
-  priceRange: [0, 200000000],
+  priceRange: PRICE_DEFAULTS[mode],
   locations: [],
   bedrooms: [],
   bathrooms: [],
@@ -49,12 +54,15 @@ const DEFAULT_FILTERS: FilterState = {
   buildingAge: [],
   orientations: [],
   developers: [],
-};
+});
 
-function countActiveFilters(filters: FilterState): number {
+const DEFAULT_FILTERS: FilterState = getDefaultFilters('rent');
+
+function countActiveFilters(filters: FilterState, mode: 'rent' | 'buy'): number {
+  const defaults = PRICE_DEFAULTS[mode];
   let count = 0;
   if (filters.propertyTypes.length > 0) count++;
-  if (filters.priceRange[0] !== 0 || filters.priceRange[1] !== 200000000) count++;
+  if (filters.priceRange[0] !== defaults[0] || filters.priceRange[1] !== defaults[1]) count++;
   if (filters.locations.length > 0) count++;
   if (filters.bedrooms.length > 0) count++;
   if (filters.bathrooms.length > 0) count++;
@@ -155,12 +163,14 @@ export function PropertySearchChat() {
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastFiltersRef = useRef<FilterState>(DEFAULT_FILTERS);
   const lastSearchModeRef = useRef<"rent" | "buy">("rent");
+  const inputRef = useRef<HTMLInputElement>(null);
   
-  const activeFilterCount = countActiveFilters(filters);
+  const activeFilterCount = countActiveFilters(filters, searchMode);
 
-  // Rotate suggestions when mode changes
+  // Rotate suggestions when mode changes & reset price range
   useEffect(() => {
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
+    setFilters(prev => ({ ...prev, priceRange: PRICE_DEFAULTS[searchMode] }));
   }, [searchMode]);
 
   const refreshSuggestions = useCallback(() => {
@@ -238,8 +248,8 @@ export function PropertySearchChat() {
         transaction_type: searchMode === 'rent' ? 'Rent' : 'Buy',
         location: currentFilters.locations,
         price_range: {
-          min: currentFilters.priceRange[0] > 0 ? currentFilters.priceRange[0] : null,
-          max: currentFilters.priceRange[1] < 200000000 ? currentFilters.priceRange[1] : null,
+          min: currentFilters.priceRange[0] > PRICE_DEFAULTS[searchMode][0] ? currentFilters.priceRange[0] : null,
+          max: currentFilters.priceRange[1] < PRICE_DEFAULTS[searchMode][1] ? currentFilters.priceRange[1] : null,
           currency: 'HKD' as const,
         },
         bedrooms: currentFilters.bedrooms.length > 0 
@@ -282,16 +292,20 @@ export function PropertySearchChat() {
     const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 
     try {
+      console.log('Sending webhook payload:', webhookPayload);
+      
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(webhookPayload),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
+      console.log('Webhook response status:', response.status);
 
       // Mark all sources as done
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'done' as const })));
@@ -300,7 +314,23 @@ export function PropertySearchChat() {
         throw new Error(`Search failed with status ${response.status}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      if (!responseText || responseText.trim() === '') {
+        console.warn('Webhook returned empty response body');
+        conversation.addAssistantMessage("Search completed but no data was returned. Please try again.");
+        setShowConversation(true);
+        return;
+      }
+      
+      let data: any;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseErr) {
+        console.error('Failed to parse webhook response:', responseText.substring(0, 200));
+        throw new Error('Invalid response from search service');
+      }
+      
+      console.log('Webhook response data:', data);
 
       if (!data.success && data.error) {
         throw new Error(data.error);
@@ -475,6 +505,7 @@ export function PropertySearchChat() {
   }, [filters, searchMode, hasSearched, searchQuery, executeSearch]);
 
   const handleSearch = async () => {
+    if (isSearching || !searchQuery.trim()) return;
     lastFiltersRef.current = filters;
     await executeSearch(searchQuery, filters, 1, conversation.hasHistory);
   };
@@ -486,9 +517,10 @@ export function PropertySearchChat() {
   };
 
   const handleClearAllFilters = () => {
-    setFilters(DEFAULT_FILTERS);
+    const defaults = getDefaultFilters(searchMode);
+    setFilters(defaults);
     if (hasSearched) {
-      executeSearch(searchQuery, DEFAULT_FILTERS, 1, true);
+      executeSearch(searchQuery, defaults, 1, true);
     }
   };
 
@@ -500,7 +532,7 @@ export function PropertySearchChat() {
 
   const handleSuggestionClick = (suggestion: string) => {
     setSearchQuery(suggestion);
-    executeSearch(suggestion, filters, 1, true);
+    inputRef.current?.focus();
   };
 
   const handleRowClick = (property: PropertyResult | WebSearchResult) => {
@@ -594,7 +626,7 @@ export function PropertySearchChat() {
                   </Button>
                 )}
               </div>
-              <FilterToggleBar filters={filters} onFiltersChange={setFilters} />
+              <FilterToggleBar filters={filters} onFiltersChange={setFilters} searchMode={searchMode} />
             </div>
           </div>
 
@@ -644,7 +676,7 @@ export function PropertySearchChat() {
                     className="cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => {
                       setSearchQuery(suggestion);
-                      executeSearch(suggestion, filters, 1, false);
+                      inputRef.current?.focus();
                     }}
                   >
                     {suggestion}
@@ -670,6 +702,7 @@ export function PropertySearchChat() {
               <div className="relative flex-1">
                 <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
                 <Input
+                  ref={inputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleKeyDown}
@@ -684,8 +717,13 @@ export function PropertySearchChat() {
               </div>
               <Button
                 onClick={handleSearch}
-                disabled={isSearching}
-                className="h-12 gap-2 bg-accent px-6 text-accent-foreground hover:bg-accent/90"
+                disabled={isSearching || !searchQuery.trim()}
+                className={cn(
+                  "h-12 gap-2 px-6",
+                  searchQuery.trim() 
+                    ? "bg-accent text-accent-foreground hover:bg-accent/90" 
+                    : "bg-muted text-muted-foreground"
+                )}
               >
                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                 {t('search.button')}
