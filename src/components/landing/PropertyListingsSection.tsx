@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { StatCounter } from "./StatCounter";
+import { VideoDemo } from "./VideoDemo";
 import { FilterSidebar, type FilterState } from "./FilterSidebar";
 import { PropertyGrid } from "./PropertyGrid";
 import { GoogleMapView } from "@/components/map/GoogleMapView";
@@ -95,8 +96,13 @@ export function PropertyListingsSection() {
     });
   }, [filters]);
   return <section className="bg-primary-foreground">
-      {/* Stat Counter */}
-      <StatCounter />
+      {/* Stat Counter + Video */}
+      <div className="container px-4 py-12 md:py-16">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+          <StatCounter />
+          <VideoDemo />
+        </div>
+      </div>
 
       {/* Main Content */}
       <div className="container px-4 py-8 md:py-12">
