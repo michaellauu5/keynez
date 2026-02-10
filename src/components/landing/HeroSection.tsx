@@ -1,5 +1,4 @@
 import { PropertySearchChat } from "./PropertySearchChat";
-import { VideoDemo } from "./VideoDemo";
 import { useTranslation } from "@/hooks/useTranslation";
 
 export function HeroSection() {
@@ -32,14 +31,9 @@ export function HeroSection() {
           </p>
         </div>
 
-        {/* Two Column Grid */}
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-10">
-          <div className="order-1">
-            <PropertySearchChat />
-          </div>
-          <div className="order-2">
-            <VideoDemo />
-          </div>
+        {/* Chat Only */}
+        <div className="mx-auto max-w-2xl">
+          <PropertySearchChat />
         </div>
       </div>
     </section>
