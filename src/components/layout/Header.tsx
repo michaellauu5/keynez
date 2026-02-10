@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Language, languageNames } from '@/translations';
-import keynezLogo from '@/assets/keynez-logo.jpg';
+import keynezLogo from '@/assets/keynez-logo-new.png';
 
 const navLinks = [
   { labelKey: 'nav.home', href: '/' },
