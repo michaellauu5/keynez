@@ -48,11 +48,6 @@ export function VideoDemo() {
     }
   };
   return <div className="flex h-full flex-col">
-      {/* Title Section */}
-      <div className="mb-4 text-center lg:text-left">
-        
-        
-      </div>
 
       {/* Video Container */}
       <div className="relative overflow-hidden rounded-xl shadow-lg">
@@ -89,9 +84,5 @@ export function VideoDemo() {
         </AspectRatio>
       </div>
 
-      {/* Caption Below */}
-      <p className="mt-4 text-center text-sm lg:text-left text-primary-foreground">
-        {t('video.caption')}
-      </p>
     </div>;
 }

@@ -300,7 +300,7 @@ export function FilterToggleBar({ filters, onFiltersChange, searchMode = 'rent' 
           clearLabel={t('filter.clearSelection')}
         />
         <RangeFilter
-          label={searchMode === 'rent' ? '月租' : '售价'}
+          label={searchMode === 'rent' ? t('filter.monthlyRent') : t('filter.salePrice')}
           min={priceConfig.min}
           max={priceConfig.max}
           step={priceConfig.step}

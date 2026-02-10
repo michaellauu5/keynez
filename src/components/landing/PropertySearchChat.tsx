@@ -569,7 +569,7 @@ export function PropertySearchChat() {
   return (
     <>
       <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
-        <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px', maxHeight: '80vh' }}>
+        <CardContent className="p-0 flex flex-col" style={{ minHeight: '500px' }}>
           {/* Header: Rent/Buy Toggle + Filters */}
           <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
             {/* CRITICAL: Rent vs Buy Toggle */}
@@ -651,50 +651,6 @@ export function PropertySearchChat() {
             }}
           />
 
-          {/* Initial state - Show when no messages */}
-          {!isSearching && !hasSearched && conversation.messages.length === 0 && (
-            <div className="flex flex-col items-center justify-center flex-1 py-8 text-center px-4">
-              <div className="mb-4 rounded-full bg-accent/20 p-4">
-                <Sparkles className="h-8 w-8 text-accent" />
-              </div>
-              <h3 className="mb-2 font-serif text-lg font-semibold">
-                {searchMode === 'rent' ? 'Find Rental Properties' : 'Find Properties for Sale'}
-              </h3>
-              <p className="max-w-md text-sm text-muted-foreground mb-1">
-                {t('search.initialDescription')}
-              </p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Searches AI database + 9 Hong Kong property portals simultaneously
-              </p>
-              
-              {/* Rotating Suggestions */}
-              <div className="flex flex-wrap justify-center gap-2 mb-3">
-                {promptSuggestions.map((suggestion, idx) => (
-                  <Badge
-                    key={`${suggestion}-${idx}`}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => {
-                      setSearchQuery(suggestion);
-                      inputRef.current?.focus();
-                    }}
-                  >
-                    {suggestion}
-                  </Badge>
-                ))}
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 gap-1 text-xs text-muted-foreground"
-                onClick={refreshSuggestions}
-              >
-                <RefreshCw className="h-3 w-3" />
-                More suggestions
-              </Button>
-            </div>
-          )}
 
           {/* Search Input - Pinned at bottom */}
           <div className="p-4 lg:p-6 pt-3 border-t flex-shrink-0">
