@@ -95,7 +95,7 @@ export function PropertyListingsSection() {
       return true;
     });
   }, [filters]);
-  return <section className="bg-primary-foreground">
+  return <section className="bg-black/20 backdrop-blur-sm">
       {/* Stat Counter + Video */}
       <div className="container px-4 py-12 md:py-16">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
