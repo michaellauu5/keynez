@@ -57,9 +57,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "Connect With Us",
 
     // Hero Section
-    "hero.title": "Find Your Perfect Property in",
+    "hero.title": "Your Property Intelligence Companion in ",
     "hero.titleAccent": "Hong Kong",
-    "hero.subtitle": "Powered by AI. Search in plain language and discover properties that match your lifestyle.",
+    "hero.subtitle": "Fullest property source coverage in town. Professional guidance for every step of your property search.",
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
@@ -114,6 +114,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "filter.seaView": "Sea View",
     "filter.pool": "Pool",
     "filter.gym": "Gym",
+    "filter.monthlyRent": "Monthly Rent",
+    "filter.salePrice": "Sale Price",
 
     // Stat Counter
     "stats.activeListings": "Active Listings",
@@ -219,9 +221,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "關注我們",
 
     // Hero Section
-    "hero.title": "在",
-    "hero.titleAccent": "香港",
-    "hero.subtitle": "由人工智能驅動。用自然語言搜尋，發現符合您生活方式的物業。",
+    "hero.title": "新一代 · ",
+    "hero.titleAccent": "智能搵樓助理",
+    "hero.subtitle": "全港最全盤源覆蓋 · 專業指導您搵樓每一步",
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
@@ -276,6 +278,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "filter.seaView": "海景",
     "filter.pool": "泳池",
     "filter.gym": "健身室",
+    "filter.monthlyRent": "月租",
+    "filter.salePrice": "售價",
 
     // Stat Counter
     "stats.activeListings": "個活躍盤源",
@@ -381,9 +385,9 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.connect": "关注我们",
 
     // Hero Section
-    "hero.title": "在",
-    "hero.titleAccent": "香港",
-    "hero.subtitle": "由人工智能驱动。用自然语言搜索，发现符合您生活方式的房产。",
+    "hero.title": "新一代 · ",
+    "hero.titleAccent": "智能搵楼助理",
+    "hero.subtitle": "全港最全房源覆盖 · 专业指导您找房每一步",
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
 
@@ -438,6 +442,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "filter.seaView": "海景",
     "filter.pool": "泳池",
     "filter.gym": "健身房",
+    "filter.monthlyRent": "月租",
+    "filter.salePrice": "售价",
 
     // Stat Counter
     "stats.activeListings": "个活跃房源",
