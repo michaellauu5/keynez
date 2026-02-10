@@ -43,7 +43,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-gradient-to-r from-primary/10 via-sky/5 to-accent/10 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/20 backdrop-blur" style={{ backgroundImage: `url(${keynezLogo})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center">
