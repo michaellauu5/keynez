@@ -35,7 +35,7 @@ export function StatCounter({
   return <div ref={containerRef} className="py-12 md:py-16 text-center bg-gradient-to-b from-background to-muted/30">
       <div className="container px-4">
         <div className="inline-block">
-          <p className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-primary-foreground" aria-label={`${value.toLocaleString()} plus ${t('stats.activeListings')}`}>
+          <p className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-muted" aria-label={`${value.toLocaleString()} plus ${t('stats.activeListings')}`}>
             {formattedValue}+
           </p>
           <div className="mt-2 h-1 w-full bg-accent rounded-full" />
