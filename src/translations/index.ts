@@ -59,7 +59,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Hero Section
     "hero.title": "Your Property Intelligence Companion in ",
     "hero.titleAccent": "Hong Kong",
-    "hero.subtitle": "Fullest property source coverage in town. Professional guidance for every step of your property search.",
+    "hero.subtitle": "Your first companion for property search in Hong Kong · Fullest property source coverage in town\n One stop professional comparioson tool\n Best place to find great property deals · powered by AI",
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
@@ -223,7 +223,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Hero Section
     "hero.title": "新一代 · ",
     "hero.titleAccent": "智能搵樓助理",
-    "hero.subtitle": "全港最全盤源覆蓋 · 專業指導您搵樓每一步",
+    "hero.subtitle": "搵樓第一步 · 涵蓋全港所有平台盤源\n專業對比 · 一眼睇曬\n業主盤 · 筍盤 · AI幫你慳到盡",
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
@@ -387,7 +387,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Hero Section
     "hero.title": "新一代 · ",
     "hero.titleAccent": "智能搵楼助理",
-    "hero.subtitle": "全港最全房源覆盖 · 专业指导您找房每一步",
+    "hero.subtitle": "找房第一步 · 覆盖全港所有平台盘源\n专业对比 · 一眼看清\n业主盘 · 优质房源 · AI帮您规划",
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
 
