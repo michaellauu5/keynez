@@ -15,6 +15,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Language, languageNames } from '@/translations';
 import keynezLogo from '@/assets/keynez-logo-new.png';
+import bannerBg from '@/assets/banner-bg.png';
 
 const navLinks = [
   { labelKey: 'nav.home', href: '/' },
@@ -43,7 +44,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/20 bg-gradient-to-r from-primary/10 via-sky/5 to-accent/10 backdrop-blur">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/20 backdrop-blur" style={{ backgroundImage: `url(${bannerBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center -ml-4 md:-ml-6">
