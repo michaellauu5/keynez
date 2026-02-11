@@ -1,9 +1,9 @@
-export type Language = 'en' | 'zh-HK' | 'zh-CN';
+export type Language = "en" | "zh-HK" | "zh-CN";
 
 export const languageNames: Record<Language, string> = {
-  en: 'English',
-  'zh-HK': '繁體中文',
-  'zh-CN': '简体中文',
+  en: "English",
+  "zh-HK": "繁體中文",
+  "zh-CN": "简体中文",
 };
 
 export const translations: Record<Language, Record<string, string>> = {
@@ -52,19 +52,22 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "Subscribe",
     "footer.subscribeSuccess": "Thank you for subscribing!",
     "footer.copyright": "All rights reserved",
-    "footer.description": "Keynez AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
+    "footer.description":
+      "Keynez AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
     "footer.quickLinks": "Quick Links",
     "footer.connect": "Connect With Us",
 
     // Hero Section
     "hero.title": "Your Property Intelligence Companion in ",
     "hero.titleAccent": "Hong Kong",
-    "hero.subtitle": "Your first companion for property search in Hong Kong · Fullest property source coverage in town\n One stop professional comparioson tool\n Best place to find great property deals · powered by AI",
+    "hero.subtitle":
+      "Fullest property source coverage in town. Professional guidance for every step of your property search.",
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
     // Search Chat
-    "search.placeholder": "Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'",
+    "search.placeholder":
+      "Describe your ideal property... e.g., 'Two-bedroom (500 sqft above) rental apartment within 30 minutes away from Central Station. My budget is around HKD 20,000'",
     "search.button": "Search",
     "search.thinking.analyzing": "Analyzing your requirements...",
     "search.thinking.searching": "Searching property database...",
@@ -76,7 +79,8 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.noResults": "No properties match your criteria",
     "search.noResultsHint": "Try adjusting your search or filters",
     "search.initialTitle": "AI-Powered Property Search",
-    "search.initialDescription": "Describe what you're looking for in natural language, or use the filters above. Our AI will find the most relevant properties for you.",
+    "search.initialDescription":
+      "Describe what you're looking for in natural language, or use the filters above. Our AI will find the most relevant properties for you.",
     "search.emptyState": "Search for properties to see results here",
     "search.found": "Found",
     "search.matchingProperties": "matching properties",
@@ -160,7 +164,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Video Demo
     "video.title": "See How Keynez AI Works",
     "video.subtitle": "AI-powered property search for Hong Kong",
-    "video.caption": "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
+    "video.caption":
+      "Our AI understands your preferences in plain language and finds the perfect properties in seconds.",
     "video.tapToPause": "Tap to pause",
 
     // Common
@@ -216,19 +221,20 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "訂閱",
     "footer.subscribeSuccess": "感謝您的訂閱！",
     "footer.copyright": "版權所有",
-    "footer.description": "Keynez AI 是香港首屈一指的人工智能物業搜尋平台。我們運用先進的人工智能技術，助您找到理想的家。",
+    "footer.description":
+      "Keynez AI 是香港首屈一指的人工智能物業搜尋平台。我們運用先進的人工智能技術，助您找到理想的家。",
     "footer.quickLinks": "快速連結",
     "footer.connect": "關注我們",
 
     // Hero Section
     "hero.title": "新一代 · ",
     "hero.titleAccent": "智能搵樓助理",
-    "hero.subtitle": "搵樓第一步 · 涵蓋全港所有平台盤源\n專業對比 · 一眼睇曬\n業主盤 · 筍盤 · AI幫你慳到盡",
+    "hero.subtitle": "全港最全盤源覆蓋 · 專業指導您搵樓每一步",
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
     // Search Chat
-    "search.placeholder": "描述您理想的物業... 例如：「半山區三房海景單位，五千萬以下」",
+    "search.placeholder": "描述您理想的物業... 例如：「中環站<30分鐘車程，月租2萬蚊左右兩房500呎以上單位」",
     "search.button": "搜尋",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜尋物業資料庫...",
@@ -240,7 +246,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "search.noResults": "沒有符合條件的物業",
     "search.noResultsHint": "請嘗試調整搜尋條件或篩選器",
     "search.initialTitle": "AI 智能物業搜尋",
-    "search.initialDescription": "用自然語言描述您想要的物業，或使用上方的篩選器。我們的 AI 將為您找到最相關的物業。",
+    "search.initialDescription": "描述您想要的物業，或使用上方的篩選器。我們的 AI 將為您找到最相關的物業。",
     "search.emptyState": "搜尋物業以查看結果",
     "search.found": "找到",
     "search.matchingProperties": "個符合條件的物業",
@@ -324,7 +330,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Video Demo
     "video.title": "了解 Keynez AI 如何運作",
     "video.subtitle": "香港 AI 智能物業搜尋",
-    "video.caption": "我們的 AI 能理解您以自然語言表達的偏好，並在數秒內為您找到完美的物業。",
+    "video.caption": "我們的 AI 能理解您表達的偏好，並在數秒內為您找到完美的物業。",
     "video.tapToPause": "點擊暫停",
 
     // Common
@@ -341,7 +347,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "nav.buy": "买房",
     "nav.rent": "租房",
     "nav.sell": "卖房",
-    "nav.research": "研究画板",
+    "nav.research": "楼盘收藏 · 研究对比",
 
     // Auth
     "auth.login": "登录",
@@ -380,19 +386,19 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.subscribe": "订阅",
     "footer.subscribeSuccess": "感谢您的订阅！",
     "footer.copyright": "版权所有",
-    "footer.description": "Keynez AI 是香港首屈一指的人工智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
+    "footer.description": "Keynez AI 是香港覆盖最全的智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
     "footer.quickLinks": "快速链接",
     "footer.connect": "关注我们",
 
     // Hero Section
     "hero.title": "新一代 · ",
     "hero.titleAccent": "智能搵楼助理",
-    "hero.subtitle": "找房第一步 · 覆盖全港所有平台盘源\n专业对比 · 一眼看清\n业主盘 · 优质房源 · AI帮您规划",
+    "hero.subtitle": "全港最全房源覆盖 · 专业指导您找房每一步",
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
 
     // Search Chat
-    "search.placeholder": "描述您理想的房产... 例如：「半山区三房海景单位，五千万以下」",
+    "search.placeholder": "描述您理想的房产... 例如：「中环站<30分钟车程，月租2万左右两房500呎以上单位」",
     "search.button": "搜索",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜索房产数据库...",
