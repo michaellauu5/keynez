@@ -26,7 +26,7 @@ export function HeroSection() {
           <h1 className="font-sans text-3xl font-bold text-white text-shadow-lg sm:text-4xl lg:text-5xl">
             {renderTitle()}
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-white/90 text-shadow-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-white/90 text-shadow-lg whitespace-pre-line">
             {t('hero.subtitle')}
           </p>
         </div>
