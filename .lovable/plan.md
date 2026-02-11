@@ -1,7 +1,15 @@
 
-# Move Logo to Left Edge
 
-## Change
-**File: `src/components/layout/Header.tsx`** (line 49):
-- Add negative left margin to the Link wrapping the logo to eliminate the gap between the logo and the left edge of the page
-- Change `className="flex items-center"` to `className="flex items-center -ml-4 md:-ml-6"` which offsets the container padding (`px-4 md:px-6`) and pushes the logo flush to the left edge
+# Use Wood Texture as Header Banner Background
+
+## Changes
+
+**1. Copy the uploaded image to the project**
+- Copy `user-uploads://banner.png` to `src/assets/banner-bg.png`
+
+**2. File: `src/components/layout/Header.tsx`**
+- Import the banner image: `import bannerBg from '@/assets/banner-bg.png';`
+- On the `<header>` element (line 46), replace the gradient background classes (`bg-gradient-to-r from-primary/10 via-sky/5 to-accent/10`) with an inline style using the banner image as a full-width background (`backgroundImage`, `backgroundSize: cover`, `backgroundPosition: center`)
+- Keep `backdrop-blur`, `border-b`, `sticky top-0 z-50` intact
+- Logo position and all other elements remain unchanged
+
