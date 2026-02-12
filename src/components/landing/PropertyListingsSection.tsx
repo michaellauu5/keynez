@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { StatCounter } from "./StatCounter";
 import { VideoDemo } from "./VideoDemo";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { mockProperties } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useFilterSync } from "@/contexts/FilterSyncContext";
 const defaultFilters: FilterState = {
   transactionType: "all",
   regions: [],
@@ -28,7 +29,25 @@ const defaultFilters: FilterState = {
 };
 type ViewMode = "grid" | "map";
 export function PropertyListingsSection() {
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const { listingFilters, setListingFilters } = useFilterSync();
+  const [internalFilters, setInternalFilters] = useState<FilterState>(defaultFilters);
+  
+  // Merge: external synced fields override internal, but keep amenity booleans from internal
+  const filters: FilterState = {
+    ...internalFilters,
+    propertyTypes: listingFilters.propertyTypes.length > 0 ? listingFilters.propertyTypes : internalFilters.propertyTypes,
+    bedrooms: listingFilters.bedrooms.length > 0 ? listingFilters.bedrooms : internalFilters.bedrooms,
+    bathrooms: listingFilters.bathrooms.length > 0 ? listingFilters.bathrooms : internalFilters.bathrooms,
+    regions: listingFilters.regions.length > 0 ? listingFilters.regions : internalFilters.regions,
+    districts: listingFilters.districts.length > 0 ? listingFilters.districts : internalFilters.districts,
+    transactionType: listingFilters.transactionType,
+    sizeRange: listingFilters.sizeRange,
+  };
+  
+  const setFilters = useCallback((f: FilterState) => {
+    setInternalFilters(f);
+    setListingFilters(f);
+  }, [setListingFilters]);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const isMobile = useIsMobile();

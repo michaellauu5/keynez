@@ -102,14 +102,38 @@ function exportToCSV(results: PropertyResult[], mode: 'rent' | 'buy') {
   link.click();
 }
 
-export function PropertySearchChat() {
+interface PropertySearchChatProps {
+  externalFilters?: FilterState;
+  onFiltersChange?: (filters: FilterState) => void;
+  externalSearchMode?: "rent" | "buy";
+  onSearchModeChange?: (mode: "rent" | "buy") => void;
+}
+
+export function PropertySearchChat({
+  externalFilters,
+  onFiltersChange,
+  externalSearchMode,
+  onSearchModeChange,
+}: PropertySearchChatProps = {}) {
   const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [thinkingMessage, setThinkingMessage] = useState("");
   
   // CRITICAL: Rent vs Buy mode - prevents comingling results
-  const [searchMode, setSearchMode] = useState<"rent" | "buy">("rent");
+  const [searchMode, setSearchModeInternal] = useState<"rent" | "buy">(externalSearchMode || "rent");
+  
+  // Sync searchMode with external
+  const setSearchMode = useCallback((mode: "rent" | "buy") => {
+    setSearchModeInternal(mode);
+    onSearchModeChange?.(mode);
+  }, [onSearchModeChange]);
+  
+  useEffect(() => {
+    if (externalSearchMode && externalSearchMode !== searchMode) {
+      setSearchModeInternal(externalSearchMode);
+    }
+  }, [externalSearchMode]);
   
   // Combined results (from both AI database and web search)
   const [results, setResults] = useState<(PropertyResult & {
@@ -134,7 +158,14 @@ export function PropertySearchChat() {
   const [searchSummary, setSearchSummary] = useState("");
   const [filterSummary, setFilterSummary] = useState("");
   const [highlightTerms, setHighlightTerms] = useState<string[]>([]);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
+  const [filtersInternal, setFiltersInternal] = useState<FilterState>(externalFilters || DEFAULT_FILTERS);
+  
+  // Sync with external filters
+  const filters = externalFilters || filtersInternal;
+  const setFilters = useCallback((f: FilterState) => {
+    setFiltersInternal(f);
+    onFiltersChange?.(f);
+  }, [onFiltersChange]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
@@ -170,7 +201,7 @@ export function PropertySearchChat() {
   // Rotate suggestions when mode changes & reset price range
   useEffect(() => {
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
-    setFilters(prev => ({ ...prev, priceRange: PRICE_DEFAULTS[searchMode] }));
+    setFilters({ ...filters, priceRange: PRICE_DEFAULTS[searchMode] });
   }, [searchMode]);
 
   const refreshSuggestions = useCallback(() => {

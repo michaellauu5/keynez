@@ -1,8 +1,10 @@
 import { PropertySearchChat } from "./PropertySearchChat";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useFilterSync } from "@/contexts/FilterSyncContext";
 
 export function HeroSection() {
   const { t, language } = useTranslation();
+  const { chatFilters, setChatFilters, searchMode, setSearchMode } = useFilterSync();
 
   const renderTitle = () => {
     if (language === 'en') {
@@ -33,7 +35,12 @@ export function HeroSection() {
 
         {/* Chat Only */}
         <div className="mx-auto max-w-2xl">
-          <PropertySearchChat />
+          <PropertySearchChat
+            externalFilters={chatFilters}
+            onFiltersChange={setChatFilters}
+            externalSearchMode={searchMode}
+            onSearchModeChange={setSearchMode}
+          />
         </div>
       </div>
     </section>
