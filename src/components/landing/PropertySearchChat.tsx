@@ -331,6 +331,23 @@ export function PropertySearchChat() {
       }
       
       console.log('Webhook response data:', data);
+      console.log('Response keys:', Object.keys(data));
+
+      // Validate response structure
+      const hasExpectedFormat = data.results !== undefined || data.success !== undefined;
+
+      if (!hasExpectedFormat) {
+        console.warn('Unexpected n8n response format. Expected {success, results, insights, ...} but got:', Object.keys(data));
+        conversation.addAssistantMessage(
+          "The search service returned an unexpected response format. Please check your n8n workflow configuration to ensure it returns the expected JSON structure with `success`, `results`, and `insights` fields.\n\nReceived keys: " + Object.keys(data).join(', ')
+        );
+        setShowConversation(true);
+        clearInterval(thinkingInterval);
+        clearInterval(sourceInterval);
+        setIsSearching(false);
+        setThinkingMessage("");
+        return;
+      }
 
       if (!data.success && data.error) {
         throw new Error(data.error);
@@ -345,8 +362,8 @@ export function PropertySearchChat() {
       })[] = (data.results || []).map((r: any, index: number) => ({
         id: r.reference || `webhook-${index}`,
         name: r.building_name,
-        location: r.location || '',
-        price: searchMode === 'rent' ? (r.monthly_rent || 0) : (r.sale_price || 0),
+        location: r.location || r.district || r.area || '',
+        price: searchMode === 'rent' ? (r.monthly_rent || r.rent || r.price || 0) : (r.sale_price || r.price || 0),
         size: r.size_sqft || 0,
         bedrooms: r.bedrooms || '-',
         bathrooms: r.bathrooms || '-',
@@ -416,8 +433,10 @@ export function PropertySearchChat() {
       // Add AI response to conversation and attach results to it
       const resultCount = data.results_count || webhookResults.length;
       if (resultCount > 0) {
+        const summaryText = data.summary 
+          || `I found **${resultCount} properties** matching your criteria. Here are the top results:`;
         const assistantMsg = conversation.addAssistantMessage(
-          `I found **${resultCount} properties** matching your criteria. Here are the top results:`,
+          summaryText,
           resultCount
         );
         
