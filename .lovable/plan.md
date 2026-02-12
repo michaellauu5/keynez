@@ -1,104 +1,62 @@
 
-
-# Fix Webhook Response Handling for n8n Integration
+# Synchronize Chatbot and Bottom Section Filter Toggles
 
 ## Problem
-
-The webhook sends requests to n8n correctly (status 200), but n8n returns responses in unexpected formats:
-- First call: empty body
-- Subsequent calls: `{"myField":"value"}` (test/placeholder data)
-
-The current code silently fails because it expects a specific response shape (`success`, `results`, `insights`, etc.) and shows generic "no results" messages when the shape doesn't match.
-
-## Root Cause
-
-Two issues:
-1. **n8n side**: The webhook is returning test data, not the expected property results format. This is an n8n workflow configuration issue the user needs to fix separately.
-2. **Frontend side**: The response handling doesn't provide useful feedback about what n8n actually returned, making debugging impossible.
+The chatbot (PropertySearchChat) and the bottom property listings section (PropertyListingsSection) each maintain their own independent filter state. Changing filters in one has no effect on the other.
 
 ## Solution
+Lift filter state up to the Index page and pass it down to both components, with a mapping layer to translate between the two different FilterState interfaces.
 
-Make the frontend response handling more robust and informative so it works correctly when n8n returns proper data AND provides helpful debugging info when it doesn't.
+## Technical Details
 
-## Technical Changes
+### 1. Create a shared filter context (`src/contexts/FilterSyncContext.tsx`)
 
-### File: `src/components/landing/PropertySearchChat.tsx`
+A new React context that holds a single source of truth for filters. It stores the chatbot's `FilterToggleBar.FilterState` as the canonical format and exposes:
+- `chatFilters` / `setChatFilters` -- used by PropertySearchChat
+- `listingFilters` / `setListingFilters` -- used by PropertyListingsSection
+- Internal mapping functions to convert between the two FilterState shapes
 
-**1. Improve response validation and logging (around lines 317-340)**
+**Mapping logic:**
+- `propertyTypes`: same field, direct sync
+- `bedrooms`: chatbot uses `string[]` ("Studio", "1", "2"...), listing uses `number[]` (0, 1, 2...) -- map "Studio" to 0, parse others as integers
+- `bathrooms`: similar string-to-number mapping
+- `locations` (chatbot) maps to `regions` (listing) -- best-effort match by name
+- `priceRange` / `sizeRange`: same tuple format, direct sync
+- `transactionType` in listing maps to `searchMode` in chatbot (rent/buy)
+- Boolean amenity filters (hasParking, petsAllowed, etc.) in the listing sidebar have no direct equivalent in the chatbot toggles, so they remain independent
 
-After parsing the JSON response, add validation that checks whether the response matches the expected format. If it doesn't, log the actual response shape and show a descriptive message:
+### 2. Update `src/pages/Index.tsx`
 
-```typescript
-console.log('Webhook response data:', data);
-console.log('Response keys:', Object.keys(data));
+Wrap `HeroSection` and `PropertyListingsSection` in `FilterSyncProvider`. Pass the shared filter state and callbacks as props to both components.
 
-// Validate response structure
-const hasExpectedFormat = data.results !== undefined || data.success !== undefined;
+### 3. Update `src/components/landing/PropertySearchChat.tsx`
 
-if (!hasExpectedFormat) {
-  console.warn('Unexpected n8n response format. Expected {success, results, insights, ...} but got:', Object.keys(data));
-  conversation.addAssistantMessage(
-    "The search service returned an unexpected response format. Please check your n8n workflow configuration to ensure it returns the expected JSON structure with `success`, `results`, and `insights` fields."
-  );
-  setShowConversation(true);
-  return;
-}
-```
+- Accept optional `externalFilters` and `onExternalFiltersChange` props
+- When filters change internally, also call `onExternalFiltersChange`
+- When `externalFilters` changes from outside, update internal `filters` state
+- Sync `searchMode` (rent/buy) bidirectionally with the listing's `transactionType`
 
-**2. Handle the `summary` field from n8n (around lines 418-443)**
+### 4. Update `src/components/landing/PropertyListingsSection.tsx`
 
-When n8n returns a `summary` field, use it as the assistant message instead of a generic one:
+- Accept optional `externalFilters` and `onExternalFiltersChange` props
+- When filters change internally, also call `onExternalFiltersChange`
+- When `externalFilters` changes from outside, update internal `filters` state
 
-```typescript
-const summaryText = data.summary 
-  || `I found **${resultCount} properties** matching your criteria. Here are the top results:`;
-const assistantMsg = conversation.addAssistantMessage(summaryText, resultCount);
-```
+### 5. Update `src/components/landing/HeroSection.tsx`
 
-**3. Normalize response field names (around lines 340-370)**
+- Pass through filter sync props from context to `PropertySearchChat`
 
-Support both `monthly_rent` / `sale_price` and alternative field names like `price` or `rent` that n8n might use:
-
-```typescript
-price: searchMode === 'rent' 
-  ? (r.monthly_rent || r.rent || r.price || 0) 
-  : (r.sale_price || r.price || 0),
-```
-
-Also handle `location` / `district` / `area`:
-```typescript
-location: r.location || r.district || r.area || '',
-```
-
-**4. Add Accept header already present -- verify Content-Type handling**
-
-The fetch already includes `Accept: application/json`. No change needed here.
-
-### File: `src/hooks/useWebhookSearch.ts`
-
-No changes needed -- this hook isn't actually used in the main search flow (PropertySearchChat has its own inline fetch logic).
-
-## Summary of Changes
-
+### Files Changed
 | File | Change |
 |------|--------|
-| `src/components/landing/PropertySearchChat.tsx` | Add response format validation with descriptive error messages |
-| `src/components/landing/PropertySearchChat.tsx` | Use n8n `summary` field for assistant messages |
-| `src/components/landing/PropertySearchChat.tsx` | Normalize alternative field names in result mapping |
+| `src/contexts/FilterSyncContext.tsx` | New -- shared filter context with mapping logic |
+| `src/pages/Index.tsx` | Wrap in FilterSyncProvider, pass shared state |
+| `src/components/landing/HeroSection.tsx` | Accept and forward filter sync props |
+| `src/components/landing/PropertySearchChat.tsx` | Accept external filter props, sync bidirectionally |
+| `src/components/landing/PropertyListingsSection.tsx` | Accept external filter props, sync bidirectionally |
 
-## What the User Still Needs to Do (n8n Side)
-
-The n8n workflow must be configured to return JSON in this format:
-```json
-{
-  "success": true,
-  "summary": "Found 15 properties...",
-  "results_count": 15,
-  "results": [...],
-  "insights": [...],
-  "agent_recommendations": [...]
-}
-```
-
-Currently it returns `{"myField":"value"}` which is test/placeholder data.
-
+### Behavior
+- User toggles "2 bedrooms" in chatbot filters --> bottom listing section also filters to 2 bedrooms
+- User selects "Eastern" district in bottom sidebar --> chatbot location filter updates to "Eastern"
+- User switches Rent/Buy in chatbot --> bottom listing transactionType changes accordingly
+- Amenity-only filters (parking, pets, etc.) in the bottom sidebar remain independent since the chatbot has no equivalent toggles
