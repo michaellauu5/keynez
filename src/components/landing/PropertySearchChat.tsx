@@ -494,7 +494,7 @@ export function PropertySearchChat({
       
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error("Webhook search error:", error);
+      console.log('❌ Error:', error);
 
       // Mark sources as error
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'error' as const })));
@@ -502,18 +502,19 @@ export function PropertySearchChat({
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           setSearchErrors(["Search is taking longer than expected. Please try again or refine your filters."]);
-          toast.error("Search timed out. Please try again.");
+          conversation.addAssistantMessage("⚠️ Search timed out. Please try again or refine your filters.");
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
           setSearchErrors(["Unable to connect to search service. Please check your connection and try again."]);
-          toast.error("Unable to connect to search service.");
+          conversation.addAssistantMessage("⚠️ Cannot connect to search service. Please check your connection.");
         } else {
           setSearchErrors([error.message]);
-          toast.error("Search failed. Please try again.");
+          conversation.addAssistantMessage(`⚠️ Search failed: ${error.message}. Please try again.`);
         }
       } else {
         setSearchErrors(["An unexpected error occurred."]);
-        toast.error("Search failed. Please try again.");
+        conversation.addAssistantMessage("⚠️ An unexpected error occurred. Please try again.");
       }
+      setShowConversation(true);
     } finally {
       clearInterval(thinkingInterval);
       clearInterval(sourceInterval);
