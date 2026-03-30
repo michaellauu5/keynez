@@ -620,7 +620,7 @@ export function PropertySearchChat({
   return (
     <>
       <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
-        <CardContent className="p-0 flex flex-col" style={{ minHeight: '500px' }}>
+        <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px' }}>
           {/* Header: Rent/Buy Toggle + Filters */}
           <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
             {/* CRITICAL: Rent vs Buy Toggle */}
