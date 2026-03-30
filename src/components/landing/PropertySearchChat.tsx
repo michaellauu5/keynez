@@ -323,7 +323,7 @@ export function PropertySearchChat({
     const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 
     try {
-      console.log('Sending webhook payload:', webhookPayload);
+      console.log('📤 Payload:', webhookPayload);
       
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
