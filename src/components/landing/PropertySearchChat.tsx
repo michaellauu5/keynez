@@ -336,7 +336,7 @@ export function PropertySearchChat({
       });
 
       clearTimeout(timeoutId);
-      console.log('Webhook response status:', response.status);
+      console.log('📥 Status:', response.status);
 
       // Mark all sources as done
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'done' as const })));
