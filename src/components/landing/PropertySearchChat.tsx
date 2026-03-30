@@ -348,7 +348,7 @@ export function PropertySearchChat({
       const responseText = await response.text();
       if (!responseText || responseText.trim() === '') {
         console.warn('Webhook returned empty response body');
-        conversation.addAssistantMessage("Search completed but no data was returned. Please try again.");
+        conversation.addAssistantMessage("⚠️ Search completed but no data was returned. Please try again.");
         setShowConversation(true);
         return;
       }
