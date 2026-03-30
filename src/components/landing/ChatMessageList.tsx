@@ -161,6 +161,18 @@ export function ChatMessageList({
                   {message.resultCount} properties found
                 </Badge>
               )}
+
+              {/* Retry button for error messages */}
+              {message.role === "assistant" && message.content.startsWith("⚠️") && onSearchAgain && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-2 text-xs gap-1"
+                  onClick={onSearchAgain}
+                >
+                  🔄 Retry
+                </Button>
+              )}
             </div>
 
             {/* User avatar */}

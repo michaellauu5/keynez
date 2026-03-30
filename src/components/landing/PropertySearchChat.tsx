@@ -323,7 +323,7 @@ export function PropertySearchChat({
     const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
 
     try {
-      console.log('Sending webhook payload:', webhookPayload);
+      console.log('📤 Payload:', webhookPayload);
       
       const response = await fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
@@ -336,7 +336,7 @@ export function PropertySearchChat({
       });
 
       clearTimeout(timeoutId);
-      console.log('Webhook response status:', response.status);
+      console.log('📥 Status:', response.status);
 
       // Mark all sources as done
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'done' as const })));
@@ -348,7 +348,7 @@ export function PropertySearchChat({
       const responseText = await response.text();
       if (!responseText || responseText.trim() === '') {
         console.warn('Webhook returned empty response body');
-        conversation.addAssistantMessage("Search completed but no data was returned. Please try again.");
+        conversation.addAssistantMessage("⚠️ Search completed but no data was returned. Please try again.");
         setShowConversation(true);
         return;
       }
@@ -361,8 +361,8 @@ export function PropertySearchChat({
         throw new Error('Invalid response from search service');
       }
       
-      console.log('Webhook response data:', data);
-      console.log('Response keys:', Object.keys(data));
+      console.log('📥 Data:', data);
+      console.log('📥 Response keys:', Object.keys(data));
 
       // Validate response structure
       const hasExpectedFormat = data.results !== undefined || data.success !== undefined;
@@ -494,7 +494,7 @@ export function PropertySearchChat({
       
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error("Webhook search error:", error);
+      console.log('❌ Error:', error);
 
       // Mark sources as error
       setSearchSources(prev => prev.map(s => ({ ...s, status: 'error' as const })));
@@ -502,18 +502,19 @@ export function PropertySearchChat({
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           setSearchErrors(["Search is taking longer than expected. Please try again or refine your filters."]);
-          toast.error("Search timed out. Please try again.");
+          conversation.addAssistantMessage("⚠️ Search timed out. Please try again or refine your filters.");
         } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
           setSearchErrors(["Unable to connect to search service. Please check your connection and try again."]);
-          toast.error("Unable to connect to search service.");
+          conversation.addAssistantMessage("⚠️ Cannot connect to search service. Please check your connection.");
         } else {
           setSearchErrors([error.message]);
-          toast.error("Search failed. Please try again.");
+          conversation.addAssistantMessage(`⚠️ Search failed: ${error.message}. Please try again.`);
         }
       } else {
         setSearchErrors(["An unexpected error occurred."]);
-        toast.error("Search failed. Please try again.");
+        conversation.addAssistantMessage("⚠️ An unexpected error occurred. Please try again.");
       }
+      setShowConversation(true);
     } finally {
       clearInterval(thinkingInterval);
       clearInterval(sourceInterval);
@@ -619,7 +620,7 @@ export function PropertySearchChat({
   return (
     <>
       <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
-        <CardContent className="p-0 flex flex-col" style={{ minHeight: '500px' }}>
+        <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px' }}>
           {/* Header: Rent/Buy Toggle + Filters */}
           <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
             {/* CRITICAL: Rent vs Buy Toggle */}
