@@ -361,8 +361,8 @@ export function PropertySearchChat({
         throw new Error('Invalid response from search service');
       }
       
-      console.log('Webhook response data:', data);
-      console.log('Response keys:', Object.keys(data));
+      console.log('📥 Data:', data);
+      console.log('📥 Response keys:', Object.keys(data));
 
       // Validate response structure
       const hasExpectedFormat = data.results !== undefined || data.success !== undefined;
