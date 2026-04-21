@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/components/auth/AuthContext";
+import { FilterSyncProvider } from "@/contexts/FilterSyncContext";
 import { LoginModal } from "@/components/auth/LoginModal";
 import Index from "./pages/Index";
 import ResearchCanvas from "./pages/ResearchCanvas";
@@ -22,15 +23,17 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/buy" element={<BuyPage />} />
-              <Route path="/rent" element={<RentPage />} />
-              <Route path="/research-canvas" element={<ResearchCanvas />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <LoginModal />
+            <FilterSyncProvider>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/buy" element={<BuyPage />} />
+                <Route path="/rent" element={<RentPage />} />
+                <Route path="/research-canvas" element={<ResearchCanvas />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <LoginModal />
+            </FilterSyncProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
