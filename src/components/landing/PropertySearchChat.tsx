@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Sparkles, Loader2, Filter, X, Home, Key } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, Sparkles, Loader2, Filter, X, MessageCircle, Home, Key, RefreshCw, RotateCcw } from "lucide-react";
 import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
@@ -15,7 +16,6 @@ import { useConversation, ChatMessage } from "@/hooks/useConversation";
 import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface ExtractedCriteria {
   locations: string[];
@@ -619,54 +619,64 @@ export function PropertySearchChat({
 
   return (
     <>
-      <Card className="overflow-hidden rounded-md border border-border bg-background/92 shadow-xl backdrop-blur-xl print:border print:shadow-none">
-        <CardContent className="flex min-h-[600px] flex-col p-0">
-          <div className="border-b border-border bg-background/95 px-4 pb-5 pt-5 lg:px-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-normal text-muted-foreground">Keynez search</p>
-                  <h2 className="mt-1 text-2xl font-semibold text-foreground">Search homes with a cleaner browsing flow</h2>
-                </div>
-                <div className="inline-flex items-center rounded-full border border-border bg-muted p-1">
-                  <Button
-                    variant={searchMode === "rent" ? "default" : "ghost"}
-                    size="sm"
-                    className={cn("rounded-full px-5", searchMode === "rent" && "shadow-sm")}
-                    onClick={() => setSearchMode("rent")}
-                  >
-                    <Key className="mr-2 h-4 w-4" />
-                    Rent
-                  </Button>
-                  <Button
-                    variant={searchMode === "buy" ? "default" : "ghost"}
-                    size="sm"
-                    className={cn("rounded-full px-5", searchMode === "buy" && "shadow-sm")}
-                    onClick={() => setSearchMode("buy")}
-                  >
-                    <Home className="mr-2 h-4 w-4" />
-                    Buy
-                  </Button>
-                  <Button variant="ghost" size="sm" className="rounded-full px-5 text-muted-foreground" disabled>
-                    Sell
-                  </Button>
-                </div>
+      <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
+        <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px' }}>
+          {/* Header: Rent/Buy Toggle + Filters */}
+          <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
+            {/* CRITICAL: Rent vs Buy Toggle */}
+            <div className="mb-4 flex items-center justify-center">
+              <div className="inline-flex items-center p-1 rounded-full bg-muted border-2 border-muted">
+                <Button
+                  variant={searchMode === "rent" ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "rounded-full px-6 gap-2 transition-all",
+                    searchMode === "rent" && "bg-accent text-accent-foreground shadow-md"
+                  )}
+                  onClick={() => setSearchMode("rent")}
+                >
+                  <Key className="h-4 w-4" />
+                  For Rent
+                </Button>
+                <Button
+                  variant={searchMode === "buy" ? "default" : "ghost"}
+                  size="sm"
+                  className={cn(
+                    "rounded-full px-6 gap-2 transition-all",
+                    searchMode === "buy" && "bg-primary text-primary-foreground shadow-md"
+                  )}
+                  onClick={() => setSearchMode("buy")}
+                >
+                  <Home className="h-4 w-4" />
+                  For Sale
+                </Button>
               </div>
+            </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Filter Section */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <Filter className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-foreground">{t('filter.filters')}</span>
-                  {activeFilterCount > 0 && <Badge className="rounded-full px-3 py-1 text-xs">{activeFilterCount} {t('filter.filtersActive')}</Badge>}
+                  {activeFilterCount > 0 && (
+                    <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold">
+                      {activeFilterCount} {t('filter.filtersActive')}
+                    </Badge>
+                  )}
                 </div>
                 {activeFilterCount > 0 && (
-                  <Button variant="ghost" size="sm" className="h-8 rounded-full px-3 text-xs" onClick={handleClearAllFilters}>
-                    <X className="mr-1 h-3 w-3" />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+                    onClick={handleClearAllFilters}
+                  >
+                    <X className="h-3 w-3" />
                     {t('filter.clearAll')}
                   </Button>
                 )}
               </div>
-
               <FilterToggleBar filters={filters} onFiltersChange={setFilters} searchMode={searchMode} />
             </div>
           </div>
@@ -694,7 +704,7 @@ export function PropertySearchChat({
 
 
           {/* Search Input - Pinned at bottom */}
-          <div className="border-t border-border bg-background/95 p-4 lg:p-6">
+          <div className="p-4 lg:p-6 pt-3 border-t flex-shrink-0">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Sparkles className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-accent" />
@@ -708,7 +718,7 @@ export function PropertySearchChat({
                       ? 'Ask a follow-up: "show more", "3 bedrooms instead", "tell me about #3"...'
                       : t('search.placeholder')
                   }
-                  className="h-12 rounded-full pl-10 pr-4 text-base"
+                  className="h-12 pl-10 pr-4 text-base"
                   disabled={isSearching}
                 />
               </div>

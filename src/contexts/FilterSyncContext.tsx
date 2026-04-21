@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
 import { FilterState as ChatFilterState } from "@/components/landing/FilterToggleBar";
 import { FilterState as ListingFilterState } from "@/components/landing/FilterSidebar";
 
@@ -16,9 +16,9 @@ const PRICE_DEFAULTS = {
   buy: [1000000, 90000000] as [number, number],
 };
 
-const defaultChatFilters = (mode: "rent" | "buy"): ChatFilterState => ({
+const defaultChatFilters: ChatFilterState = {
   propertyTypes: [],
-  priceRange: PRICE_DEFAULTS[mode],
+  priceRange: PRICE_DEFAULTS.rent,
   locations: [],
   bedrooms: [],
   bathrooms: [],
@@ -27,14 +27,14 @@ const defaultChatFilters = (mode: "rent" | "buy"): ChatFilterState => ({
   buildingAge: [],
   orientations: [],
   developers: [],
-});
+};
 
-const defaultListingFilters = (mode: "rent" | "buy"): ListingFilterState => ({
-  transactionType: mode === "rent" ? "rent" : "sale",
+const defaultListingFilters: ListingFilterState = {
+  transactionType: "all",
   regions: [],
   districts: [],
   propertyTypes: [],
-  priceRange: PRICE_DEFAULTS[mode],
+  priceRange: [0, 200000000],
   sizeRange: [0, 5000],
   bedrooms: [],
   bathrooms: [],
@@ -45,90 +45,107 @@ const defaultListingFilters = (mode: "rent" | "buy"): ListingFilterState => ({
   hasSeaView: null,
   hasPool: null,
   hasGym: null,
-});
+};
+
+// --- Mapping helpers ---
 
 function bedroomsStrToNum(strs: string[]): number[] {
-  return strs.map((s) => (s === "Studio" ? 0 : s === "5+" ? 5 : parseInt(s, 10))).filter((n) => !Number.isNaN(n));
+  return strs.map(s => s === "Studio" ? 0 : s === "5+" ? 5 : parseInt(s)).filter(n => !isNaN(n));
 }
 
 function bedroomsNumToStr(nums: number[]): string[] {
-  return nums.map((n) => (n === 0 ? "Studio" : n >= 5 ? "5+" : String(n)));
+  return nums.map(n => n === 0 ? "Studio" : n >= 5 ? "5+" : String(n));
 }
 
 function bathroomsStrToNum(strs: string[]): number[] {
-  return strs.map((s) => (s === "4+" ? 4 : parseInt(s, 10))).filter((n) => !Number.isNaN(n));
+  return strs.map(s => s === "4+" ? 4 : parseInt(s)).filter(n => !isNaN(n));
 }
 
 function bathroomsNumToStr(nums: number[]): string[] {
-  return nums.map((n) => (n >= 4 ? "4+" : String(n)));
+  return nums.map(n => n >= 4 ? "4+" : String(n));
+}
+
+function modeToTransactionType(mode: "rent" | "buy"): "all" | "sale" | "rent" {
+  return mode === "rent" ? "rent" : "sale";
+}
+
+function transactionTypeToMode(tt: "all" | "sale" | "rent"): "rent" | "buy" | null {
+  if (tt === "rent") return "rent";
+  if (tt === "sale") return "buy";
+  return null; // "all" has no direct mapping
 }
 
 const FilterSyncContext = createContext<FilterSyncContextValue | null>(null);
 
 export function FilterSyncProvider({ children }: { children: ReactNode }) {
+  const [chatFilters, setChatFiltersState] = useState<ChatFilterState>(defaultChatFilters);
+  const [listingFilters, setListingFiltersState] = useState<ListingFilterState>(defaultListingFilters);
   const [searchMode, setSearchModeState] = useState<"rent" | "buy">("rent");
-  const [chatFilters, setChatFiltersState] = useState<ChatFilterState>(defaultChatFilters("rent"));
-  const [listingFilters, setListingFiltersState] = useState<ListingFilterState>(defaultListingFilters("rent"));
+  
+  // Guards to prevent infinite sync loops
+  const syncingRef = useRef(false);
 
-  const setChatFilters = useCallback(
-    (filters: ChatFilterState) => {
-      setChatFiltersState(filters);
-      setListingFiltersState((prev) => ({
-        ...prev,
-        transactionType: searchMode === "rent" ? "rent" : "sale",
-        propertyTypes: filters.propertyTypes,
-        priceRange: filters.priceRange,
-        regions: filters.locations,
-        bedrooms: bedroomsStrToNum(filters.bedrooms),
-        bathrooms: bathroomsStrToNum(filters.bathrooms),
-        sizeRange: filters.sizeRange,
-      }));
-    },
-    [searchMode]
-  );
+  const setChatFilters = useCallback((filters: ChatFilterState) => {
+    setChatFiltersState(filters);
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    
+    // Propagate shared fields to listing filters
+    setListingFiltersState(prev => ({
+      ...prev,
+      propertyTypes: filters.propertyTypes,
+      bedrooms: bedroomsStrToNum(filters.bedrooms),
+      bathrooms: bathroomsStrToNum(filters.bathrooms),
+      regions: filters.locations, // locations → regions (best-effort)
+      sizeRange: filters.sizeRange,
+      // Don't sync priceRange directly — different scales per mode
+    }));
+    
+    syncingRef.current = false;
+  }, []);
 
   const setListingFilters = useCallback((filters: ListingFilterState) => {
     setListingFiltersState(filters);
-    const nextMode = filters.transactionType === "sale" ? "buy" : "rent";
-    setSearchModeState(nextMode);
-    setChatFiltersState((prev) => ({
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+
+    // Propagate shared fields to chat filters
+    setChatFiltersState(prev => ({
       ...prev,
       propertyTypes: filters.propertyTypes,
-      priceRange: filters.priceRange,
-      locations: filters.regions,
       bedrooms: bedroomsNumToStr(filters.bedrooms),
       bathrooms: bathroomsNumToStr(filters.bathrooms),
+      locations: filters.regions, // regions → locations
       sizeRange: filters.sizeRange,
     }));
+
+    // Sync transactionType → searchMode
+    const mappedMode = transactionTypeToMode(filters.transactionType);
+    if (mappedMode) {
+      setSearchModeState(mappedMode);
+    }
+
+    syncingRef.current = false;
   }, []);
 
   const setSearchMode = useCallback((mode: "rent" | "buy") => {
     setSearchModeState(mode);
-    setChatFiltersState((prev) => ({ ...prev, ...defaultChatFilters(mode) }));
-    setListingFiltersState((prev) => ({
+    // Sync to listing transactionType
+    setListingFiltersState(prev => ({
       ...prev,
-      transactionType: mode === "rent" ? "rent" : "sale",
-      priceRange: PRICE_DEFAULTS[mode],
-      propertyTypes: [],
-      regions: [],
-      districts: [],
-      bedrooms: [],
-      bathrooms: [],
-      sizeRange: [0, 5000],
+      transactionType: modeToTransactionType(mode),
     }));
   }, []);
 
   return (
-    <FilterSyncContext.Provider
-      value={{
-        chatFilters,
-        setChatFilters,
-        listingFilters,
-        setListingFilters,
-        searchMode,
-        setSearchMode,
-      }}
-    >
+    <FilterSyncContext.Provider value={{
+      chatFilters,
+      setChatFilters,
+      listingFilters,
+      setListingFilters,
+      searchMode,
+      setSearchMode,
+    }}>
       {children}
     </FilterSyncContext.Provider>
   );

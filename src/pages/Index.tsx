@@ -12,12 +12,14 @@ const Index = () => {
           className="relative min-h-screen"
           style={{
             backgroundImage: `url(${heroLivingRoom})`,
-            backgroundAttachment: "fixed",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundAttachment: 'fixed',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/30 to-background" style={{ position: "fixed", zIndex: 0 }} />
+          {/* Semi-transparent overlay */}
+          <div className="absolute inset-0 bg-black/30" style={{ position: 'fixed', zIndex: 0 }} />
+          
           <div className="relative z-10">
             <HeroSection />
             <PropertyListingsSection />
