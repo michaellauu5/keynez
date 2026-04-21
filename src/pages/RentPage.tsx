@@ -4,10 +4,7 @@ import { ListingsPageLayout } from "@/components/listings/ListingsPageLayout";
 export default function RentPage() {
   return (
     <Layout>
-      <ListingsPageLayout
-        transactionType="rent"
-        title="Properties for Rent"
-      />
+      <ListingsPageLayout transactionType="rent" title="Homes for Rent" />
     </Layout>
   );
 }
