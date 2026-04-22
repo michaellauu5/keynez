@@ -1,65 +1,51 @@
-# Restructure Filters to Match Centaline + Fix CJK Font Consistency
+# Filter Refinements: Price Units, Area Label, Developer i18n, Overseas & School Net Lists
 
-Refactor `FilterToggleBar` to exactly 6 dropdowns mirroring [hk.centanet.com](https://hk.centanet.com/findproperty/en/list/rent), with localized option labels in EN / 繁中 / 简中, and add a CJK-safe font stack so Chinese characters render with consistent weight.
+## Changes
 
-## 1. Six Filter Dropdowns (replaces current 10)
+### 1. `src/translations/index.ts`
 
+**English buy price presets** — replace `万` with millions notation (also applicable to custom range):
 
-| #   | Dropdown          | Behavior                                                                                                                                                                                                                                                                                                                                                                   |
-| --- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Type**          | Single-level multi-select: Apartment, Carpark, Office, Shop                                                                                                                                                                                                                                                                                                                |
-| 2   | **Location**      | Two-level cascading: 6 regions → districts. Regions: Hong Kong Island, Kowloon, New Territories, Outlying Islands, Overseas, School Nets. Each expands inline (accordion) to district checkboxes. (futher cascade to sub districts according to Hong Kong's official district classifications, e.g. wan chai, tsim sha tsui etc. refer to centaline website for reference) |
-| 3   | **Price**         | Preset radio list (Under HK$5,000/mo; 5,000–10,000; 10,000–15,000; 15,000–20,000; 20,000–30,000; 30,000–50,000; >50,000) **+ Custom range** slider toggle. Buy mode swaps to 万-based presets.                                                                                                                                                                              |
-| 4   | **Saleable Area** | Range slider with presets (<300, 300–500, 500–800, 800–1200, 1200+ sqft) + custom.                                                                                                                                                                                                                                                                                         |
-| 5   | **Bedrooms**      | Pill toggles: Studio, 1, 2, 3, 4+                                                                                                                                                                                                                                                                                                                                          |
-| 6   | **More**          | Wide popover with 5 sub-sections: Building Age / Floor (High/Mid/Low) / Developers / Facilities (Pool, Gym, Clubhouse, Parking) / Views (Sea, Mountain, City, Garden) / Characteristics (New, Furnished, Pet-friendly, Duplex).                                                                                                                                            |
+- `filter.opt.price.buy.u500`: "Under HK$5M"
+- `filter.opt.price.buy.500_1000`: "HK$5M – 10M"
+- `filter.opt.price.buy.1000_2000`: "HK$10M – 20M"
+- `filter.opt.price.buy.2000_5000`: "HK$20M – 50M"
+- `filter.opt.price.buy.5000p`: "Above HK$50M"
 
+(Chinese 萬 / 万 versions stay as-is.)
 
-Existing FilterState shape extended with `districts: string[]` and `facilities: string[]`, `views: string[]`, `characteristics: string[]`. `bathrooms`, `orientations` removed from the toggle bar (kept in advanced sidebar to avoid breaking other components).
+**English label**: change `filter.area` from "Saleable Area" → **"Area"**. Traditional/Simplified Chinese keep `實用面積` / `实用面积`.
 
-## 2. Localized Option Labels (3 languages)
+**Add developer translation keys** for all 8 developers in EN / zh-HK / zh-CN, e.g.:
 
-Currently option lists (`PROPERTY_TYPES`, `LOCATIONS`, `BEDROOMS`, etc.) are hardcoded English strings. Move them to `src/translations/index.ts` under new keys, e.g.:
+- Sun Hung Kai → 新鴻基地產 / 新鸿基地产
+- Henderson Land → 恒基兆業 / 恒基兆业
+- New World Development → 新世界發展 / 新世界发展
+- Cheung Kong → 長江實業 / 长江实业
+- Sino Land → 信和置業 / 信和置业
+- Hang Lung → 恆隆地產 / 恒隆地产
+- Wharf Holdings → 九龍倉 / 九龙仓
+- Kerry Properties → 嘉里建設 / 嘉里建设
 
-```
-filter.opt.type.apartment   → Apartment / 住宅 / 住宅
-filter.opt.type.carpark     → Carpark   / 車位 / 车位
-filter.opt.region.hki       → Hong Kong Island / 香港島 / 香港岛
-filter.opt.region.kln       → Kowloon / 九龍 / 九龙
-...
-```
+**Add Overseas region keys** (8 destinations): UK, Canada, Australia, Singapore, Japan, Thailand, Malaysia, USA — translated in 3 languages.
 
-Replace hardcoded arrays in `FilterToggleBar` with arrays of translation keys, render via `t(key)`. Selected values stored as canonical English keys (so filtering logic in `PropertyListingsSection` and `FilterSyncContext` mapping doesn't break).
+**Add School Nets keys** organized into 3 groups (Primary / Secondary / University), with HK official Centaline-style nets:
 
-## 3. CJK Font Consistency
+- **Primary nets** (12 representative): 11, 12, 14, 16, 18, 31, 34, 35, 40, 41, 91, 95
+- **Secondary**: HK Island, Kowloon, NT regional bands
+- **Universities**: HKU, CUHK, HKUST, PolyU, CityU, HKBU etc. 
 
-The current `--font-sans` (`Work Sans`) has no Chinese glyphs, so the browser falls back to the system Chinese font per-character — causing the inconsistent weight ("bold characters sparingly") the user reported.
+Each with `filter.opt.schoolnet.*` keys in 3 languages (English uses "Primary Net 11" / Chinese uses "小學11校網" / "小学11校网" etc.)
 
-**Fix in `src/index.css`:**
+### 2. `src/components/landing/FilterToggleBar.tsx`
 
-- Import Noto Sans TC (繁) and Noto Sans SC (简) at weights 400/500/600/700 from Google Fonts.
-- Update `--font-sans` to: `'Work Sans', 'Noto Sans TC', 'Noto Sans SC', ui-sans-serif, system-ui, ...`
-- Add `html[lang="zh-HK"]` → font-family includes Noto Sans TC first; `html[lang="zh-CN"]` → Noto Sans SC first.
-- Wire `LanguageContext` to set `document.documentElement.lang` whenever language changes.
+**Fix `DEVELOPER_OPTIONS**` — replace placeholder `tKey` (currently the English name itself) with proper translation keys like `filter.opt.dev.shk`, `filter.opt.dev.henderson`, etc. so the `t(opt.tKey)` lookup succeeds in Chinese. Currently the fallback `t(opt.tKey) === opt.tKey ? opt.value : t(opt.tKey)` always returns English.
 
-This guarantees one consistent typeface family across all CJK glyphs at every weight.
+**Populate `Overseas` districts** array with 8 destination entries (UK, Canada, Australia, Singapore, Japan, Thailand, Malaysia, USA) using new translation keys.
 
-## Files Changed
-
-
-| File                                                            | Change                                                                                                                     |
-| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `src/components/landing/FilterToggleBar.tsx`                    | Rewrite to 6 dropdowns with cascading Location and "More" mega-popover; use translation keys                               |
-| `src/translations/index.ts`                                     | Add `filter.opt.*` keys for type/region/district/price-presets/area-presets/bedrooms/more sub-sections in EN, zh-HK, zh-CN |
-| `src/contexts/LanguageContext.tsx`                              | Set `document.documentElement.lang` on language change                                                                     |
-| `src/index.css`                                                 | Add Noto Sans TC/SC imports, update `--font-sans` stack, add `html[lang]` rules                                            |
-| `src/components/landing/FilterToggleBar.tsx` (FilterState type) | Add `districts`, `facilities`, `views`, `characteristics`                                                                  |
-| `src/contexts/FilterSyncContext.tsx`                            | Update default chat filters with new fields, extend mapping                                                                |
-| `src/components/landing/PropertySearchChat.tsx`                 | Update default filter state with new fields (no behavior change)                                                           |
-
+**Populate `School Nets` districts** — since this region has 3 sub-categories (Primary/Secondary/University) rather than flat districts, render it specially: split the rendered Accordion content for `School Nets` into 3 grouped sub-headings (using `t("filter.opt.schoolnet.primary")` etc.) each with its own checkbox group. Other regions keep the flat `CheckboxGroup` rendering.
 
 ## Out of Scope
 
-- The advanced sidebar (`FilterSidebar.tsx`) keeps its current full filter set; only the toggle bar is restructured.
-- Bathrooms/orientation no longer in toggle bar but remain available in advanced sidebar.
-- Centaline's exact district lists per region will be modeled best-effort from existing `LOCATIONS`.
+- No changes to filter selection logic or canonical English value mapping.
+- Existing buy price `formatPrice` slider tooltip (which uses `万`) stays — only the preset radio labels change in English.
