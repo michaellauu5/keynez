@@ -640,7 +640,7 @@ export function PropertySearchChat({
                   onClick={() => setSearchMode("rent")}
                 >
                   <Key className="h-4 w-4" />
-                  {t('filter.forRent')}
+                  {t('chat.toggle.rent')}
                 </Button>
                 <Button
                   variant={searchMode === "buy" ? "default" : "ghost"}
@@ -652,7 +652,7 @@ export function PropertySearchChat({
                   onClick={() => setSearchMode("buy")}
                 >
                   <Home className="h-4 w-4" />
-                  {t('filter.forSale')}
+                  {t('chat.toggle.buy')}
                 </Button>
               </div>
             </div>
