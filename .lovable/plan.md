@@ -1,65 +1,53 @@
 
 
-# Restore Full-Width Header Bar With Smooth Edges
+# Fix Sidebar Text Visibility & Section Title Keys
 
-Bring back the solid header band that spans the full width (like two iterations ago), but keep it feeling integrated — no hard seam, logo stays sharp, hero still bleeds in softly at the bottom.
+Two issues on the vertical FilterSidebar:
+
+1. **Invisible toggle text** — Inactive Bedrooms / Bathrooms buttons (`variant="outline"`) and the Clear All button (`variant="ghost"`) inherit dark foreground text, which disappears against the sidebar's colored background. Active buttons (the green "bubble" style) render correctly and should stay green.
+2. **Raw keys leaking** — Section titles for Facilities, Views, and Characteristics show as "filter.facilities", "filter.views", "filter.characteristics" because those translation keys don't exist. The actual keys (used by the chat bar) are `filter.more.facilities`, `filter.more.views`, `filter.more.characteristics`.
 
 ## Changes
 
-### `src/components/layout/Header.tsx`
+### `src/components/landing/FilterSidebar.tsx`
 
-**1. Header background — solid band, soft bottom**
+**A. Keep inactive toggle text white (active stays green bubble)**
 
-Replace the current top-down fade with a stronger, mostly-opaque band that occupies the full bar height and only fades at the very bottom edge:
+- Bedrooms button (line ~383): add white text classes for inactive state.
+  ```tsx
+  className={cn(
+    "h-8 text-xs",
+    active
+      ? "bg-accent text-accent-foreground border-transparent"
+      : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+  )}
+  ```
+- Bathrooms button (line ~405): same treatment (`h-8 w-12 text-xs` preserved).
+- Clear All button (line ~283): replace `variant="ghost"` styling with explicit white text:
+  ```tsx
+  className="h-8 text-xs text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+  ```
 
-```tsx
-<header className="sticky top-0 z-50 w-full border-b border-white/5
-                   bg-gradient-to-b from-black/75 via-black/70 to-black/40
-                   backdrop-blur-xl">
+No change to active "bubble" styling (`bg-accent text-accent-foreground` = green) — matches user's requirement.
+
+**B. Fix the three section titles** (lines 430, 434, 438):
+
+```diff
+- <Section id="fac" title={t("filter.facilities")} ...>
++ <Section id="fac" title={t("filter.more.facilities")} ...>
+
+- <Section id="views" title={t("filter.views")} ...>
++ <Section id="views" title={t("filter.more.views")} ...>
+
+- <Section id="char" title={t("filter.characteristics")} ...>
++ <Section id="char" title={t("filter.more.characteristics")} ...>
 ```
 
-- `from-black/75 via-black/70` keeps the entire bar visually filled (the "cross bar" look).
-- `to-black/40` + `border-white/5` gives a whisper-soft bottom edge instead of a hard line — no bolted-on seam.
-- `backdrop-blur-xl` strengthens separation from the hero without needing an image.
-
-**2. Remove the per-logo halo**
-
-The radial halo behind the logo is no longer needed once the bar itself is filled — it would double up and look muddy. Delete the `<span aria-hidden …radial-gradient… />` element and simplify the Link wrapper:
-
-```tsx
-<Link to="/" className="flex items-center">
-  <img … />
-</Link>
-```
-
-**3. Keep logo sharp & soften its edges into the band**
-
-Retain the alpha-tracing dual `drop-shadow` so the logo doesn't read as a rectangle against the now-darker band, and lighten it slightly since the background is already dark:
-
-```tsx
-className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[280px] object-contain
-           [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.45))_drop-shadow(0_2px_10px_rgba(0,0,0,0.35))]"
-```
-
-No size/position changes — stays at current `h-20/h-24` container with `pl-1 md:pl-2`.
-
-**4. Nav / actions — unchanged**
-
-Active underline, white nav text, language dropdown, auth button, and mobile sheet remain exactly as they are. They already read well on a darker band.
-
-## Visual result
-
-```text
-Now (fades to transparent):        After (filled band, soft bottom):
-┌ · · · · · · · · · · · · ┐        ┌─────────────────────────────┐
-│ LOGO  nav   ···  [user] │        │ LOGO   nav   ···   [user]   │  ← solid cross bar
-│ · · · · · · · · · · · · │        │░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░│  ← 1px soft fade
-│  hero bleeds through    │        │   hero starts cleanly       │
-```
+These keys already exist in `en` / `zh-HK` / `zh-CN` translations (used by `FilterToggleBar`).
 
 ## Out of Scope
 
-- No changes to Layout, hero, routing, translations, or auth.
-- No new assets — uses existing `keynez-logo-new.png`.
-- `banner-bg.png` not reintroduced (the gradient band achieves the same "filled" effect more cleanly).
+- No changes to active button colors, sidebar background, layout, or any other section.
+- No translation file changes — reusing existing keys.
+- No changes to `FilterToggleBar`, `PropertyListingsSection`, or context.
 

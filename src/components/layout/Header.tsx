@@ -15,6 +15,7 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Language, languageNames } from '@/translations';
 import keynezLogo from '@/assets/keynez-logo-new.png';
+import bannerBg from '@/assets/banner-bg.png';
 
 const navLinks = [
   { labelKey: 'nav.home', href: '/' },
@@ -43,14 +44,14 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-gradient-to-b from-black/75 via-black/70 to-black/40 backdrop-blur-xl">
-      <div className="container flex h-20 md:h-24 items-center justify-between px-4 md:px-6 pl-1 md:pl-2">
+    <header className="sticky top-0 z-50 w-full border-b border-primary/20 backdrop-blur" style={{ backgroundImage: `url(${bannerBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center">
+        <Link to="/" className="flex items-center -ml-4 md:-ml-6">
           <img
             src={keynezLogo}
             alt="Keynez AI"
-            className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[280px] object-contain [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.45))_drop-shadow(0_2px_10px_rgba(0,0,0,0.35))]"
+            className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain"
           />
         </Link>
 
@@ -61,7 +62,7 @@ export function Header() {
               <a
                 key={link.labelKey}
                 href={link.href}
-                className="text-sm font-medium text-white/80 transition-colors hover:text-white"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t(link.labelKey)}
               </a>
@@ -69,15 +70,15 @@ export function Header() {
               <Link
                 key={link.labelKey}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-white relative ${
+                className={`text-sm font-medium transition-colors hover:text-foreground relative ${
                   isActiveRoute(link.href)
-                    ? 'text-white font-semibold'
-                    : 'text-white/80'
+                    ? 'text-foreground font-semibold'
+                    : 'text-muted-foreground'
                 }`}
               >
                 {t(link.labelKey)}
                 {isActiveRoute(link.href) && (
-                  <span className="absolute -bottom-[29px] md:-bottom-[37px] left-0 right-0 h-0.5 bg-accent" />
+                  <span className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-accent" />
                 )}
               </Link>
             )
