@@ -280,7 +280,7 @@ function FilterContent({ filters, onFiltersChange, searchMode = "rent" }: Filter
       <div className="flex items-center justify-between pb-2 border-b border-border">
         <h3 className="font-semibold text-primary-foreground">{t("filter.filters")}</h3>
         {activeCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 text-xs">
+          <Button variant="ghost" size="sm" onClick={clearAll} className="h-8 text-xs text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground">
             {t("filter.clearAll")} ({activeCount})
           </Button>
         )}
@@ -380,7 +380,12 @@ function FilterContent({ filters, onFiltersChange, searchMode = "rent" }: Filter
                 key={b.value}
                 variant={active ? "default" : "outline"}
                 size="sm"
-                className={cn("h-8 text-xs", active && "bg-accent text-accent-foreground")}
+                className={cn(
+                  "h-8 text-xs",
+                  active
+                    ? "bg-accent text-accent-foreground border-transparent"
+                    : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                )}
                 onClick={() => {
                   if (active) set("bedrooms", filters.bedrooms.filter((x) => x !== b.value));
                   else set("bedrooms", [...filters.bedrooms, b.value]);
@@ -402,7 +407,12 @@ function FilterContent({ filters, onFiltersChange, searchMode = "rent" }: Filter
                 key={b.value}
                 variant={active ? "default" : "outline"}
                 size="sm"
-                className={cn("h-8 w-12 text-xs", active && "bg-accent text-accent-foreground")}
+                className={cn(
+                  "h-8 w-12 text-xs",
+                  active
+                    ? "bg-accent text-accent-foreground border-transparent"
+                    : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                )}
                 onClick={() => {
                   if (active) set("bathrooms", filters.bathrooms.filter((x) => x !== b.value));
                   else set("bathrooms", [...filters.bathrooms, b.value]);
@@ -427,15 +437,15 @@ function FilterContent({ filters, onFiltersChange, searchMode = "rent" }: Filter
         <CheckList options={DEVELOPER_OPTIONS} selected={filters.developers} onChange={(v) => set("developers", v)} />
       </Section>
 
-      <Section id="fac" title={t("filter.facilities")} open={openSections.includes("fac")} onToggle={() => toggle("fac")}>
+      <Section id="fac" title={t("filter.more.facilities")} open={openSections.includes("fac")} onToggle={() => toggle("fac")}>
         <CheckList options={FACILITY_OPTIONS} selected={filters.facilities} onChange={(v) => set("facilities", v)} />
       </Section>
 
-      <Section id="views" title={t("filter.views")} open={openSections.includes("views")} onToggle={() => toggle("views")}>
+      <Section id="views" title={t("filter.more.views")} open={openSections.includes("views")} onToggle={() => toggle("views")}>
         <CheckList options={VIEW_OPTIONS} selected={filters.views} onChange={(v) => set("views", v)} />
       </Section>
 
-      <Section id="char" title={t("filter.characteristics")} open={openSections.includes("char")} onToggle={() => toggle("char")}>
+      <Section id="char" title={t("filter.more.characteristics")} open={openSections.includes("char")} onToggle={() => toggle("char")}>
         <CheckList options={CHARACTERISTIC_OPTIONS} selected={filters.characteristics} onChange={(v) => set("characteristics", v)} />
       </Section>
     </div>
