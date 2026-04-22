@@ -1,53 +1,50 @@
 
 
-# Fix Sidebar Text Visibility & Section Title Keys
+# Soften & Widen the Header Bar
 
-Two issues on the vertical FilterSidebar:
-
-1. **Invisible toggle text** — Inactive Bedrooms / Bathrooms buttons (`variant="outline"`) and the Clear All button (`variant="ghost"`) inherit dark foreground text, which disappears against the sidebar's colored background. Active buttons (the green "bubble" style) render correctly and should stay green.
-2. **Raw keys leaking** — Section titles for Facilities, Views, and Characteristics show as "filter.facilities", "filter.views", "filter.characteristics" because those translation keys don't exist. The actual keys (used by the chat bar) are `filter.more.facilities`, `filter.more.views`, `filter.more.characteristics`.
+The header currently feels "bolted on": a solid 64px strip with a hard bottom border and a busy `banner-bg.png` tile that clashes with the hero photo behind it. We'll make it taller, drop the hard edges, and let the hero image read through so the logo sits *on* the page instead of *on top of* it — while keeping the logo crisp.
 
 ## Changes
 
-### `src/components/landing/FilterSidebar.tsx`
+### `src/components/layout/Header.tsx`
 
-**A. Keep inactive toggle text white (active stays green bubble)**
+**1. Increase vertical width**
+- `h-16` → `h-20 md:h-24` on the inner container (64px → 80px mobile / 96px desktop).
+- Logo grows proportionally: `h-14 md:h-16` → `h-16 md:h-20`, `max-w-[200px] md:max-w-[280px]` → `max-w-[220px] md:max-w-[320px]`. Source PNG already supports this without softness.
 
-- Bedrooms button (line ~383): add white text classes for inactive state.
+**2. Merge smoothly into the background**
+- Remove the `banner-bg.png` background image and the hard `border-b border-primary/20`.
+- Replace with a transparent header that uses a soft top-down gradient fade so it dissolves into the hero photo:
   ```tsx
-  className={cn(
-    "h-8 text-xs",
-    active
-      ? "bg-accent text-accent-foreground border-transparent"
-      : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-  )}
+  <header className="sticky top-0 z-50 w-full bg-gradient-to-b from-black/55 via-black/25 to-transparent backdrop-blur-md">
   ```
-- Bathrooms button (line ~405): same treatment (`h-8 w-12 text-xs` preserved).
-- Clear All button (line ~283): replace `variant="ghost"` styling with explicit white text:
+  - `from-black/55` keeps nav/logo legible at the very top.
+  - `via-black/25 to-transparent` fades out so there is no visible seam against the hero image.
+  - `backdrop-blur-md` (instead of `backdrop`) gently blurs whatever scrolls underneath, eliminating the "bolted plate" feel without a hard edge.
+- Drop the `bannerBg` import.
+
+**3. Keep logo sharp & visible against the lighter fade**
+- Add a subtle drop shadow on the logo so it stays readable against bright sky areas of the hero:
   ```tsx
-  className="h-8 text-xs text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+  className="... drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
   ```
+- No filter/blur on the image itself — sharpness preserved.
 
-No change to active "bubble" styling (`bg-accent text-accent-foreground` = green) — matches user's requirement.
+**4. Nav link contrast**
+- Inactive nav links currently use `text-muted-foreground` which can vanish over the hero. Switch to `text-white/80 hover:text-white` and active to `text-white` with the existing accent underline. Mobile sheet links unaffected.
 
-**B. Fix the three section titles** (lines 430, 434, 438):
+## Visual result
 
-```diff
-- <Section id="fac" title={t("filter.facilities")} ...>
-+ <Section id="fac" title={t("filter.more.facilities")} ...>
-
-- <Section id="views" title={t("filter.views")} ...>
-+ <Section id="views" title={t("filter.more.views")} ...>
-
-- <Section id="char" title={t("filter.characteristics")} ...>
-+ <Section id="char" title={t("filter.more.characteristics")} ...>
+```text
+Before:                          After:
+┌──────────────────────────┐    ╭ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─╮
+│ [logo] nav  ···  [user]  │    │ [LOGO]  nav  ···  [user]│ ← taller, blurred fade
+├──────────────────────────┤    │░░░░░░░░░░░░░░░░░░░░░░░░│
+│  hero image starts here  │    │  hero image bleeds up  │ ← no seam
 ```
 
-These keys already exist in `en` / `zh-HK` / `zh-CN` translations (used by `FilterToggleBar`).
-
 ## Out of Scope
-
-- No changes to active button colors, sidebar background, layout, or any other section.
-- No translation file changes — reusing existing keys.
-- No changes to `FilterToggleBar`, `PropertyListingsSection`, or context.
+- No changes to `Layout`, hero section, or `banner-bg.png` (asset stays for any other use).
+- No changes to mobile sheet panel styling.
+- No translation, routing, or auth changes.
 
