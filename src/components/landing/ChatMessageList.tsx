@@ -11,6 +11,9 @@ import { AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { MatchQuality } from "./MatchQualityBadge";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import { SUGGESTED_PROMPTS } from "@/data/suggestedPrompts";
+import { useTranslation } from "@/hooks/useTranslation";
+import { SlidingPromptRow } from "./SlidingPromptRow";
 
 export interface WebhookResultData {
   mode: "rent" | "buy";
@@ -56,6 +59,8 @@ export function ChatMessageList({
   onSearchAgain,
 }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { language } = useTranslation();
+  const prompts = SUGGESTED_PROMPTS[language] ?? SUGGESTED_PROMPTS.en;
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -74,10 +79,30 @@ export function ChatMessageList({
     >
       {/* Empty state */}
       {messages.length === 0 && !isLoading && (
-        <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-          <div className="text-center space-y-2">
-            <Sparkles className="h-8 w-8 mx-auto text-accent/50" />
-            <p>Start a conversation to search properties</p>
+        <div className="flex flex-col items-center justify-start max-h-[70%] py-4 text-muted-foreground text-sm">
+          <div className="text-center space-y-1 mb-3">
+            <Sparkles className="h-6 w-6 mx-auto text-accent/50" />
+            <p className="text-xs">Try asking…</p>
+          </div>
+          <div className="w-full space-y-2">
+            <SlidingPromptRow
+              prompts={prompts}
+              startIndex={0}
+              enterDelay={0}
+              onClick={onSuggestionClick}
+            />
+            <SlidingPromptRow
+              prompts={prompts}
+              startIndex={5}
+              enterDelay={700}
+              onClick={onSuggestionClick}
+            />
+            <SlidingPromptRow
+              prompts={prompts}
+              startIndex={10}
+              enterDelay={1400}
+              onClick={onSuggestionClick}
+            />
           </div>
         </div>
       )}
