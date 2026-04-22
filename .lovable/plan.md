@@ -1,78 +1,53 @@
 
 
-# Replace Sidebar Filter Logic With Chat Filter Logic (Keep Vertical Layout)
+# Fix Sidebar Text Visibility & Section Title Keys
 
-Keep the existing vertical `FilterSidebar` UI/layout exactly as it is, but swap its underlying filter content and logic to mirror the chat's `FilterToggleBar`. Both bars will share the same state via `FilterSyncContext`, so selections stay in sync across all three languages with no drift.
+Two issues on the vertical FilterSidebar:
 
-## Scope
-
-```text
-[ Property Listings page — layout unchanged ]
-  ┌────────────┬─────────────────────────────┐
-  │  Sidebar   │  N properties · grid / map  │
-  │  (vertical)│                             │
-  │  ┌──────┐  │  [ property cards ]         │
-  │  │Type  │  │                             │
-  │  │Loc   │  │                             │
-  │  │Price │  │                             │
-  │  │Area  │  │                             │
-  │  │Beds  │  │                             │
-  │  │More  │  │                             │
-  │  └──────┘  │                             │
-  └────────────┴─────────────────────────────┘
-```
-
-The vertical column stays. Only the **filter fields, options, labels, and matching logic** change to match the chat bar.
+1. **Invisible toggle text** — Inactive Bedrooms / Bathrooms buttons (`variant="outline"`) and the Clear All button (`variant="ghost"`) inherit dark foreground text, which disappears against the sidebar's colored background. Active buttons (the green "bubble" style) render correctly and should stay green.
+2. **Raw keys leaking** — Section titles for Facilities, Views, and Characteristics show as "filter.facilities", "filter.views", "filter.characteristics" because those translation keys don't exist. The actual keys (used by the chat bar) are `filter.more.facilities`, `filter.more.views`, `filter.more.characteristics`.
 
 ## Changes
 
-### 1. `src/components/landing/FilterSidebar.tsx` — rewrite contents, keep shell
+### `src/components/landing/FilterSidebar.tsx`
 
-- Keep the outer `<aside>` vertical layout, header ("Filters"), Clear All button, mobile Sheet wrapper, and overall styling.
-- Replace its `FilterState` shape with the chat's `FilterState` (from `FilterToggleBar`): `propertyTypes`, `priceRange`, `locations`, `districts`, `bedrooms` (string[]), `bathrooms` (string[]), `sizeRange`, `floorLevels`, `buildingAge`, `orientations`, `developers`, `facilities`, `views`, `characteristics`.
-- Replace each section with the same option lists and translation keys used by `FilterToggleBar` (Property Type, Location/Region, District, Price, Area, Bedrooms, Bathrooms, Floor, Building Age, Orientation, Developer, Facilities, Views, Characteristics). Render them as stacked vertical sections (Accordion or grouped blocks), not popovers — preserves the sidebar feel.
-- Add a `searchMode: "rent" | "buy"` prop so the price slider uses the same min/max defaults as the chat (`2000–100000` rent, `1000000–90000000` buy).
-- Drop sidebar-only fields (`transactionType`, `hasParking`, `petsAllowed`, `isFurnished`, `isNew`, `hasSeaView`, `hasPool`, `hasGym`) — these are now expressed via `facilities` / `views` / `characteristics` (matching the chat bar).
+**A. Keep inactive toggle text white (active stays green bubble)**
 
-### 2. `src/components/landing/PropertyListingsSection.tsx` — wire to shared state + new filter logic
+- Bedrooms button (line ~383): add white text classes for inactive state.
+  ```tsx
+  className={cn(
+    "h-8 text-xs",
+    active
+      ? "bg-accent text-accent-foreground border-transparent"
+      : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
+  )}
+  ```
+- Bathrooms button (line ~405): same treatment (`h-8 w-12 text-xs` preserved).
+- Clear All button (line ~283): replace `variant="ghost"` styling with explicit white text:
+  ```tsx
+  className="h-8 text-xs text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+  ```
 
-- Stop using `listingFilters` / `setListingFilters` / internal `FilterState`. Read `chatFilters`, `setChatFilters`, `searchMode` from `useFilterSync()`.
-- Pass `chatFilters`, `setChatFilters`, `searchMode` to `<FilterSidebar />` (desktop and mobile Sheet).
-- Rewrite `mockProperties.filter(...)` against the chat `FilterState`:
+No change to active "bubble" styling (`bg-accent text-accent-foreground` = green) — matches user's requirement.
 
-| Chat field | Property predicate |
-|---|---|
-| `searchMode` | `priceType === "rent"` if `"rent"`, else `"sale"` |
-| `propertyTypes` | match `property.propertyType` |
-| `districts` | match `property.district` (if non-empty) |
-| `locations` | match `property.region` (if `districts` empty) |
-| `priceRange` | `price` within range |
-| `sizeRange` | `size` within range |
-| `bedrooms` | `"Studio"→0`, `"5+"→≥5`, else exact |
-| `bathrooms` | `"4+"→≥4`, else exact |
-| `buildingAge` / `floorLevels` / `developers` | match corresponding property field |
-| `facilities` | every selected ∈ `property.features` (Parking also honours `hasParking`) |
-| `views` | `"${view} View"` ∈ `property.features` |
-| `characteristics` | `New→isNew`, `Furnished→isFurnished`, `Pet-friendly→petsAllowed`, `Duplex→features.includes("Duplex")` |
+**B. Fix the three section titles** (lines 430, 434, 438):
 
-Counter and grid/map toggle untouched.
+```diff
+- <Section id="fac" title={t("filter.facilities")} ...>
++ <Section id="fac" title={t("filter.more.facilities")} ...>
 
-### 3. `src/contexts/FilterSyncContext.tsx` — simplify
+- <Section id="views" title={t("filter.views")} ...>
++ <Section id="views" title={t("filter.more.views")} ...>
 
-Both bars now use the chat `FilterState`. Drop the listing half:
-- Remove `listingFilters`, `setListingFilters`, `defaultListingFilters`, all bedroom/bathroom/transactionType mapping helpers, and the cross-sync inside the setters.
-- Keep `chatFilters` / `setChatFilters` / `searchMode` / `setSearchMode`.
-- Update `FilterSyncContextValue` accordingly.
+- <Section id="char" title={t("filter.characteristics")} ...>
++ <Section id="char" title={t("filter.more.characteristics")} ...>
+```
 
-## Translations
-
-No new keys. All option labels and section headings reuse the keys already defined for `FilterToggleBar` across `en` / `zh-HK` / `zh-CN`.
+These keys already exist in `en` / `zh-HK` / `zh-CN` translations (used by `FilterToggleBar`).
 
 ## Out of Scope
 
-- `FilterToggleBar.tsx`, `PropertySearchChat.tsx`, AI search payload — untouched.
-- `PropertyGrid`, `GoogleMapView`, `StatCounter`, `VideoDemo` — untouched.
-- `AdvancedFilterSidebar.tsx` (used elsewhere) — untouched.
-- No data-model changes to `mockProperties`.
-- No visual restyle of the sidebar — same width, padding, header, Clear All, mobile Sheet.
+- No changes to active button colors, sidebar background, layout, or any other section.
+- No translation file changes — reusing existing keys.
+- No changes to `FilterToggleBar`, `PropertyListingsSection`, or context.
 
