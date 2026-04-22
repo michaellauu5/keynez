@@ -1,32 +1,28 @@
 
 
-# Localize "Try asking…" Empty State Hint
+# Localize "For Rent / For Sale" Toggle
 
-The "Try asking…" hint above the sliding prompt bubbles is hardcoded English. Localize it to match the active UI language.
+The Rent/Buy toggle in the search chat is hardcoded English. Use existing translation keys so it follows the active site language.
 
-## Changes
+## Change
 
-### `src/translations/index.ts`
+### `src/components/landing/PropertySearchChat.tsx` (lines 643, 655)
 
-Add new key `chat.empty.tryAsking`:
-
-| Language | Text |
-|---|---|
-| en | `Try asking…` |
-| zh-HK | `試下問…` |
-| zh-CN | `试着问…` |
-
-### `src/components/landing/ChatMessageList.tsx` (line 85)
-
-Replace the hardcoded `<p className="text-xs">Try asking…</p>` with the translated value:
+Replace hardcoded text with translations:
 
 ```tsx
-<p className="text-xs">{t('chat.empty.tryAsking')}</p>
+<Key className="h-4 w-4" />
+{t('filter.forRent')}
 ```
 
-Pull `t` from the existing `useTranslation()` call already in the component (currently only `language` is destructured).
+```tsx
+<Home className="h-4 w-4" />
+{t('filter.forSale')}
+```
+
+`t` is already available via the existing `useTranslation()` hook in this component — no new imports needed. Translation keys `filter.forRent` and `filter.forSale` already exist for all three locales (en / zh-HK / zh-CN).
 
 ## Out of Scope
-- No styling, layout, or sliding bubble changes.
-- No changes to other empty-state copy.
+- No styling, layout, or behavior changes.
+- No new translation keys (existing ones are reused).
 
