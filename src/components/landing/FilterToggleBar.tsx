@@ -463,9 +463,12 @@ export function FilterToggleBar({
           <PopoverContent className="w-80 p-2 max-h-[480px] overflow-y-auto" align="start">
             <Accordion type="multiple" className="w-full">
               {REGION_DISTRICTS.map((r) => {
-                const selectedInRegion = filters.districts.filter((d) =>
-                  r.districts.some((rd) => rd.value === d)
-                ).length;
+                const isSchoolNets = r.region === "School Nets";
+                const selectedInRegion = isSchoolNets
+                  ? filters.districts.filter((d) => SCHOOLNET_VALUES.includes(d)).length
+                  : filters.districts.filter((d) =>
+                      r.districts.some((rd) => rd.value === d)
+                    ).length;
                 return (
                   <AccordionItem value={r.region} key={r.region} className="border-b">
                     <AccordionTrigger className="py-2 px-2 text-sm hover:no-underline">
@@ -479,7 +482,43 @@ export function FilterToggleBar({
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="pb-2 pl-2">
-                      {r.districts.length > 0 ? (
+                      {isSchoolNets ? (
+                        <div className="space-y-3">
+                          {SCHOOLNET_GROUPS.map((g) => (
+                            <div key={g.groupKey}>
+                              <p className="mb-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                {t(g.groupKey)}
+                              </p>
+                              <CheckboxGroup
+                                options={g.options}
+                                selected={filters.districts}
+                                onChange={(v) => {
+                                  const groupValues = g.options.map((o) => o.value);
+                                  const others = filters.districts.filter(
+                                    (d) => !groupValues.includes(d)
+                                  );
+                                  const inGroup = v.filter((d) => groupValues.includes(d));
+                                  const next = [...others, ...inGroup];
+                                  const regions = REGION_DISTRICTS.filter((reg) => {
+                                    if (reg.region === "School Nets") {
+                                      return next.some((d) => SCHOOLNET_VALUES.includes(d));
+                                    }
+                                    return next.some((d) =>
+                                      reg.districts.some((rd) => rd.value === d)
+                                    );
+                                  }).map((reg) => reg.region);
+                                  onFiltersChange({
+                                    ...filters,
+                                    districts: next,
+                                    locations: regions,
+                                  });
+                                }}
+                                cols={1}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : r.districts.length > 0 ? (
                         <CheckboxGroup
                           options={r.districts}
                           selected={filters.districts}
@@ -493,9 +532,14 @@ export function FilterToggleBar({
                             );
                             const next = [...otherRegions, ...inThisRegion];
                             // also mirror region selection in `locations` for backward compat
-                            const regions = REGION_DISTRICTS.filter((reg) =>
-                              next.some((d) => reg.districts.some((rd) => rd.value === d))
-                            ).map((reg) => reg.region);
+                            const regions = REGION_DISTRICTS.filter((reg) => {
+                              if (reg.region === "School Nets") {
+                                return next.some((d) => SCHOOLNET_VALUES.includes(d));
+                              }
+                              return next.some((d) =>
+                                reg.districts.some((rd) => rd.value === d)
+                              );
+                            }).map((reg) => reg.region);
                             onFiltersChange({
                               ...filters,
                               districts: next,
