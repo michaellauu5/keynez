@@ -1,51 +1,37 @@
-# Filter Refinements: Price Units, Area Label, Developer i18n, Overseas & School Net Lists
+
+
+# Fix Mixed-Language Strings in Custom Price & Area Sliders
+
+The custom-range price slider and saleable-area slider in `FilterToggleBar.tsx` show hardcoded `万` and `sqft` regardless of UI language. Make them follow the active language so they match the preset (non-customised) options.
 
 ## Changes
 
-### 1. `src/translations/index.ts`
+### `src/components/landing/FilterToggleBar.tsx`
 
-**English buy price presets** — replace `万` with millions notation (also applicable to custom range):
+1. **`formatPrice` becomes language-aware** — accept the current `language` (or pass `t`) and switch the buy-mode unit:
+   - `en` → `HK$50M` style: convert from raw value to millions, e.g. `HK$${(v/1_000_000).toLocaleString()}M`
+   - `zh-HK` → `HK$${(v/10000).toLocaleString()}萬`
+   - `zh-CN` → `HK$${(v/10000).toLocaleString()}万`
+   - Rent mode stays `HK$${v.toLocaleString()}` in all languages.
 
-- `filter.opt.price.buy.u500`: "Under HK$5M"
-- `filter.opt.price.buy.500_1000`: "HK$5M – 10M"
-- `filter.opt.price.buy.1000_2000`: "HK$10M – 20M"
-- `filter.opt.price.buy.2000_5000`: "HK$20M – 50M"
-- `filter.opt.price.buy.5000p`: "Above HK$50M"
+2. **Area slider unit** — replace the hardcoded `sqft` literal in three spots (custom-summary line ~673, and the two slider min/max labels ~728-729) with a translated unit:
+   - `en` → `sqft`
+   - `zh-HK` → `平方呎`
+   - `zh-CN` → `平方尺`
+   
+   Source it from a new translation key `filter.unit.area` (added to all three locales) and render `{value} {t("filter.unit.area")}`.
 
-(Chinese 萬 / 万 versions stay as-is.)
+3. **Wire `useTranslation`'s `language`** into the component (already imported via `useTranslation`) and pass it to `formatPrice` calls at lines 583, 638, 639.
 
-**English label**: change `filter.area` from "Saleable Area" → **"Area"**. Traditional/Simplified Chinese keep `實用面積` / `实用面积`.
+### `src/translations/index.ts`
 
-**Add developer translation keys** for all 8 developers in EN / zh-HK / zh-CN, e.g.:
-
-- Sun Hung Kai → 新鴻基地產 / 新鸿基地产
-- Henderson Land → 恒基兆業 / 恒基兆业
-- New World Development → 新世界發展 / 新世界发展
-- Cheung Kong → 長江實業 / 长江实业
-- Sino Land → 信和置業 / 信和置业
-- Hang Lung → 恆隆地產 / 恒隆地产
-- Wharf Holdings → 九龍倉 / 九龙仓
-- Kerry Properties → 嘉里建設 / 嘉里建设
-
-**Add Overseas region keys** (8 destinations): UK, Canada, Australia, Singapore, Japan, Thailand, Malaysia, USA — translated in 3 languages.
-
-**Add School Nets keys** organized into 3 groups (Primary / Secondary / University), with HK official Centaline-style nets:
-
-- **Primary nets** (12 representative): 11, 12, 14, 16, 18, 31, 34, 35, 40, 41, 91, 95
-- **Secondary**: HK Island, Kowloon, NT regional bands
-- **Universities**: HKU, CUHK, HKUST, PolyU, CityU, HKBU etc. 
-
-Each with `filter.opt.schoolnet.*` keys in 3 languages (English uses "Primary Net 11" / Chinese uses "小學11校網" / "小学11校网" etc.)
-
-### 2. `src/components/landing/FilterToggleBar.tsx`
-
-**Fix `DEVELOPER_OPTIONS**` — replace placeholder `tKey` (currently the English name itself) with proper translation keys like `filter.opt.dev.shk`, `filter.opt.dev.henderson`, etc. so the `t(opt.tKey)` lookup succeeds in Chinese. Currently the fallback `t(opt.tKey) === opt.tKey ? opt.value : t(opt.tKey)` always returns English.
-
-**Populate `Overseas` districts** array with 8 destination entries (UK, Canada, Australia, Singapore, Japan, Thailand, Malaysia, USA) using new translation keys.
-
-**Populate `School Nets` districts** — since this region has 3 sub-categories (Primary/Secondary/University) rather than flat districts, render it specially: split the rendered Accordion content for `School Nets` into 3 grouped sub-headings (using `t("filter.opt.schoolnet.primary")` etc.) each with its own checkbox group. Other regions keep the flat `CheckboxGroup` rendering.
+Add one new key per locale:
+- `en`: `"filter.unit.area": "sqft"`
+- `zh-HK`: `"filter.unit.area": "平方呎"`
+- `zh-CN`: `"filter.unit.area": "平方尺"`
 
 ## Out of Scope
+- Preset labels (already localised correctly).
+- Rent price formatting (no unit suffix to localise).
+- Other components using `sqft` (table headers etc. already have separate localised keys).
 
-- No changes to filter selection logic or canonical English value mapping.
-- Existing buy price `formatPrice` slider tooltip (which uses `万`) stays — only the preset radio labels change in English.
