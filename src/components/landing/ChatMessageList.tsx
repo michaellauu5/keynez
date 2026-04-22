@@ -59,7 +59,7 @@ export function ChatMessageList({
   onSearchAgain,
 }: ChatMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { language } = useTranslation();
+  const { t, language } = useTranslation();
   const prompts = SUGGESTED_PROMPTS[language] ?? SUGGESTED_PROMPTS.en;
 
   // Auto-scroll to bottom when new messages arrive
@@ -82,7 +82,7 @@ export function ChatMessageList({
         <div className="flex flex-col items-center justify-start max-h-[70%] py-4 text-muted-foreground text-sm">
           <div className="text-center space-y-1 mb-3">
             <Sparkles className="h-6 w-6 mx-auto text-accent/50" />
-            <p className="text-xs">Try asking…</p>
+            <p className="text-xs">{t('chat.empty.tryAsking')}</p>
           </div>
           <div className="w-full space-y-2">
             <SlidingPromptRow

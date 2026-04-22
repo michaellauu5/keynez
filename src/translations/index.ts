@@ -66,6 +66,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Search Chat
     "search.placeholder": "What kind of place are you after?",
     "search.button": "Search",
+    "chat.empty.tryAsking": "Try asking…",
     "search.thinking.analyzing": "Analyzing your requirements...",
     "search.thinking.searching": "Searching property database...",
     "search.thinking.ranking": "Ranking by relevance...",
@@ -382,6 +383,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Search Chat
     "search.placeholder": "想搵乜嘢樓盤呢？",
     "search.button": "搜尋",
+    "chat.empty.tryAsking": "試下問…",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜尋物業資料庫...",
     "search.thinking.ranking": "按相關性排序...",
@@ -698,6 +700,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Search Chat
     "search.placeholder": "想找什么样的房子？",
     "search.button": "搜索",
+    "chat.empty.tryAsking": "试着问…",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜索房产数据库...",
     "search.thinking.ranking": "按相关性排序...",
