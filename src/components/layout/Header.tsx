@@ -43,18 +43,14 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-gradient-to-b from-black/60 via-black/20 to-transparent backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-gradient-to-b from-black/75 via-black/70 to-black/40 backdrop-blur-xl">
       <div className="container flex h-20 md:h-24 items-center justify-between px-4 md:px-6 pl-1 md:pl-2">
         {/* Logo */}
-        <Link to="/" className="relative flex items-center">
-          <span
-            aria-hidden
-            className="absolute inset-0 -z-10 blur-2xl opacity-40 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)]"
-          />
+        <Link to="/" className="flex items-center">
           <img
             src={keynezLogo}
             alt="Keynez AI"
-            className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[280px] object-contain [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.35))_drop-shadow(0_4px_14px_rgba(0,0,0,0.25))]"
+            className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[280px] object-contain [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.45))_drop-shadow(0_2px_10px_rgba(0,0,0,0.35))]"
           />
         </Link>
 
