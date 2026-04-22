@@ -64,7 +64,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.searchButton": "Search",
 
     // Search Chat
-    "search.placeholder": "Describe your ideal property... e.g., '3 bedroom in Mid-Levels with sea view under 50 million'",
+    "search.placeholder": "What kind of place are you after? Even the trickiest wishlist is welcome.",
     "search.button": "Search",
     "search.thinking.analyzing": "Analyzing your requirements...",
     "search.thinking.searching": "Searching property database...",
@@ -380,7 +380,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.searchButton": "搜尋",
 
     // Search Chat
-    "search.placeholder": "描述您理想的物業... 例如：「半山區三房海景單位，五千萬以下」",
+    "search.placeholder": "想搵乜嘢樓盤？刁鑽要求都可以幫你架！",
     "search.button": "搜尋",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜尋物業資料庫...",
@@ -696,7 +696,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.searchButton": "搜索",
 
     // Search Chat
-    "search.placeholder": "描述您理想的房产... 例如：「半山区三房海景单位，五千万以下」",
+    "search.placeholder": "想找什么样的房子？特别的要求也能帮你搞定。",
     "search.button": "搜索",
     "search.thinking.analyzing": "分析您的需求...",
     "search.thinking.searching": "搜索房产数据库...",

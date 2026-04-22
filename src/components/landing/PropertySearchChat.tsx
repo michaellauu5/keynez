@@ -722,7 +722,7 @@ export function PropertySearchChat({
                       ? 'Ask a follow-up: "show more", "3 bedrooms instead", "tell me about #3"...'
                       : t('search.placeholder')
                   }
-                  className="h-12 pl-10 pr-4 text-base"
+                  className="h-12 pl-10 pr-4 text-base placeholder:text-muted-foreground/60 placeholder:font-normal"
                   disabled={isSearching}
                 />
               </div>
