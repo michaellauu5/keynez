@@ -287,8 +287,16 @@ const PRICE_CONFIG = {
   buy: { min: 1000000, max: 90000000, step: 500000, presets: PRICE_PRESETS_BUY },
 };
 
-function formatPrice(v: number, mode: "rent" | "buy") {
-  if (mode === "buy") return `HK$${(v / 10000).toLocaleString()}万`;
+function formatPrice(v: number, mode: "rent" | "buy", language: string = "en") {
+  if (mode === "buy") {
+    if (language === "en") {
+      const m = v / 1_000_000;
+      const str = Number.isInteger(m) ? m.toString() : m.toFixed(1);
+      return `HK$${str}M`;
+    }
+    const unit = language === "zh-CN" ? "万" : "萬";
+    return `HK$${(v / 10000).toLocaleString()}${unit}`;
+  }
   return `HK$${v.toLocaleString()}`;
 }
 
@@ -371,7 +379,7 @@ export function FilterToggleBar({
   onFiltersChange,
   searchMode = "rent",
 }: FilterToggleBarProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const priceConfig = PRICE_CONFIG[searchMode];
   const [priceTab, setPriceTab] = useState<"preset" | "custom">("preset");
   const [areaTab, setAreaTab] = useState<"preset" | "custom">("preset");
@@ -580,7 +588,7 @@ export function FilterToggleBar({
                 active={isPriceCustom}
                 summary={
                   isPriceCustom
-                    ? `${formatPrice(filters.priceRange[0], searchMode)} – ${formatPrice(filters.priceRange[1], searchMode)}`
+                    ? `${formatPrice(filters.priceRange[0], searchMode, language)} – ${formatPrice(filters.priceRange[1], searchMode, language)}`
                     : undefined
                 }
               />
@@ -635,8 +643,8 @@ export function FilterToggleBar({
             ) : (
               <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span>{formatPrice(filters.priceRange[0], searchMode)}</span>
-                  <span>{formatPrice(filters.priceRange[1], searchMode)}</span>
+                  <span>{formatPrice(filters.priceRange[0], searchMode, language)}</span>
+                  <span>{formatPrice(filters.priceRange[1], searchMode, language)}</span>
                 </div>
                 <Slider
                   min={priceConfig.min}
@@ -670,7 +678,7 @@ export function FilterToggleBar({
                 active={isAreaCustom}
                 summary={
                   isAreaCustom
-                    ? `${filters.sizeRange[0]} – ${filters.sizeRange[1]} sqft`
+                    ? `${filters.sizeRange[0]} – ${filters.sizeRange[1]} ${t("filter.unit.area")}`
                     : undefined
                 }
               />
@@ -725,8 +733,8 @@ export function FilterToggleBar({
             ) : (
               <div className="space-y-3 pt-1">
                 <div className="flex items-center justify-between text-sm">
-                  <span>{filters.sizeRange[0]} sqft</span>
-                  <span>{filters.sizeRange[1]} sqft</span>
+                  <span>{filters.sizeRange[0]} {t("filter.unit.area")}</span>
+                  <span>{filters.sizeRange[1]} {t("filter.unit.area")}</span>
                 </div>
                 <Slider
                   min={0}
