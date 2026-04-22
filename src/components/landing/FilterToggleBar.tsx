@@ -8,14 +8,26 @@ import {
 } from "@/components/ui/popover";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/hooks/useTranslation";
 
+/**
+ * FilterState — extended with `districts`, `facilities`, `views`, `characteristics`.
+ * Older fields kept for backward compatibility with sync context, advanced sidebar,
+ * and PropertySearchChat payload mapping.
+ */
 export interface FilterState {
   propertyTypes: string[];
   priceRange: [number, number];
-  locations: string[];
+  locations: string[];      // region keys (e.g. "Hong Kong Island")
+  districts: string[];      // sub-district keys (canonical English)
   bedrooms: string[];
   bathrooms: string[];
   sizeRange: [number, number];
@@ -23,367 +35,779 @@ export interface FilterState {
   buildingAge: string[];
   orientations: string[];
   developers: string[];
+  facilities: string[];
+  views: string[];
+  characteristics: string[];
 }
 
 interface FilterToggleBarProps {
   filters: FilterState;
   onFiltersChange: (filters: FilterState) => void;
-  searchMode?: 'rent' | 'buy';
+  searchMode?: "rent" | "buy";
 }
 
-const PROPERTY_TYPES = ["Apartment", "House", "Commercial", "Studio", "Penthouse"];
-const LOCATIONS = [
-  "Central & Western",
-  "Wan Chai",
-  "Eastern",
-  "Southern",
-  "Yau Tsim Mong",
-  "Sham Shui Po",
-  "Kowloon City",
-  "Wong Tai Sin",
-  "Kwun Tong",
-  "Tsuen Wan",
-  "Tuen Mun",
-  "Yuen Long",
-  "North",
-  "Tai Po",
-  "Sha Tin",
-  "Sai Kung",
-  "Islands",
-];
-const BEDROOMS = ["Studio", "1", "2", "3", "4", "5+"];
-const BATHROOMS = ["1", "2", "3", "4+"];
-const FLOOR_LEVELS = ["Low (1-10)", "Mid (11-25)", "High (26-40)", "Ultra High (40+)"];
-const BUILDING_AGE = ["New Build", "<5 years", "<10 years", "<20 years", "20+ years"];
-const ORIENTATIONS = ["North", "South", "East", "West", "Sea View", "Mountain View", "City View"];
-const DEVELOPERS = [
-  "Sun Hung Kai",
-  "Henderson Land",
-  "New World Development",
-  "Cheung Kong",
-  "Sino Land",
-  "Hang Lung",
-  "Wharf Holdings",
-  "Kerry Properties",
+// ---- Option catalogues (canonical English keys + i18n key) ----
+
+const TYPE_OPTIONS: { value: string; tKey: string }[] = [
+  { value: "Apartment", tKey: "filter.opt.type.apartment" },
+  { value: "Carpark", tKey: "filter.opt.type.carpark" },
+  { value: "Office", tKey: "filter.opt.type.office" },
+  { value: "Shop", tKey: "filter.opt.type.shop" },
 ];
 
-interface MultiSelectFilterProps {
-  label: string;
-  options: string[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
-  clearLabel: string;
-}
+const REGION_DISTRICTS: {
+  region: string;
+  regionKey: string;
+  districts: { value: string; tKey: string }[];
+}[] = [
+  {
+    region: "Hong Kong Island",
+    regionKey: "filter.opt.region.hki",
+    districts: [
+      { value: "Central", tKey: "filter.opt.district.central" },
+      { value: "Sheung Wan", tKey: "filter.opt.district.sheungwan" },
+      { value: "Mid-Levels", tKey: "filter.opt.district.midlevels" },
+      { value: "The Peak", tKey: "filter.opt.district.thepeak" },
+      { value: "Wan Chai", tKey: "filter.opt.district.wanchai" },
+      { value: "Causeway Bay", tKey: "filter.opt.district.causewaybay" },
+      { value: "Happy Valley", tKey: "filter.opt.district.happyvalley" },
+      { value: "North Point", tKey: "filter.opt.district.northpoint" },
+      { value: "Quarry Bay", tKey: "filter.opt.district.quarrybay" },
+      { value: "Tai Koo", tKey: "filter.opt.district.taikoo" },
+      { value: "Shau Kei Wan", tKey: "filter.opt.district.shaukeiwan" },
+      { value: "Chai Wan", tKey: "filter.opt.district.chaiwan" },
+      { value: "Aberdeen", tKey: "filter.opt.district.aberdeen" },
+      { value: "Repulse Bay", tKey: "filter.opt.district.repulsebay" },
+      { value: "Stanley", tKey: "filter.opt.district.stanley" },
+    ],
+  },
+  {
+    region: "Kowloon",
+    regionKey: "filter.opt.region.kln",
+    districts: [
+      { value: "Tsim Sha Tsui", tKey: "filter.opt.district.tst" },
+      { value: "Jordan", tKey: "filter.opt.district.jordan" },
+      { value: "Yau Ma Tei", tKey: "filter.opt.district.yaumatei" },
+      { value: "Mong Kok", tKey: "filter.opt.district.mongkok" },
+      { value: "Sham Shui Po", tKey: "filter.opt.district.shamshuipo" },
+      { value: "Cheung Sha Wan", tKey: "filter.opt.district.cheungshawan" },
+      { value: "Lai Chi Kok", tKey: "filter.opt.district.laichikok" },
+      { value: "Kowloon Tong", tKey: "filter.opt.district.kowloontong" },
+      { value: "Hung Hom", tKey: "filter.opt.district.hunghom" },
+      { value: "To Kwa Wan", tKey: "filter.opt.district.tokwawan" },
+      { value: "Kwun Tong", tKey: "filter.opt.district.kwuntong" },
+      { value: "Wong Tai Sin", tKey: "filter.opt.district.wongtaisin" },
+      { value: "Diamond Hill", tKey: "filter.opt.district.diamondhill" },
+    ],
+  },
+  {
+    region: "New Territories",
+    regionKey: "filter.opt.region.nt",
+    districts: [
+      { value: "Sha Tin", tKey: "filter.opt.district.shatin" },
+      { value: "Ma On Shan", tKey: "filter.opt.district.maonshan" },
+      { value: "Tai Po", tKey: "filter.opt.district.taipo" },
+      { value: "Fanling", tKey: "filter.opt.district.fanling" },
+      { value: "Sheung Shui", tKey: "filter.opt.district.sheungshui" },
+      { value: "Tsuen Wan", tKey: "filter.opt.district.tsuenwan" },
+      { value: "Kwai Chung", tKey: "filter.opt.district.kwaichung" },
+      { value: "Tsing Yi", tKey: "filter.opt.district.tsingyi" },
+      { value: "Tuen Mun", tKey: "filter.opt.district.tuenmun" },
+      { value: "Yuen Long", tKey: "filter.opt.district.yuenlong" },
+      { value: "Tin Shui Wai", tKey: "filter.opt.district.tinshuiwai" },
+      { value: "Sai Kung", tKey: "filter.opt.district.saikung" },
+      { value: "Tseung Kwan O", tKey: "filter.opt.district.tko" },
+    ],
+  },
+  {
+    region: "Outlying Islands",
+    regionKey: "filter.opt.region.islands",
+    districts: [
+      { value: "Lantau", tKey: "filter.opt.district.lantau" },
+      { value: "Tung Chung", tKey: "filter.opt.district.tungchung" },
+      { value: "Discovery Bay", tKey: "filter.opt.district.discoverybay" },
+      { value: "Cheung Chau", tKey: "filter.opt.district.cheungchau" },
+      { value: "Lamma Island", tKey: "filter.opt.district.lamma" },
+      { value: "Peng Chau", tKey: "filter.opt.district.pengchau" },
+    ],
+  },
+  {
+    region: "Overseas",
+    regionKey: "filter.opt.region.overseas",
+    districts: [],
+  },
+  {
+    region: "School Nets",
+    regionKey: "filter.opt.region.schoolnets",
+    districts: [],
+  },
+];
 
-function MultiSelectFilter({ label, options, selected, onChange, clearLabel }: MultiSelectFilterProps) {
-  const hasSelection = selected.length > 0;
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={hasSelection ? "default" : "outline"}
-          size="sm"
-          className={cn(
-            "h-8 gap-1 rounded-full text-xs font-medium transition-all",
-            hasSelection && "bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 border-[#FFD54F]"
-          )}
-        >
-          {label}
-          {hasSelection && (
-            <Badge 
-              variant="secondary" 
-              className={cn(
-                "ml-1 h-5 min-w-5 rounded-full px-1.5 text-xs",
-                hasSelection && "bg-black/20 text-black"
-              )}
-            >
-              {selected.length}
-            </Badge>
-          )}
-          <ChevronDown className="h-3 w-3" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-3" align="start">
-        <div className="space-y-2">
-          {options.map((option) => (
-            <label
-              key={option}
-              className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-muted"
-            >
-              <Checkbox
-                checked={selected.includes(option)}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    onChange([...selected, option]);
-                  } else {
-                    onChange(selected.filter((s) => s !== option));
-                  }
-                }}
-              />
-              <span className="text-sm">{option}</span>
-            </label>
-          ))}
-        </div>
-        {hasSelection && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="mt-2 w-full text-xs"
-            onClick={() => onChange([])}
-          >
-            {clearLabel}
-          </Button>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-interface QuickPreset {
-  label: string;
+interface PricePreset {
+  tKey: string;
   value: [number, number];
 }
 
-interface RangeFilterProps {
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  value: [number, number];
-  onChange: (value: [number, number]) => void;
-  formatValue: (value: number) => string;
-  resetLabel: string;
-  quickPresets?: QuickPreset[];
-}
+const PRICE_PRESETS_RENT: PricePreset[] = [
+  { tKey: "filter.opt.price.rent.u5k", value: [2000, 5000] },
+  { tKey: "filter.opt.price.rent.5_10k", value: [5000, 10000] },
+  { tKey: "filter.opt.price.rent.10_15k", value: [10000, 15000] },
+  { tKey: "filter.opt.price.rent.15_20k", value: [15000, 20000] },
+  { tKey: "filter.opt.price.rent.20_30k", value: [20000, 30000] },
+  { tKey: "filter.opt.price.rent.30_50k", value: [30000, 50000] },
+  { tKey: "filter.opt.price.rent.50kp", value: [50000, 100000] },
+];
 
-function RangeFilter({ label, min, max, step, value, onChange, formatValue, resetLabel, quickPresets }: RangeFilterProps) {
-  const hasCustomRange = value[0] !== min || value[1] !== max;
+const PRICE_PRESETS_BUY: PricePreset[] = [
+  { tKey: "filter.opt.price.buy.u500", value: [1000000, 5000000] },
+  { tKey: "filter.opt.price.buy.500_1000", value: [5000000, 10000000] },
+  { tKey: "filter.opt.price.buy.1000_2000", value: [10000000, 20000000] },
+  { tKey: "filter.opt.price.buy.2000_5000", value: [20000000, 50000000] },
+  { tKey: "filter.opt.price.buy.5000p", value: [50000000, 90000000] },
+];
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant={hasCustomRange ? "default" : "outline"}
-          size="sm"
-          className={cn(
-            "h-8 gap-1 rounded-full text-xs font-medium transition-all",
-            hasCustomRange && "bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 border-[#FFD54F]"
-          )}
-        >
-          {label}
-          {hasCustomRange && (
-            <span className="ml-1 text-xs text-black/80">
-              {formatValue(value[0])} - {formatValue(value[1])}
-            </span>
-          )}
-          <ChevronDown className="h-3 w-3" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-4" align="start">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span>{formatValue(value[0])}</span>
-            <span>{formatValue(value[1])}</span>
-          </div>
-          <Slider
-            min={min}
-            max={max}
-            step={step}
-            value={value}
-            onValueChange={(v) => onChange(v as [number, number])}
-            className="w-full"
-          />
-          {quickPresets && quickPresets.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {quickPresets.map((preset) => (
-                <Button
-                  key={preset.label}
-                  variant="outline"
-                  size="sm"
-                  className={cn(
-                    "h-7 text-xs rounded-full px-2.5",
-                    value[0] === preset.value[0] && value[1] === preset.value[1] && "bg-[#FFD54F] text-black border-[#FFD54F]"
-                  )}
-                  onClick={() => onChange(preset.value)}
-                >
-                  {preset.label}
-                </Button>
-              ))}
-            </div>
-          )}
-          {hasCustomRange && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => onChange([min, max])}
-            >
-              {resetLabel}
-            </Button>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
+const AREA_PRESETS: PricePreset[] = [
+  { tKey: "filter.opt.area.u300", value: [0, 300] },
+  { tKey: "filter.opt.area.300_500", value: [300, 500] },
+  { tKey: "filter.opt.area.500_800", value: [500, 800] },
+  { tKey: "filter.opt.area.800_1200", value: [800, 1200] },
+  { tKey: "filter.opt.area.1200p", value: [1200, 5000] },
+];
+
+const BEDROOM_OPTIONS: { value: string; tKey: string }[] = [
+  { value: "Studio", tKey: "filter.opt.bed.studio" },
+  { value: "1", tKey: "filter.opt.bed.1" },
+  { value: "2", tKey: "filter.opt.bed.2" },
+  { value: "3", tKey: "filter.opt.bed.3" },
+  { value: "4+", tKey: "filter.opt.bed.4p" },
+];
+
+const FLOOR_OPTIONS = [
+  { value: "High (26-40)", tKey: "filter.opt.floor.high" },
+  { value: "Mid (11-25)", tKey: "filter.opt.floor.mid" },
+  { value: "Low (1-10)", tKey: "filter.opt.floor.low" },
+];
+
+const AGE_OPTIONS = [
+  { value: "New Build", tKey: "filter.opt.age.new" },
+  { value: "<5 years", tKey: "filter.opt.age.lt5" },
+  { value: "<10 years", tKey: "filter.opt.age.lt10" },
+  { value: "<20 years", tKey: "filter.opt.age.lt20" },
+  { value: "20+ years", tKey: "filter.opt.age.20p" },
+];
+
+const DEVELOPER_OPTIONS = [
+  { value: "Sun Hung Kai", tKey: "Sun Hung Kai" },
+  { value: "Henderson Land", tKey: "Henderson Land" },
+  { value: "New World Development", tKey: "New World Development" },
+  { value: "Cheung Kong", tKey: "Cheung Kong" },
+  { value: "Sino Land", tKey: "Sino Land" },
+  { value: "Hang Lung", tKey: "Hang Lung" },
+  { value: "Wharf Holdings", tKey: "Wharf Holdings" },
+  { value: "Kerry Properties", tKey: "Kerry Properties" },
+];
+
+const FACILITY_OPTIONS = [
+  { value: "Pool", tKey: "filter.opt.fac.pool" },
+  { value: "Gym", tKey: "filter.opt.fac.gym" },
+  { value: "Clubhouse", tKey: "filter.opt.fac.clubhouse" },
+  { value: "Parking", tKey: "filter.opt.fac.parking" },
+];
+
+const VIEW_OPTIONS = [
+  { value: "Sea", tKey: "filter.opt.view.sea" },
+  { value: "Mountain", tKey: "filter.opt.view.mountain" },
+  { value: "City", tKey: "filter.opt.view.city" },
+  { value: "Garden", tKey: "filter.opt.view.garden" },
+];
+
+const CHARACTERISTIC_OPTIONS = [
+  { value: "New", tKey: "filter.opt.char.new" },
+  { value: "Furnished", tKey: "filter.opt.char.furnished" },
+  { value: "Pet-friendly", tKey: "filter.opt.char.pet" },
+  { value: "Duplex", tKey: "filter.opt.char.duplex" },
+];
 
 const PRICE_CONFIG = {
-  rent: {
-    min: 2000,
-    max: 100000,
-    step: 1000,
-    format: (v: number) => `HK$${v.toLocaleString()}`,
-    presets: [
-      { label: '< HK$10,000', value: [2000, 10000] as [number, number] },
-      { label: 'HK$10k-20k', value: [10000, 20000] as [number, number] },
-      { label: 'HK$20k-30k', value: [20000, 30000] as [number, number] },
-      { label: 'HK$30k-50k', value: [30000, 50000] as [number, number] },
-      { label: '> HK$50,000', value: [50000, 100000] as [number, number] },
-    ],
-  },
-  buy: {
-    min: 1000000,
-    max: 90000000,
-    step: 500000,
-    format: (v: number) => `HK$${(v / 10000).toLocaleString()}万`,
-    presets: [
-      { label: '< HK$500万', value: [1000000, 5000000] as [number, number] },
-      { label: '500万-1000万', value: [5000000, 10000000] as [number, number] },
-      { label: '1000万-2000万', value: [10000000, 20000000] as [number, number] },
-      { label: '2000万-5000万', value: [20000000, 50000000] as [number, number] },
-      { label: '> HK$5000万', value: [50000000, 90000000] as [number, number] },
-    ],
-  },
+  rent: { min: 2000, max: 100000, step: 1000, presets: PRICE_PRESETS_RENT },
+  buy: { min: 1000000, max: 90000000, step: 500000, presets: PRICE_PRESETS_BUY },
 };
 
-export function FilterToggleBar({ filters, onFiltersChange, searchMode = 'rent' }: FilterToggleBarProps) {
+function formatPrice(v: number, mode: "rent" | "buy") {
+  if (mode === "buy") return `HK$${(v / 10000).toLocaleString()}万`;
+  return `HK$${v.toLocaleString()}`;
+}
+
+// ---------- Reusable trigger button ----------
+
+interface FilterTriggerProps {
+  label: string;
+  count?: number;
+  active?: boolean;
+  summary?: string;
+}
+
+function FilterTrigger({ label, count, active, summary }: FilterTriggerProps) {
+  const isActive = active || (count ?? 0) > 0;
+  return (
+    <Button
+      variant={isActive ? "default" : "outline"}
+      size="sm"
+      className={cn(
+        "h-9 gap-1.5 rounded-full text-xs font-medium px-4 transition-all",
+        isActive &&
+          "bg-[#FFD54F] text-black hover:bg-[#FFD54F]/90 border-[#FFD54F]"
+      )}
+    >
+      <span>{label}</span>
+      {summary && <span className="text-[11px] opacity-80">· {summary}</span>}
+      {count !== undefined && count > 0 && (
+        <Badge
+          variant="secondary"
+          className="ml-0.5 h-5 min-w-5 rounded-full bg-black/20 px-1.5 text-[10px] text-black"
+        >
+          {count}
+        </Badge>
+      )}
+      <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+    </Button>
+  );
+}
+
+// ---------- Multi-checkbox group ----------
+
+function CheckboxGroup({
+  options,
+  selected,
+  onChange,
+  cols = 1,
+}: {
+  options: { value: string; tKey: string }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  cols?: 1 | 2 | 3;
+}) {
+  const { t } = useTranslation();
+  const colsClass = cols === 3 ? "grid-cols-3" : cols === 2 ? "grid-cols-2" : "grid-cols-1";
+  return (
+    <div className={cn("grid gap-1.5", colsClass)}>
+      {options.map((opt) => (
+        <label
+          key={opt.value}
+          className="flex cursor-pointer items-center gap-2 rounded-md p-1.5 hover:bg-muted"
+        >
+          <Checkbox
+            checked={selected.includes(opt.value)}
+            onCheckedChange={(checked) => {
+              if (checked) onChange([...selected, opt.value]);
+              else onChange(selected.filter((s) => s !== opt.value));
+            }}
+          />
+          <span className="text-sm">{t(opt.tKey) === opt.tKey ? opt.value : t(opt.tKey)}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+// ============== Main component ==============
+
+export function FilterToggleBar({
+  filters,
+  onFiltersChange,
+  searchMode = "rent",
+}: FilterToggleBarProps) {
   const { t } = useTranslation();
   const priceConfig = PRICE_CONFIG[searchMode];
-  
-  const activeFiltersCount = [
-    filters.propertyTypes.length > 0,
-    filters.priceRange[0] !== priceConfig.min || filters.priceRange[1] !== priceConfig.max,
-    filters.locations.length > 0,
-    filters.bedrooms.length > 0,
-    filters.bathrooms.length > 0,
-    filters.sizeRange[0] !== 0 || filters.sizeRange[1] !== 5000,
-    filters.floorLevels.length > 0,
-    filters.buildingAge.length > 0,
-    filters.orientations.length > 0,
-    filters.developers.length > 0,
-  ].filter(Boolean).length;
+  const [priceTab, setPriceTab] = useState<"preset" | "custom">("preset");
+  const [areaTab, setAreaTab] = useState<"preset" | "custom">("preset");
 
-  const clearAllFilters = () => {
+  const set = <K extends keyof FilterState>(key: K, value: FilterState[K]) =>
+    onFiltersChange({ ...filters, [key]: value });
+
+  const isPriceCustom =
+    filters.priceRange[0] !== priceConfig.min ||
+    filters.priceRange[1] !== priceConfig.max;
+  const isAreaCustom =
+    filters.sizeRange[0] !== 0 || filters.sizeRange[1] !== 5000;
+
+  const moreCount =
+    filters.buildingAge.length +
+    filters.floorLevels.length +
+    filters.developers.length +
+    filters.facilities.length +
+    filters.views.length +
+    filters.characteristics.length;
+
+  const totalActive =
+    (filters.propertyTypes.length > 0 ? 1 : 0) +
+    (filters.locations.length + filters.districts.length > 0 ? 1 : 0) +
+    (isPriceCustom ? 1 : 0) +
+    (isAreaCustom ? 1 : 0) +
+    (filters.bedrooms.length > 0 ? 1 : 0) +
+    (moreCount > 0 ? 1 : 0);
+
+  const clearAll = () =>
     onFiltersChange({
+      ...filters,
       propertyTypes: [],
       priceRange: [priceConfig.min, priceConfig.max],
       locations: [],
+      districts: [],
       bedrooms: [],
-      bathrooms: [],
       sizeRange: [0, 5000],
       floorLevels: [],
       buildingAge: [],
-      orientations: [],
       developers: [],
+      facilities: [],
+      views: [],
+      characteristics: [],
     });
-  };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-2">
-        <MultiSelectFilter
-          label={t('filter.propertyType')}
-          options={PROPERTY_TYPES}
-          selected={filters.propertyTypes}
-          onChange={(v) => onFiltersChange({ ...filters, propertyTypes: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <RangeFilter
-          label={searchMode === 'rent' ? t('filter.monthlyRent') : t('filter.salePrice')}
-          min={priceConfig.min}
-          max={priceConfig.max}
-          step={priceConfig.step}
-          value={filters.priceRange}
-          onChange={(v) => onFiltersChange({ ...filters, priceRange: v })}
-          formatValue={priceConfig.format}
-          resetLabel={t('filter.resetRange')}
-          quickPresets={priceConfig.presets}
-        />
-        <MultiSelectFilter
-          label={t('filter.location')}
-          options={LOCATIONS}
-          selected={filters.locations}
-          onChange={(v) => onFiltersChange({ ...filters, locations: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <MultiSelectFilter
-          label={t('filter.bedrooms')}
-          options={BEDROOMS}
-          selected={filters.bedrooms}
-          onChange={(v) => onFiltersChange({ ...filters, bedrooms: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <MultiSelectFilter
-          label={t('filter.bathrooms')}
-          options={BATHROOMS}
-          selected={filters.bathrooms}
-          onChange={(v) => onFiltersChange({ ...filters, bathrooms: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <RangeFilter
-          label={t('filter.size')}
-          min={0}
-          max={5000}
-          step={50}
-          value={filters.sizeRange}
-          onChange={(v) => onFiltersChange({ ...filters, sizeRange: v })}
-          formatValue={(v) => `${v} sqft`}
-          resetLabel={t('filter.resetRange')}
-        />
-        <MultiSelectFilter
-          label={t('filter.floorLevel')}
-          options={FLOOR_LEVELS}
-          selected={filters.floorLevels}
-          onChange={(v) => onFiltersChange({ ...filters, floorLevels: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <MultiSelectFilter
-          label={t('filter.buildingAge')}
-          options={BUILDING_AGE}
-          selected={filters.buildingAge}
-          onChange={(v) => onFiltersChange({ ...filters, buildingAge: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <MultiSelectFilter
-          label={t('filter.orientation')}
-          options={ORIENTATIONS}
-          selected={filters.orientations}
-          onChange={(v) => onFiltersChange({ ...filters, orientations: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
-        <MultiSelectFilter
-          label={t('filter.developer')}
-          options={DEVELOPERS}
-          selected={filters.developers}
-          onChange={(v) => onFiltersChange({ ...filters, developers: v })}
-          clearLabel={t('filter.clearSelection')}
-        />
+        {/* 1. Type */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger
+                label={t("filter.type")}
+                count={filters.propertyTypes.length}
+              />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-56 p-3" align="start">
+            <CheckboxGroup
+              options={TYPE_OPTIONS}
+              selected={filters.propertyTypes}
+              onChange={(v) => set("propertyTypes", v)}
+            />
+            {filters.propertyTypes.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full text-xs"
+                onClick={() => set("propertyTypes", [])}
+              >
+                {t("filter.clearSelection")}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* 2. Location (cascading) */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger
+                label={t("filter.location")}
+                count={filters.districts.length + filters.locations.length}
+              />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-2 max-h-[480px] overflow-y-auto" align="start">
+            <Accordion type="multiple" className="w-full">
+              {REGION_DISTRICTS.map((r) => {
+                const selectedInRegion = filters.districts.filter((d) =>
+                  r.districts.some((rd) => rd.value === d)
+                ).length;
+                return (
+                  <AccordionItem value={r.region} key={r.region} className="border-b">
+                    <AccordionTrigger className="py-2 px-2 text-sm hover:no-underline">
+                      <span className="flex items-center gap-2">
+                        {t(r.regionKey)}
+                        {selectedInRegion > 0 && (
+                          <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                            {selectedInRegion}
+                          </Badge>
+                        )}
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="pb-2 pl-2">
+                      {r.districts.length > 0 ? (
+                        <CheckboxGroup
+                          options={r.districts}
+                          selected={filters.districts}
+                          onChange={(v) => {
+                            // keep districts from other regions, replace this region's
+                            const otherRegions = filters.districts.filter(
+                              (d) => !r.districts.some((rd) => rd.value === d)
+                            );
+                            const inThisRegion = v.filter((d) =>
+                              r.districts.some((rd) => rd.value === d)
+                            );
+                            const next = [...otherRegions, ...inThisRegion];
+                            // also mirror region selection in `locations` for backward compat
+                            const regions = REGION_DISTRICTS.filter((reg) =>
+                              next.some((d) => reg.districts.some((rd) => rd.value === d))
+                            ).map((reg) => reg.region);
+                            onFiltersChange({
+                              ...filters,
+                              districts: next,
+                              locations: regions,
+                            });
+                          }}
+                          cols={2}
+                        />
+                      ) : (
+                        <p className="px-2 py-1 text-xs text-muted-foreground">—</p>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+            {(filters.districts.length > 0 || filters.locations.length > 0) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-2 w-full text-xs"
+                onClick={() =>
+                  onFiltersChange({ ...filters, districts: [], locations: [] })
+                }
+              >
+                {t("filter.clearSelection")}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* 3. Price */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger
+                label={searchMode === "rent" ? t("filter.monthlyRent") : t("filter.salePrice")}
+                active={isPriceCustom}
+                summary={
+                  isPriceCustom
+                    ? `${formatPrice(filters.priceRange[0], searchMode)} – ${formatPrice(filters.priceRange[1], searchMode)}`
+                    : undefined
+                }
+              />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start">
+            <div className="mb-3 flex gap-1 rounded-md bg-muted p-0.5 text-xs">
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded px-2 py-1.5 transition",
+                  priceTab === "preset" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setPriceTab("preset")}
+              >
+                {t("filter.priceRange")}
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded px-2 py-1.5 transition",
+                  priceTab === "custom" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setPriceTab("custom")}
+              >
+                {t("filter.opt.price.custom")}
+              </button>
+            </div>
+
+            {priceTab === "preset" ? (
+              <div className="space-y-1">
+                {priceConfig.presets.map((p) => {
+                  const isSel =
+                    filters.priceRange[0] === p.value[0] &&
+                    filters.priceRange[1] === p.value[1];
+                  return (
+                    <button
+                      type="button"
+                      key={p.tKey}
+                      onClick={() => set("priceRange", p.value)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition hover:bg-muted",
+                        isSel && "bg-[#FFD54F]/30 font-medium"
+                      )}
+                    >
+                      <span>{t(p.tKey)}</span>
+                      {isSel && <span className="text-[10px]">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{formatPrice(filters.priceRange[0], searchMode)}</span>
+                  <span>{formatPrice(filters.priceRange[1], searchMode)}</span>
+                </div>
+                <Slider
+                  min={priceConfig.min}
+                  max={priceConfig.max}
+                  step={priceConfig.step}
+                  value={filters.priceRange}
+                  onValueChange={(v) => set("priceRange", v as [number, number])}
+                />
+              </div>
+            )}
+
+            {isPriceCustom && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-3 w-full text-xs"
+                onClick={() => set("priceRange", [priceConfig.min, priceConfig.max])}
+              >
+                {t("filter.resetRange")}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* 4. Saleable Area */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger
+                label={t("filter.area")}
+                active={isAreaCustom}
+                summary={
+                  isAreaCustom
+                    ? `${filters.sizeRange[0]} – ${filters.sizeRange[1]} sqft`
+                    : undefined
+                }
+              />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-3" align="start">
+            <div className="mb-3 flex gap-1 rounded-md bg-muted p-0.5 text-xs">
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded px-2 py-1.5 transition",
+                  areaTab === "preset" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setAreaTab("preset")}
+              >
+                {t("filter.area")}
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded px-2 py-1.5 transition",
+                  areaTab === "custom" ? "bg-background shadow-sm" : "text-muted-foreground"
+                )}
+                onClick={() => setAreaTab("custom")}
+              >
+                {t("filter.opt.price.custom")}
+              </button>
+            </div>
+
+            {areaTab === "preset" ? (
+              <div className="space-y-1">
+                {AREA_PRESETS.map((p) => {
+                  const isSel =
+                    filters.sizeRange[0] === p.value[0] &&
+                    filters.sizeRange[1] === p.value[1];
+                  return (
+                    <button
+                      type="button"
+                      key={p.tKey}
+                      onClick={() => set("sizeRange", p.value)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition hover:bg-muted",
+                        isSel && "bg-[#FFD54F]/30 font-medium"
+                      )}
+                    >
+                      <span>{t(p.tKey)}</span>
+                      {isSel && <span className="text-[10px]">✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3 pt-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span>{filters.sizeRange[0]} sqft</span>
+                  <span>{filters.sizeRange[1]} sqft</span>
+                </div>
+                <Slider
+                  min={0}
+                  max={5000}
+                  step={50}
+                  value={filters.sizeRange}
+                  onValueChange={(v) => set("sizeRange", v as [number, number])}
+                />
+              </div>
+            )}
+
+            {isAreaCustom && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-3 w-full text-xs"
+                onClick={() => set("sizeRange", [0, 5000])}
+              >
+                {t("filter.resetRange")}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
+
+        {/* 5. Bedrooms — pill toggles */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger
+                label={t("filter.bedrooms")}
+                count={filters.bedrooms.length}
+              />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-3" align="start">
+            <div className="flex flex-wrap gap-1.5">
+              {BEDROOM_OPTIONS.map((b) => {
+                const isSel = filters.bedrooms.includes(b.value);
+                return (
+                  <button
+                    type="button"
+                    key={b.value}
+                    onClick={() =>
+                      set(
+                        "bedrooms",
+                        isSel
+                          ? filters.bedrooms.filter((x) => x !== b.value)
+                          : [...filters.bedrooms, b.value]
+                      )
+                    }
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs transition",
+                      isSel
+                        ? "bg-[#FFD54F] text-black border-[#FFD54F]"
+                        : "bg-background hover:bg-muted"
+                    )}
+                  >
+                    {t(b.tKey)}
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* 6. More */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <span>
+              <FilterTrigger label={t("filter.more")} count={moreCount} />
+            </span>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[640px] max-w-[calc(100vw-2rem)] p-4 max-h-[520px] overflow-y-auto"
+            align="start"
+          >
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.age")}
+                </p>
+                <CheckboxGroup
+                  options={AGE_OPTIONS}
+                  selected={filters.buildingAge}
+                  onChange={(v) => set("buildingAge", v)}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.floor")}
+                </p>
+                <CheckboxGroup
+                  options={FLOOR_OPTIONS}
+                  selected={filters.floorLevels}
+                  onChange={(v) => set("floorLevels", v)}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.facilities")}
+                </p>
+                <CheckboxGroup
+                  options={FACILITY_OPTIONS}
+                  selected={filters.facilities}
+                  onChange={(v) => set("facilities", v)}
+                  cols={2}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.views")}
+                </p>
+                <CheckboxGroup
+                  options={VIEW_OPTIONS}
+                  selected={filters.views}
+                  onChange={(v) => set("views", v)}
+                  cols={2}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.characteristics")}
+                </p>
+                <CheckboxGroup
+                  options={CHARACTERISTIC_OPTIONS}
+                  selected={filters.characteristics}
+                  onChange={(v) => set("characteristics", v)}
+                  cols={2}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {t("filter.more.developers")}
+                </p>
+                <CheckboxGroup
+                  options={DEVELOPER_OPTIONS}
+                  selected={filters.developers}
+                  onChange={(v) => set("developers", v)}
+                />
+              </div>
+            </div>
+
+            {moreCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-4 w-full text-xs"
+                onClick={() =>
+                  onFiltersChange({
+                    ...filters,
+                    buildingAge: [],
+                    floorLevels: [],
+                    developers: [],
+                    facilities: [],
+                    views: [],
+                    characteristics: [],
+                  })
+                }
+              >
+                {t("filter.clearSelection")}
+              </Button>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
-      {activeFiltersCount > 0 && (
+      {totalActive > 0 && (
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">
-            {activeFiltersCount} {t('filter.filtersActive')}
+            {totalActive} {t("filter.filtersActive")}
           </span>
           <Button
             variant="ghost"
             size="sm"
             className="h-6 gap-1 px-2 text-xs"
-            onClick={clearAllFilters}
+            onClick={clearAll}
           >
             <X className="h-3 w-3" />
-            {t('filter.clearAll')}
+            {t("filter.clearAll")}
           </Button>
         </div>
       )}

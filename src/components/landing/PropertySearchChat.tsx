@@ -47,6 +47,7 @@ const getDefaultFilters = (mode: 'rent' | 'buy'): FilterState => ({
   propertyTypes: [],
   priceRange: PRICE_DEFAULTS[mode],
   locations: [],
+  districts: [],
   bedrooms: [],
   bathrooms: [],
   sizeRange: [0, 5000],
@@ -54,6 +55,9 @@ const getDefaultFilters = (mode: 'rent' | 'buy'): FilterState => ({
   buildingAge: [],
   orientations: [],
   developers: [],
+  facilities: [],
+  views: [],
+  characteristics: [],
 });
 
 const DEFAULT_FILTERS: FilterState = getDefaultFilters('rent');

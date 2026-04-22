@@ -20,6 +20,7 @@ const defaultChatFilters: ChatFilterState = {
   propertyTypes: [],
   priceRange: PRICE_DEFAULTS.rent,
   locations: [],
+  districts: [],
   bedrooms: [],
   bathrooms: [],
   sizeRange: [0, 5000],
@@ -27,6 +28,9 @@ const defaultChatFilters: ChatFilterState = {
   buildingAge: [],
   orientations: [],
   developers: [],
+  facilities: [],
+  views: [],
+  characteristics: [],
 };
 
 const defaultListingFilters: ListingFilterState = {
