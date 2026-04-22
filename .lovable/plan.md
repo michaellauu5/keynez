@@ -1,53 +1,22 @@
 
 
-# Fix Sidebar Text Visibility & Section Title Keys
+# Make Header Banner 20% Taller
 
-Two issues on the vertical FilterSidebar:
+Increase the sticky header's height by 20% while keeping the existing banner background image, logo, nav, and all other styling intact.
 
-1. **Invisible toggle text** — Inactive Bedrooms / Bathrooms buttons (`variant="outline"`) and the Clear All button (`variant="ghost"`) inherit dark foreground text, which disappears against the sidebar's colored background. Active buttons (the green "bubble" style) render correctly and should stay green.
-2. **Raw keys leaking** — Section titles for Facilities, Views, and Characteristics show as "filter.facilities", "filter.views", "filter.characteristics" because those translation keys don't exist. The actual keys (used by the chat bar) are `filter.more.facilities`, `filter.more.views`, `filter.more.characteristics`.
+## Change
 
-## Changes
-
-### `src/components/landing/FilterSidebar.tsx`
-
-**A. Keep inactive toggle text white (active stays green bubble)**
-
-- Bedrooms button (line ~383): add white text classes for inactive state.
-  ```tsx
-  className={cn(
-    "h-8 text-xs",
-    active
-      ? "bg-accent text-accent-foreground border-transparent"
-      : "bg-transparent text-primary-foreground border-primary-foreground/40 hover:bg-primary-foreground/10 hover:text-primary-foreground"
-  )}
-  ```
-- Bathrooms button (line ~405): same treatment (`h-8 w-12 text-xs` preserved).
-- Clear All button (line ~283): replace `variant="ghost"` styling with explicit white text:
-  ```tsx
-  className="h-8 text-xs text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
-  ```
-
-No change to active "bubble" styling (`bg-accent text-accent-foreground` = green) — matches user's requirement.
-
-**B. Fix the three section titles** (lines 430, 434, 438):
+### `src/components/layout/Header.tsx` (line 48)
 
 ```diff
-- <Section id="fac" title={t("filter.facilities")} ...>
-+ <Section id="fac" title={t("filter.more.facilities")} ...>
-
-- <Section id="views" title={t("filter.views")} ...>
-+ <Section id="views" title={t("filter.more.views")} ...>
-
-- <Section id="char" title={t("filter.characteristics")} ...>
-+ <Section id="char" title={t("filter.more.characteristics")} ...>
+- <div className="container flex h-16 items-center justify-between px-4 md:px-6">
++ <div className="container flex h-[77px] items-center justify-between px-4 md:px-6">
 ```
 
-These keys already exist in `en` / `zh-HK` / `zh-CN` translations (used by `FilterToggleBar`).
+64px × 1.20 ≈ 77px. The existing logo (`h-14 md:h-16`) fits comfortably within the new height with no clipping.
 
 ## Out of Scope
 
-- No changes to active button colors, sidebar background, layout, or any other section.
-- No translation file changes — reusing existing keys.
-- No changes to `FilterToggleBar`, `PropertyListingsSection`, or context.
+- Background image, border, backdrop-blur — unchanged.
+- Logo, nav links, language selector, user menu, mobile sheet — unchanged.
 
