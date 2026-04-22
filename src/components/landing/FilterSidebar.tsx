@@ -425,7 +425,7 @@ function FilterContent({ filters, onFiltersChange, searchMode = "rent" }: Filter
         </div>
       </Section>
 
-      <Section id="floor" title={t("filter.floor")} open={openSections.includes("floor")} onToggle={() => toggle("floor")}>
+      <Section id="floor" title={t("filter.floorLevel")} open={openSections.includes("floor")} onToggle={() => toggle("floor")}>
         <CheckList options={FLOOR_OPTIONS} selected={filters.floorLevels} onChange={(v) => set("floorLevels", v)} />
       </Section>
 
