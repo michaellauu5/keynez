@@ -161,6 +161,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  html[lang="zh-HK"] body,
+  html[lang="zh-HK"] {
+    font-family: 'Noto Sans TC', 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+  html[lang="zh-CN"] body,
+  html[lang="zh-CN"] {
+    font-family: 'Noto Sans SC', 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+  }
 }
 
 /* Custom animations */
