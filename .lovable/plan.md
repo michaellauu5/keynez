@@ -1,56 +1,65 @@
 
 
-# Blend the Logo Into the Header
+# Restore Full-Width Header Bar With Smooth Edges
 
-The logo PNG sits as a hard rectangle against the gradient header — its own background/edges read as a "sticker." We'll let it sit naturally on the hero by softening its edges, removing any implicit box, and giving it presence through type-grade shadow rather than a plate.
+Bring back the solid header band that spans the full width (like two iterations ago), but keep it feeling integrated — no hard seam, logo stays sharp, hero still bleeds in softly at the bottom.
 
 ## Changes
 
-### `src/components/layout/Header.tsx` (logo `<img>`, line ~50)
+### `src/components/layout/Header.tsx`
 
-**1. Remove the box feel**
-- Drop the heavy `drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]` (reads like a card shadow).
-- Replace with a subtle dual shadow that hugs the glyph shapes, not the rectangle:
-  ```tsx
-  className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[320px] object-contain
-             [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.35))_drop-shadow(0_4px_14px_rgba(0,0,0,0.25))]"
-  ```
-  `drop-shadow` (CSS filter) follows the PNG's alpha channel, so the shadow traces the logo's outline instead of a square — this is the key fix for "bolted on."
+**1. Header background — solid band, soft bottom**
 
-**2. Soften the seam with the gradient**
-- Add a faint radial halo *behind* the logo only (not the whole header), so the gradient meets the logo gently:
-  ```tsx
-  <Link to="/" className="relative flex items-center -ml-4 md:-ml-6">
-    <span aria-hidden className="absolute inset-0 -z-10 blur-2xl opacity-40
-           bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)]" />
-    <img ... />
-  </Link>
-  ```
-  The halo is invisible as a shape but lifts the logo off bright hero areas without a visible plate.
+Replace the current top-down fade with a stronger, mostly-opaque band that occupies the full bar height and only fades at the very bottom edge:
 
-**3. Tighten size & alignment**
-- Slightly reduce max width on desktop (`max-w-[320px]` → `max-w-[280px]`) so the logo doesn't dominate; keeps it confident, not loud.
-- Remove the negative left margin (`-ml-4 md:-ml-6`) — it pushes the logo into the viewport edge and emphasizes the rectangle. Use `pl-1 md:pl-2` on the container instead for natural breathing room.
+```tsx
+<header className="sticky top-0 z-50 w-full border-b border-white/5
+                   bg-gradient-to-b from-black/75 via-black/70 to-black/40
+                   backdrop-blur-xl">
+```
 
-**4. Header gradient adjustment** (supports the blend)
-- Strengthen the very top stop slightly so the logo's top edge has consistent contrast regardless of hero brightness:
-  ```tsx
-  className="... bg-gradient-to-b from-black/60 via-black/20 to-transparent backdrop-blur-md"
-  ```
-  (`from-black/55` → `from-black/60`, `via-black/25` → `via-black/20` for a faster, smoother fade.)
+- `from-black/75 via-black/70` keeps the entire bar visually filled (the "cross bar" look).
+- `to-black/40` + `border-white/5` gives a whisper-soft bottom edge instead of a hard line — no bolted-on seam.
+- `backdrop-blur-xl` strengthens separation from the hero without needing an image.
+
+**2. Remove the per-logo halo**
+
+The radial halo behind the logo is no longer needed once the bar itself is filled — it would double up and look muddy. Delete the `<span aria-hidden …radial-gradient… />` element and simplify the Link wrapper:
+
+```tsx
+<Link to="/" className="flex items-center">
+  <img … />
+</Link>
+```
+
+**3. Keep logo sharp & soften its edges into the band**
+
+Retain the alpha-tracing dual `drop-shadow` so the logo doesn't read as a rectangle against the now-darker band, and lighten it slightly since the background is already dark:
+
+```tsx
+className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[280px] object-contain
+           [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.45))_drop-shadow(0_2px_10px_rgba(0,0,0,0.35))]"
+```
+
+No size/position changes — stays at current `h-20/h-24` container with `pl-1 md:pl-2`.
+
+**4. Nav / actions — unchanged**
+
+Active underline, white nav text, language dropdown, auth button, and mobile sheet remain exactly as they are. They already read well on a darker band.
 
 ## Visual result
 
 ```text
-Before:                          After:
-┌────────────┐                   ·  ·  ·
-│  [LOGO]    │  ← hard edges     · LOGO ·   ← shadow follows letters
-└────────────┘                   ·  ·  ·     halo melts into gradient
-   bolted plate                  sits on the page
+Now (fades to transparent):        After (filled band, soft bottom):
+┌ · · · · · · · · · · · · ┐        ┌─────────────────────────────┐
+│ LOGO  nav   ···  [user] │        │ LOGO   nav   ···   [user]   │  ← solid cross bar
+│ · · · · · · · · · · · · │        │░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░ ░│  ← 1px soft fade
+│  hero bleeds through    │        │   hero starts cleanly       │
 ```
 
 ## Out of Scope
-- No changes to nav links, language selector, auth button, or mobile sheet.
-- No new assets; uses existing `keynez-logo-new.png`.
-- No changes to `Layout`, hero, or routing.
+
+- No changes to Layout, hero, routing, translations, or auth.
+- No new assets — uses existing `keynez-logo-new.png`.
+- `banner-bg.png` not reintroduced (the gradient band achieves the same "filled" effect more cleanly).
 
