@@ -1,50 +1,56 @@
 
 
-# Soften & Widen the Header Bar
+# Blend the Logo Into the Header
 
-The header currently feels "bolted on": a solid 64px strip with a hard bottom border and a busy `banner-bg.png` tile that clashes with the hero photo behind it. We'll make it taller, drop the hard edges, and let the hero image read through so the logo sits *on* the page instead of *on top of* it — while keeping the logo crisp.
+The logo PNG sits as a hard rectangle against the gradient header — its own background/edges read as a "sticker." We'll let it sit naturally on the hero by softening its edges, removing any implicit box, and giving it presence through type-grade shadow rather than a plate.
 
 ## Changes
 
-### `src/components/layout/Header.tsx`
+### `src/components/layout/Header.tsx` (logo `<img>`, line ~50)
 
-**1. Increase vertical width**
-- `h-16` → `h-20 md:h-24` on the inner container (64px → 80px mobile / 96px desktop).
-- Logo grows proportionally: `h-14 md:h-16` → `h-16 md:h-20`, `max-w-[200px] md:max-w-[280px]` → `max-w-[220px] md:max-w-[320px]`. Source PNG already supports this without softness.
-
-**2. Merge smoothly into the background**
-- Remove the `banner-bg.png` background image and the hard `border-b border-primary/20`.
-- Replace with a transparent header that uses a soft top-down gradient fade so it dissolves into the hero photo:
+**1. Remove the box feel**
+- Drop the heavy `drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]` (reads like a card shadow).
+- Replace with a subtle dual shadow that hugs the glyph shapes, not the rectangle:
   ```tsx
-  <header className="sticky top-0 z-50 w-full bg-gradient-to-b from-black/55 via-black/25 to-transparent backdrop-blur-md">
+  className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[320px] object-contain
+             [filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.35))_drop-shadow(0_4px_14px_rgba(0,0,0,0.25))]"
   ```
-  - `from-black/55` keeps nav/logo legible at the very top.
-  - `via-black/25 to-transparent` fades out so there is no visible seam against the hero image.
-  - `backdrop-blur-md` (instead of `backdrop`) gently blurs whatever scrolls underneath, eliminating the "bolted plate" feel without a hard edge.
-- Drop the `bannerBg` import.
+  `drop-shadow` (CSS filter) follows the PNG's alpha channel, so the shadow traces the logo's outline instead of a square — this is the key fix for "bolted on."
 
-**3. Keep logo sharp & visible against the lighter fade**
-- Add a subtle drop shadow on the logo so it stays readable against bright sky areas of the hero:
+**2. Soften the seam with the gradient**
+- Add a faint radial halo *behind* the logo only (not the whole header), so the gradient meets the logo gently:
   ```tsx
-  className="... drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
+  <Link to="/" className="relative flex items-center -ml-4 md:-ml-6">
+    <span aria-hidden className="absolute inset-0 -z-10 blur-2xl opacity-40
+           bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.55),transparent_70%)]" />
+    <img ... />
+  </Link>
   ```
-- No filter/blur on the image itself — sharpness preserved.
+  The halo is invisible as a shape but lifts the logo off bright hero areas without a visible plate.
 
-**4. Nav link contrast**
-- Inactive nav links currently use `text-muted-foreground` which can vanish over the hero. Switch to `text-white/80 hover:text-white` and active to `text-white` with the existing accent underline. Mobile sheet links unaffected.
+**3. Tighten size & alignment**
+- Slightly reduce max width on desktop (`max-w-[320px]` → `max-w-[280px]`) so the logo doesn't dominate; keeps it confident, not loud.
+- Remove the negative left margin (`-ml-4 md:-ml-6`) — it pushes the logo into the viewport edge and emphasizes the rectangle. Use `pl-1 md:pl-2` on the container instead for natural breathing room.
+
+**4. Header gradient adjustment** (supports the blend)
+- Strengthen the very top stop slightly so the logo's top edge has consistent contrast regardless of hero brightness:
+  ```tsx
+  className="... bg-gradient-to-b from-black/60 via-black/20 to-transparent backdrop-blur-md"
+  ```
+  (`from-black/55` → `from-black/60`, `via-black/25` → `via-black/20` for a faster, smoother fade.)
 
 ## Visual result
 
 ```text
 Before:                          After:
-┌──────────────────────────┐    ╭ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─╮
-│ [logo] nav  ···  [user]  │    │ [LOGO]  nav  ···  [user]│ ← taller, blurred fade
-├──────────────────────────┤    │░░░░░░░░░░░░░░░░░░░░░░░░│
-│  hero image starts here  │    │  hero image bleeds up  │ ← no seam
+┌────────────┐                   ·  ·  ·
+│  [LOGO]    │  ← hard edges     · LOGO ·   ← shadow follows letters
+└────────────┘                   ·  ·  ·     halo melts into gradient
+   bolted plate                  sits on the page
 ```
 
 ## Out of Scope
-- No changes to `Layout`, hero section, or `banner-bg.png` (asset stays for any other use).
-- No changes to mobile sheet panel styling.
-- No translation, routing, or auth changes.
+- No changes to nav links, language selector, auth button, or mobile sheet.
+- No new assets; uses existing `keynez-logo-new.png`.
+- No changes to `Layout`, hero, or routing.
 
