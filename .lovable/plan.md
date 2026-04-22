@@ -1,26 +1,19 @@
 
 
-# Update Chat Toggle Labels to "租樓/買樓" & "租房/买房"
+# Fix Simplified Chinese Hero Title
 
-The Rent/Buy toggle in the search chat currently uses the generic `filter.forRent` / `filter.forSale` keys (which render as "出租 / 出售"). Use dedicated keys so the toggle reads as a natural verb-noun pair without affecting other filter UIs.
+The Simplified Chinese hero title currently reads "智能搵楼助理" — it mixes the Cantonese verb "搵" with the Simplified noun "楼". Replace with proper Simplified Chinese phrasing.
 
-## Changes
+## Change
 
-### 1. `src/translations/index.ts` — add two new keys per locale
+### `src/translations/index.ts` (line 699, zh-CN locale)
 
-| Key | en | zh-HK | zh-CN |
-|---|---|---|---|
-| `chat.toggle.rent` | `Rent` | `租樓` | `租房` |
-| `chat.toggle.buy` | `Buy` | `買樓` | `买房` |
-
-### 2. `src/components/landing/PropertySearchChat.tsx` (lines ~643, ~655)
-
-Swap the toggle labels:
-
-- `{t('filter.forRent')}` → `{t('chat.toggle.rent')}`
-- `{t('filter.forSale')}` → `{t('chat.toggle.buy')}`
+```diff
+- "hero.titleAccent": "智能搵楼助理",
++ "hero.titleAccent": "智能找房助理",
+```
 
 ## Out of Scope
-- No changes to `filter.forRent` / `filter.forSale` (still used by sidebar filters, badges, etc.).
-- No styling, layout, or behavior changes.
+- zh-HK ("智能搵樓助理") and en ("Hong Kong") titles unchanged.
+- No styling or layout changes.
 
