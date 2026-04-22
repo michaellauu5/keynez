@@ -1,8 +1,8 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { StatCounter } from "./StatCounter";
 import { VideoDemo } from "./VideoDemo";
-import { FilterSidebar, type FilterState } from "./FilterSidebar";
+import { FilterSidebar } from "./FilterSidebar";
 import { PropertyGrid } from "./PropertyGrid";
 import { GoogleMapView } from "@/components/map/GoogleMapView";
 import { Button } from "@/components/ui/button";
@@ -10,111 +10,107 @@ import { mockProperties } from "@/data/mockProperties";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { useFilterSync } from "@/contexts/FilterSyncContext";
-const defaultFilters: FilterState = {
-  transactionType: "all",
-  regions: [],
-  districts: [],
-  propertyTypes: [],
-  priceRange: [0, 200000000],
-  sizeRange: [0, 5000],
-  bedrooms: [],
-  bathrooms: [],
-  hasParking: null,
-  petsAllowed: null,
-  isFurnished: null,
-  isNew: null,
-  hasSeaView: null,
-  hasPool: null,
-  hasGym: null
-};
+
 type ViewMode = "grid" | "map";
+
 export function PropertyListingsSection() {
-  const { listingFilters, setListingFilters } = useFilterSync();
-  const [internalFilters, setInternalFilters] = useState<FilterState>(defaultFilters);
-  
-  // Merge: external synced fields override internal, but keep amenity booleans from internal
-  const filters: FilterState = {
-    ...internalFilters,
-    propertyTypes: listingFilters.propertyTypes.length > 0 ? listingFilters.propertyTypes : internalFilters.propertyTypes,
-    bedrooms: listingFilters.bedrooms.length > 0 ? listingFilters.bedrooms : internalFilters.bedrooms,
-    bathrooms: listingFilters.bathrooms.length > 0 ? listingFilters.bathrooms : internalFilters.bathrooms,
-    regions: listingFilters.regions.length > 0 ? listingFilters.regions : internalFilters.regions,
-    districts: listingFilters.districts.length > 0 ? listingFilters.districts : internalFilters.districts,
-    transactionType: listingFilters.transactionType,
-    sizeRange: listingFilters.sizeRange,
-  };
-  
-  const setFilters = useCallback((f: FilterState) => {
-    setInternalFilters(f);
-    setListingFilters(f);
-  }, [setListingFilters]);
+  const { chatFilters, setChatFilters, searchMode } = useFilterSync();
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
   const isMobile = useIsMobile();
+
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter(property => {
-      // Transaction type
-      if (filters.transactionType !== "all" && property.priceType !== filters.transactionType) {
-        return false;
-      }
-
-      // Regions
-      if (filters.regions.length > 0 && !filters.regions.includes(property.region)) {
-        return false;
-      }
-
-      // Districts
-      if (filters.districts.length > 0 && !filters.districts.includes(property.district)) {
-        return false;
-      }
+    const f = chatFilters;
+    return mockProperties.filter((p) => {
+      // Transaction type via searchMode
+      if (searchMode === "rent" && p.priceType !== "rent") return false;
+      if (searchMode === "buy" && p.priceType !== "sale") return false;
 
       // Property types
-      if (filters.propertyTypes.length > 0 && !filters.propertyTypes.includes(property.propertyType)) {
-        return false;
+      if (f.propertyTypes.length > 0) {
+        const match = f.propertyTypes.some(
+          (t) => t.toLowerCase() === p.propertyType.toLowerCase(),
+        );
+        if (!match) return false;
       }
 
-      // Price range (for sale properties only compare against sale price range)
-      if (property.priceType === "sale") {
-        if (property.price < filters.priceRange[0] || property.price > filters.priceRange[1]) {
-          return false;
-        }
+      // Districts (preferred) else regions/locations
+      if (f.districts.length > 0) {
+        if (!f.districts.includes(p.district)) return false;
+      } else if (f.locations.length > 0) {
+        if (!f.locations.includes(p.region)) return false;
       }
 
-      // Size range
-      if (property.size < filters.sizeRange[0] || property.size > filters.sizeRange[1]) {
-        return false;
-      }
+      // Price
+      if (p.price < f.priceRange[0] || p.price > f.priceRange[1]) return false;
+
+      // Size
+      if (p.size < f.sizeRange[0] || p.size > f.sizeRange[1]) return false;
 
       // Bedrooms
-      if (filters.bedrooms.length > 0) {
-        const bedroomMatch = filters.bedrooms.some(b => {
-          if (b === 5) return property.bedrooms >= 5;
-          return property.bedrooms === b;
+      if (f.bedrooms.length > 0) {
+        const ok = f.bedrooms.some((b) => {
+          if (b === "Studio") return p.bedrooms === 0;
+          if (b === "4+") return p.bedrooms >= 4;
+          if (b === "5+") return p.bedrooms >= 5;
+          const n = parseInt(b);
+          return !isNaN(n) && p.bedrooms === n;
         });
-        if (!bedroomMatch) return false;
+        if (!ok) return false;
       }
 
       // Bathrooms
-      if (filters.bathrooms.length > 0) {
-        const bathroomMatch = filters.bathrooms.some(b => {
-          if (b === 4) return property.bathrooms >= 4;
-          return property.bathrooms === b;
+      if (f.bathrooms.length > 0) {
+        const ok = f.bathrooms.some((b) => {
+          if (b === "4+") return p.bathrooms >= 4;
+          const n = parseInt(b);
+          return !isNaN(n) && p.bathrooms === n;
         });
-        if (!bathroomMatch) return false;
+        if (!ok) return false;
       }
 
-      // Additional filters
-      if (filters.hasParking === true && !property.hasParking) return false;
-      if (filters.petsAllowed === true && !property.petsAllowed) return false;
-      if (filters.isFurnished === true && !property.isFurnished) return false;
-      if (filters.isNew === true && !property.isNew) return false;
-      if (filters.hasSeaView === true && !property.features.includes("Sea View")) return false;
-      if (filters.hasPool === true && !property.features.includes("Pool")) return false;
-      if (filters.hasGym === true && !property.features.includes("Gym")) return false;
+      // Building age
+      if (f.buildingAge.length > 0 && !f.buildingAge.includes(p.buildingAge)) return false;
+
+      // Floor level
+      if (f.floorLevels.length > 0 && !f.floorLevels.includes(p.floorLevel)) return false;
+
+      // Developer
+      if (f.developers.length > 0 && !f.developers.includes(p.developer)) return false;
+
+      // Facilities — every selected must be present
+      if (f.facilities.length > 0) {
+        const ok = f.facilities.every((fac) => {
+          if (fac === "Parking") return p.hasParking || p.features.includes("Parking");
+          return p.features.includes(fac);
+        });
+        if (!ok) return false;
+      }
+
+      // Views — every selected must be present (e.g. "Sea View")
+      if (f.views.length > 0) {
+        const ok = f.views.every((v) => p.features.includes(`${v} View`));
+        if (!ok) return false;
+      }
+
+      // Characteristics
+      if (f.characteristics.length > 0) {
+        const ok = f.characteristics.every((c) => {
+          if (c === "New") return p.isNew;
+          if (c === "Furnished") return p.isFurnished;
+          if (c === "Pet-friendly") return p.petsAllowed;
+          if (c === "Duplex") return p.features.includes("Duplex");
+          return false;
+        });
+        if (!ok) return false;
+      }
+
       return true;
     });
-  }, [filters]);
-  return <section className="bg-black/20 backdrop-blur-sm">
+  }, [chatFilters, searchMode]);
+
+  return (
+    <section className="bg-black/20 backdrop-blur-sm">
       {/* Stat Counter + Video */}
       <div className="container px-4 py-12 md:py-16">
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
@@ -126,36 +122,77 @@ export function PropertyListingsSection() {
       {/* Main Content */}
       <div className="container px-4 py-8 md:py-12">
         {/* Mobile Filter Button */}
-        {isMobile && <div className="mb-6">
-            <FilterSidebar filters={filters} onFiltersChange={setFilters} />
-          </div>}
+        {isMobile && (
+          <div className="mb-6">
+            <FilterSidebar
+              filters={chatFilters}
+              onFiltersChange={setChatFilters}
+              searchMode={searchMode}
+            />
+          </div>
+        )}
 
         <div className="flex gap-8">
           {/* Desktop Sidebar */}
-          {!isMobile && <FilterSidebar filters={filters} onFiltersChange={setFilters} />}
+          {!isMobile && (
+            <FilterSidebar
+              filters={chatFilters}
+              onFiltersChange={setChatFilters}
+              searchMode={searchMode}
+            />
+          )}
 
           {/* Property Grid/Map */}
           <div className="flex-1 min-w-0">
-            {/* View Toggle */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-sm font-medium text-foreground">
                 <span className="text-lg font-bold">{filteredProperties.length}</span>{" "}
                 <span className="text-muted-foreground">properties found</span>
               </p>
               <div className="flex border border-border rounded-md overflow-hidden">
-                <Button variant="ghost" size="sm" onClick={() => setViewMode("grid")} className={cn("h-9 px-3 rounded-none", viewMode === "grid" && "bg-accent text-accent-foreground")} title="Grid View">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("grid")}
+                  className={cn(
+                    "h-9 px-3 rounded-none",
+                    viewMode === "grid" && "bg-accent text-accent-foreground",
+                  )}
+                  title="Grid View"
+                >
                   <LayoutGrid className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setViewMode("map")} className={cn("h-9 px-3 rounded-none border-l border-border", viewMode === "map" && "bg-accent text-accent-foreground")} title="Map View">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode("map")}
+                  className={cn(
+                    "h-9 px-3 rounded-none border-l border-border",
+                    viewMode === "map" && "bg-accent text-accent-foreground",
+                  )}
+                  title="Map View"
+                >
                   <MapIcon className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Results */}
-            {viewMode === "grid" ? <PropertyGrid properties={filteredProperties} onPropertyHover={setHoveredPropertyId} /> : <GoogleMapView properties={filteredProperties} hoveredPropertyId={hoveredPropertyId} onPropertyHover={setHoveredPropertyId} className="h-[600px]" />}
+            {viewMode === "grid" ? (
+              <PropertyGrid
+                properties={filteredProperties}
+                onPropertyHover={setHoveredPropertyId}
+              />
+            ) : (
+              <GoogleMapView
+                properties={filteredProperties}
+                hoveredPropertyId={hoveredPropertyId}
+                onPropertyHover={setHoveredPropertyId}
+                className="h-[600px]"
+              />
+            )}
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 }
