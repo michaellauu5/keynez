@@ -134,7 +134,16 @@ const REGION_DISTRICTS: {
   {
     region: "Overseas",
     regionKey: "filter.opt.region.overseas",
-    districts: [],
+    districts: [
+      { value: "United Kingdom", tKey: "filter.opt.overseas.uk" },
+      { value: "Canada", tKey: "filter.opt.overseas.canada" },
+      { value: "Australia", tKey: "filter.opt.overseas.australia" },
+      { value: "Singapore", tKey: "filter.opt.overseas.singapore" },
+      { value: "Japan", tKey: "filter.opt.overseas.japan" },
+      { value: "Thailand", tKey: "filter.opt.overseas.thailand" },
+      { value: "Malaysia", tKey: "filter.opt.overseas.malaysia" },
+      { value: "United States", tKey: "filter.opt.overseas.usa" },
+    ],
   },
   {
     region: "School Nets",
@@ -142,6 +151,51 @@ const REGION_DISTRICTS: {
     districts: [],
   },
 ];
+
+// School Nets grouped data: rendered specially in the Location accordion
+const SCHOOLNET_GROUPS: {
+  groupKey: string;
+  options: { value: string; tKey: string }[];
+}[] = [
+  {
+    groupKey: "filter.opt.schoolnet.primary",
+    options: [
+      { value: "Primary Net 11", tKey: "filter.opt.schoolnet.p11" },
+      { value: "Primary Net 12", tKey: "filter.opt.schoolnet.p12" },
+      { value: "Primary Net 14", tKey: "filter.opt.schoolnet.p14" },
+      { value: "Primary Net 16", tKey: "filter.opt.schoolnet.p16" },
+      { value: "Primary Net 18", tKey: "filter.opt.schoolnet.p18" },
+      { value: "Primary Net 31", tKey: "filter.opt.schoolnet.p31" },
+      { value: "Primary Net 34", tKey: "filter.opt.schoolnet.p34" },
+      { value: "Primary Net 35", tKey: "filter.opt.schoolnet.p35" },
+      { value: "Primary Net 40", tKey: "filter.opt.schoolnet.p40" },
+      { value: "Primary Net 41", tKey: "filter.opt.schoolnet.p41" },
+      { value: "Primary Net 91", tKey: "filter.opt.schoolnet.p91" },
+      { value: "Primary Net 95", tKey: "filter.opt.schoolnet.p95" },
+    ],
+  },
+  {
+    groupKey: "filter.opt.schoolnet.secondary",
+    options: [
+      { value: "Secondary HK Island", tKey: "filter.opt.schoolnet.s_hki" },
+      { value: "Secondary Kowloon", tKey: "filter.opt.schoolnet.s_kln" },
+      { value: "Secondary New Territories", tKey: "filter.opt.schoolnet.s_nt" },
+    ],
+  },
+  {
+    groupKey: "filter.opt.schoolnet.university",
+    options: [
+      { value: "HKU", tKey: "filter.opt.schoolnet.u_hku" },
+      { value: "CUHK", tKey: "filter.opt.schoolnet.u_cuhk" },
+      { value: "HKUST", tKey: "filter.opt.schoolnet.u_hkust" },
+      { value: "PolyU", tKey: "filter.opt.schoolnet.u_polyu" },
+      { value: "CityU", tKey: "filter.opt.schoolnet.u_cityu" },
+      { value: "HKBU", tKey: "filter.opt.schoolnet.u_hkbu" },
+    ],
+  },
+];
+
+const SCHOOLNET_VALUES = SCHOOLNET_GROUPS.flatMap((g) => g.options.map((o) => o.value));
 
 interface PricePreset {
   tKey: string;
@@ -197,14 +251,14 @@ const AGE_OPTIONS = [
 ];
 
 const DEVELOPER_OPTIONS = [
-  { value: "Sun Hung Kai", tKey: "Sun Hung Kai" },
-  { value: "Henderson Land", tKey: "Henderson Land" },
-  { value: "New World Development", tKey: "New World Development" },
-  { value: "Cheung Kong", tKey: "Cheung Kong" },
-  { value: "Sino Land", tKey: "Sino Land" },
-  { value: "Hang Lung", tKey: "Hang Lung" },
-  { value: "Wharf Holdings", tKey: "Wharf Holdings" },
-  { value: "Kerry Properties", tKey: "Kerry Properties" },
+  { value: "Sun Hung Kai", tKey: "filter.opt.dev.shk" },
+  { value: "Henderson Land", tKey: "filter.opt.dev.henderson" },
+  { value: "New World Development", tKey: "filter.opt.dev.nwd" },
+  { value: "Cheung Kong", tKey: "filter.opt.dev.cheungkong" },
+  { value: "Sino Land", tKey: "filter.opt.dev.sino" },
+  { value: "Hang Lung", tKey: "filter.opt.dev.hanglung" },
+  { value: "Wharf Holdings", tKey: "filter.opt.dev.wharf" },
+  { value: "Kerry Properties", tKey: "filter.opt.dev.kerry" },
 ];
 
 const FACILITY_OPTIONS = [
