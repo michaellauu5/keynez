@@ -15,7 +15,6 @@ import { useTranslation } from '@/hooks/useTranslation';
 import { useAuth } from '@/components/auth/AuthContext';
 import { Language, languageNames } from '@/translations';
 import keynezLogo from '@/assets/keynez-logo-new.png';
-import bannerBg from '@/assets/banner-bg.png';
 
 const navLinks = [
   { labelKey: 'nav.home', href: '/' },
@@ -44,14 +43,14 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-primary/20 backdrop-blur" style={{ backgroundImage: `url(${bannerBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+    <header className="sticky top-0 z-50 w-full bg-gradient-to-b from-black/55 via-black/25 to-transparent backdrop-blur-md">
+      <div className="container flex h-20 md:h-24 items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center -ml-4 md:-ml-6">
           <img
             src={keynezLogo}
             alt="Keynez AI"
-            className="h-14 w-auto md:h-16 max-w-[200px] md:max-w-[280px] object-contain"
+            className="h-16 w-auto md:h-20 max-w-[220px] md:max-w-[320px] object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]"
           />
         </Link>
 
@@ -70,15 +69,15 @@ export function Header() {
               <Link
                 key={link.labelKey}
                 to={link.href}
-                className={`text-sm font-medium transition-colors hover:text-foreground relative ${
+                className={`text-sm font-medium transition-colors hover:text-white relative ${
                   isActiveRoute(link.href)
-                    ? 'text-foreground font-semibold'
-                    : 'text-muted-foreground'
+                    ? 'text-white font-semibold'
+                    : 'text-white/80'
                 }`}
               >
                 {t(link.labelKey)}
                 {isActiveRoute(link.href) && (
-                  <span className="absolute -bottom-[21px] left-0 right-0 h-0.5 bg-accent" />
+                  <span className="absolute -bottom-[29px] md:-bottom-[37px] left-0 right-0 h-0.5 bg-accent" />
                 )}
               </Link>
             )
