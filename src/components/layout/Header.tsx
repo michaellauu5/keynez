@@ -45,7 +45,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-primary/20 backdrop-blur" style={{ backgroundImage: `url(${bannerBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
-      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
+      <div className="container flex h-[77px] items-center justify-between px-4 md:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center -ml-4 md:-ml-6">
           <img
