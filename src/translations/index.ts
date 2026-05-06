@@ -73,6 +73,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "how.step3.title": "Compare and shortlist",
     "how.step3.desc": "Side-by-side comparisons, AI match score, export to PDF or the Research Canvas.",
 
+    // Why Keynez
+    "why.title": "Why Keynez",
+    "why.subtitle": "Built for Hong Kong renters and buyers who are tired of fragmented search.",
+    "why.platforms.title": "Every platform, one search",
+    "why.platforms.body": "Stop tabbing between 28Hse, Centaline and Midland. Keynez indexes them all and de-duplicates by address.",
+    "why.language.title": "Speaks your language — literally",
+    "why.language.body": "Describe your ideal home in Cantonese, English or Mandarin. Our AI understands local terms like 搵樓, 筍盤, 校網, and 屋苑.",
+    "why.tool.title": "Not an agent — a tool",
+    "why.tool.body": "Keynez is a search platform, not a licensed estate agent. We link you directly to the licensed agent handling each listing. No inflated fees, no push sales.",
+    "why.export.title": "Data you can export",
+    "why.export.body": "Save shortlists to the Research Canvas. Export to PDF or CSV. Walk into your next viewing with a side-by-side comparison in hand.",
+
     // Search Chat
     "search.placeholder": "What kind of place are you after?",
     "search.button": "Search",
