@@ -421,6 +421,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "how.step3.title": "比較與篩選",
     "how.step3.desc": "並排比較、AI 匹配評分，匯出 PDF 或加入研究畫布。",
 
+    // Why Keynez
+    "why.title": "為何選擇 Keynez",
+    "why.subtitle": "為厭倦碎片化搜尋的香港租客和買家而設。",
+    "why.platforms.title": "一次搜尋，覆蓋所有平台",
+    "why.platforms.body": "唔使再喺 28Hse、中原同美聯之間切換。Keynez 一次過收錄全部，並按地址自動去重。",
+    "why.language.title": "真正識聽你嘅語言",
+    "why.language.body": "用廣東話、英文或普通話描述你的理想居所。我哋的 AI 識本地用語，例如搵樓、筍盤、校網、屋苑。",
+    "why.tool.title": "不是代理，而是工具",
+    "why.tool.body": "Keynez 是搜尋平台，並非持牌地產代理。我哋直接連結到負責每個盤源的持牌代理，無加價、無 push sale。",
+    "why.export.title": "可匯出的數據",
+    "why.export.body": "將心水盤儲存到研究畫布，匯出 PDF 或 CSV。下次睇樓時，帶住並排比較表入場。",
+
     // Search Chat
     "search.placeholder": "想搵乜嘢樓盤呢？",
     "search.button": "搜尋",
