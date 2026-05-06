@@ -1,5 +1,6 @@
 import { Layout } from "@/components/layout/Layout";
 import { HeroSection } from "@/components/landing/HeroSection";
+import { HowItWorks } from "@/components/landing/HowItWorks";
 import { PropertyListingsSection } from "@/components/landing/PropertyListingsSection";
 import heroLivingRoom from "@/assets/hero-living-room.png";
 
@@ -20,6 +21,7 @@ const Index = () => {
         
         <div className="relative z-10">
           <HeroSection />
+          <HowItWorks />
           <PropertyListingsSection />
         </div>
       </div>
