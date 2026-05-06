@@ -58,7 +58,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              
+              <img src={keynezLogo} alt="Keynez AI" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               {t('footer.description')}
@@ -104,7 +104,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo at bottom left */}
             <Link to="/" className="flex items-center">
-              
+              <img src={keynezLogo} alt="Keynez AI" className="h-8 w-auto" />
             </Link>
             
             {/* Copyright */}
