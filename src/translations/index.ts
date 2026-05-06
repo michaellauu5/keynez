@@ -73,6 +73,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "how.step3.title": "Compare and shortlist",
     "how.step3.desc": "Side-by-side comparisons, AI match score, export to PDF or the Research Canvas.",
 
+    // Why Keynez
+    "why.title": "Why Keynez",
+    "why.subtitle": "Built for Hong Kong renters and buyers who are tired of fragmented search.",
+    "why.platforms.title": "Every platform, one search",
+    "why.platforms.body": "Stop tabbing between 28Hse, Centaline and Midland. Keynez indexes them all and de-duplicates by address.",
+    "why.language.title": "Speaks your language — literally",
+    "why.language.body": "Describe your ideal home in Cantonese, English or Mandarin. Our AI understands local terms like 搵樓, 筍盤, 校網, and 屋苑.",
+    "why.tool.title": "Not an agent — a tool",
+    "why.tool.body": "Keynez is a search platform, not a licensed estate agent. We link you directly to the licensed agent handling each listing. No inflated fees, no push sales.",
+    "why.export.title": "Data you can export",
+    "why.export.body": "Save shortlists to the Research Canvas. Export to PDF or CSV. Walk into your next viewing with a side-by-side comparison in hand.",
+
     // Search Chat
     "search.placeholder": "What kind of place are you after?",
     "search.button": "Search",
@@ -409,6 +421,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "how.step3.title": "比較與篩選",
     "how.step3.desc": "並排比較、AI 匹配評分，匯出 PDF 或加入研究畫布。",
 
+    // Why Keynez
+    "why.title": "為何選擇 Keynez",
+    "why.subtitle": "為厭倦碎片化搜尋的香港租客和買家而設。",
+    "why.platforms.title": "一次搜尋，覆蓋所有平台",
+    "why.platforms.body": "唔使再喺 28Hse、中原同美聯之間切換。Keynez 一次過收錄全部，並按地址自動去重。",
+    "why.language.title": "真正識聽你嘅語言",
+    "why.language.body": "用廣東話、英文或普通話描述你的理想居所。我哋的 AI 識本地用語，例如搵樓、筍盤、校網、屋苑。",
+    "why.tool.title": "不是代理，而是工具",
+    "why.tool.body": "Keynez 是搜尋平台，並非持牌地產代理。我哋直接連結到負責每個盤源的持牌代理，無加價、無 push sale。",
+    "why.export.title": "可匯出的數據",
+    "why.export.body": "將心水盤儲存到研究畫布，匯出 PDF 或 CSV。下次睇樓時，帶住並排比較表入場。",
+
     // Search Chat
     "search.placeholder": "想搵乜嘢樓盤呢？",
     "search.button": "搜尋",
@@ -744,6 +768,18 @@ export const translations: Record<Language, Record<string, string>> = {
     "how.step2.desc": "一次性搜寻 28Hse、中原、美联、Squarefoot、OneDay 及业主盘。",
     "how.step3.title": "比较与筛选",
     "how.step3.desc": "并排比较、AI 匹配评分，导出 PDF 或加入研究画布。",
+
+    // Why Keynez
+    "why.title": "为何选择 Keynez",
+    "why.subtitle": "为厌倦碎片化搜寻的香港租客和买家而设。",
+    "why.platforms.title": "一次搜寻，覆盖所有平台",
+    "why.platforms.body": "不用再在 28Hse、中原和美联之间切换。Keynez 一次性收录全部，并按地址自动去重。",
+    "why.language.title": "真正听懂你的语言",
+    "why.language.body": "用粤语、英文或普通话描述你的理想居所。我们的 AI 懂本地用语，例如搵楼、笋盘、校网、屋苑。",
+    "why.tool.title": "不是代理，而是工具",
+    "why.tool.body": "Keynez 是搜寻平台，而非持牌地产代理。我们直接连结到负责每个房源的持牌代理，无加价、无推销。",
+    "why.export.title": "可导出的数据",
+    "why.export.body": "将心仪房源保存到研究画布，导出 PDF 或 CSV。下次看房时，带着并排比较表进场。",
 
     // Search Chat
     "search.placeholder": "想找什么样的房子？",

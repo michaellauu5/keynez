@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { LayoutGrid, Map as MapIcon } from "lucide-react";
 import { StatCounter } from "./StatCounter";
 import { VideoDemo } from "./VideoDemo";
+import { WhyKeynez } from "./WhyKeynez";
 import { FilterSidebar } from "./FilterSidebar";
 import { PropertyGrid } from "./PropertyGrid";
 import { GoogleMapView } from "@/components/map/GoogleMapView";
@@ -111,10 +112,11 @@ export function PropertyListingsSection() {
 
   return (
     <section className="bg-black/20 backdrop-blur-sm">
-      {/* Stat Counter + Video */}
+      {/* Stat Counter + Why Keynez + Video */}
       <div className="container px-4 py-12 md:py-16">
-        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-          <StatCounter />
+        <StatCounter />
+        <WhyKeynez />
+        <div className="mt-8">
           <VideoDemo />
         </div>
       </div>
