@@ -63,6 +63,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
+    // How It Works Section
+    "how.title": "How it works",
+    "how.subtitle": "Find your next home in three simple steps",
+    "how.step1.title": "Tell us what you need",
+    "how.step1.desc": "Describe your ideal place in plain Cantonese, English or Mandarin.",
+    "how.step2.title": "AI searches every platform",
+    "how.step2.desc": "We cover 28Hse, Centaline, Midland, Squarefoot, OneDay and owner listings — in one go.",
+    "how.step3.title": "Compare and shortlist",
+    "how.step3.desc": "Side-by-side comparisons, AI match score, export to PDF or the Research Canvas.",
+
     // Search Chat
     "search.placeholder": "What kind of place are you after?",
     "search.button": "Search",
@@ -382,6 +392,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
+    // How It Works Section
+    "how.title": "運作方式",
+    "how.subtitle": "三個簡單步驟，找到你的下一個家",
+    "how.step1.title": "告訴我們你的需要",
+    "how.step1.desc": "用廣東話、英文或普通話描述你心目中的理想居所。",
+    "how.step2.title": "AI 搜遍每個平台",
+    "how.step2.desc": "一次過搜尋 28Hse、中原、美聯、Squarefoot、OneDay 及業主盤。",
+    "how.step3.title": "比較與篩選",
+    "how.step3.desc": "並排比較、AI 匹配評分，匯出 PDF 或加入研究畫布。",
+
     // Search Chat
     "search.placeholder": "想搵乜嘢樓盤呢？",
     "search.button": "搜尋",
@@ -700,6 +720,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.subtitle": "找房第一步 · 覆盖全港所有平台盘源\n专业对比 · 一眼看清\n业主盘 · 优质房源 · AI帮您规划",
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
+
+    // How It Works Section
+    "how.title": "运作方式",
+    "how.subtitle": "三个简单步骤，找到你的下一个家",
+    "how.step1.title": "告诉我们你的需要",
+    "how.step1.desc": "用粤语、英文或普通话描述你心目中的理想居所。",
+    "how.step2.title": "AI 搜遍每个平台",
+    "how.step2.desc": "一次性搜寻 28Hse、中原、美联、Squarefoot、OneDay 及业主盘。",
+    "how.step3.title": "比较与筛选",
+    "how.step3.desc": "并排比较、AI 匹配评分，导出 PDF 或加入研究画布。",
 
     // Search Chat
     "search.placeholder": "想找什么样的房子？",
