@@ -769,6 +769,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.description": "Keynez AI 是香港首屈一指的人工智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
     "footer.quickLinks": "快速链接",
     "footer.connect": "关注我们",
+    "footer.company": "公司",
+    "footer.careers": "招聘",
+    "footer.press": "新闻",
+    "footer.blog": "博客",
+    "footer.comingSoon": "即将推出",
+    "footer.email": "邮箱",
+    "footer.whatsapp": "WhatsApp",
+    "footer.language": "语言",
+    "footer.disclaimer": "Keynez AI 是物业搜索平台，并非香港持牌地产代理。所有房源均链接至负责该房源的持牌代理或业主。如适用，会核实地产代理监管局牌照。",
 
     // Hero Section
     "hero.title": "新一代 · ",
