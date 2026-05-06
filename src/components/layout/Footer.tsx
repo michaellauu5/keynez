@@ -21,14 +21,14 @@ const languages: Language[] = ['en', 'zh-HK', 'zh-CN'];
 
 // Routes that exist today; others render as disabled placeholders.
 const quickLinks = [
-  { labelKey: 'footer.about', href: '/about', enabled: false },
-  { labelKey: 'footer.contact', href: '/contact', enabled: false },
-  { labelKey: 'footer.terms', href: '/terms', enabled: false },
-  { labelKey: 'footer.privacy', href: '/privacy', enabled: false },
+  { labelKey: 'footer.about', href: '/about', enabled: true },
+  { labelKey: 'footer.contact', href: '/contact', enabled: true },
+  { labelKey: 'footer.terms', href: '/terms', enabled: true },
+  { labelKey: 'footer.privacy', href: '/privacy', enabled: true },
 ];
 
 const companyLinks = [
-  { labelKey: 'footer.about', href: '/about', enabled: false },
+  { labelKey: 'footer.about', href: '/about', enabled: true },
   { labelKey: 'footer.careers', href: '/careers', enabled: false },
   { labelKey: 'footer.press', href: '/press', enabled: false },
   { labelKey: 'footer.blog', href: '/blog', enabled: false },
