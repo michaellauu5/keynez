@@ -46,8 +46,8 @@ function StatItem({ stat, isVisible }: { stat: StatDef; isVisible: boolean }) {
           <p
             className={
               stat.key === "sources" || stat.key === "speed"
-                ? "text-base md:text-lg font-semibold tracking-tight text-muted-foreground italic"
-                : "text-2xl md:text-3xl font-semibold tracking-tight text-muted-foreground italic"
+                ? "text-base md:text-lg font-semibold tracking-tight text-muted-foreground italic whitespace-nowrap"
+                : "text-2xl md:text-3xl font-semibold tracking-tight text-muted-foreground italic whitespace-nowrap"
             }
           >
             {t("stats.comingSoon")}
