@@ -55,6 +55,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.description": "Keynez AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
     "footer.quickLinks": "Quick Links",
     "footer.connect": "Connect With Us",
+    "footer.company": "Company",
+    "footer.careers": "Careers",
+    "footer.press": "Press",
+    "footer.blog": "Blog",
+    "footer.comingSoon": "Coming soon",
+    "footer.email": "Email",
+    "footer.whatsapp": "WhatsApp",
+    "footer.language": "Language",
+    "footer.disclaimer": "Keynez AI is a property search platform and is not a licensed estate agent in Hong Kong. All listings link to the licensed agent or owner responsible for that listing. EAA license verification where applicable.",
 
     // Hero Section
     "hero.title": "Your Property Intelligence Companion in ",
