@@ -7,7 +7,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Keynez AI Design System - Primary: Keynez teal
+/* Keynez AI Design System - Fresh Mint-Green to Sky-Blue Palette
    All colors MUST be HSL.
 */
 
@@ -24,7 +24,7 @@
     --popover: 0 0% 89%;
     --popover-foreground: 0 0% 9%;
 
-    /* Primary: Keynez teal */
+    /* Primary: Light Blue (sky blue) */
     --primary: 161 93% 30%;
     --primary-foreground: 151 80% 95%;
 
@@ -36,8 +36,8 @@
     --muted: 0 0% 63%;
     --muted-foreground: 0 0% 9%;
 
-    /* Accent: readable mint (CTAs, chips) */
-    --accent: 166 60% 88%;
+    /* Accent: golden yellow (CTAs, highlights) */
+    --accent: 166 76% 96%;
     --accent-foreground: 173 80% 40%;
 
     --destructive: 0 72% 50%;
