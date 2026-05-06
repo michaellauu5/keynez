@@ -721,6 +721,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.search": "搜索房产...",
     "hero.searchButton": "搜索",
 
+    // How It Works Section
+    "how.title": "运作方式",
+    "how.subtitle": "三个简单步骤，找到你的下一个家",
+    "how.step1.title": "告诉我们你的需要",
+    "how.step1.desc": "用粤语、英文或普通话描述你心目中的理想居所。",
+    "how.step2.title": "AI 搜遍每个平台",
+    "how.step2.desc": "一次性搜寻 28Hse、中原、美联、Squarefoot、OneDay 及业主盘。",
+    "how.step3.title": "比较与筛选",
+    "how.step3.desc": "并排比较、AI 匹配评分，导出 PDF 或加入研究画布。",
+
     // Search Chat
     "search.placeholder": "想找什么样的房子？",
     "search.button": "搜索",
