@@ -38,7 +38,7 @@ function StatItem({ stat, isVisible }: { stat: StatDef; isVisible: boolean }) {
     <div className="flex flex-col items-center text-center px-4">
       <div className="flex items-baseline gap-1">
         {stat.verified ? (
-          <p className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+          <p className="text-xl md:text-2xl font-bold tracking-tight text-foreground truncate max-w-full">
             {animated.toLocaleString()}
             {stat.suffix ?? ""}
           </p>
