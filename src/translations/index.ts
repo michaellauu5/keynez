@@ -288,7 +288,7 @@ export const translations: Record<Language, Record<string, string>> = {
     "stats.listingsTooltip": "Aggregated from 28Hse, Centaline, Midland, Squarefoot, Spacious and verified owner listings.",
     "stats.districtsCovered": "HK districts covered",
     "stats.dataSources": "data sources, updated daily",
-    "stats.firstMatch": "avg seconds to first match",
+    "stats.firstMatch": "average seconds to first match",
     "stats.comingSoon": "Coming soon",
     "stats.dataSourcedFrom": "Data sourced from: 28Hse · Centaline · Midland · Squarefoot · Spacious · owner listings",
 
