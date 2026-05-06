@@ -63,6 +63,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 
+    // How It Works Section
+    "how.title": "How it works",
+    "how.subtitle": "Find your next home in three simple steps",
+    "how.step1.title": "Tell us what you need",
+    "how.step1.desc": "Describe your ideal place in plain Cantonese, English or Mandarin.",
+    "how.step2.title": "AI searches every platform",
+    "how.step2.desc": "We cover 28Hse, Centaline, Midland, Squarefoot, OneDay and owner listings — in one go.",
+    "how.step3.title": "Compare and shortlist",
+    "how.step3.desc": "Side-by-side comparisons, AI match score, export to PDF or the Research Canvas.",
+
     // Search Chat
     "search.placeholder": "What kind of place are you after?",
     "search.button": "Search",
