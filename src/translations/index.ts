@@ -55,6 +55,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.description": "Keynez AI is Hong Kong's premier AI-powered property search platform. We use advanced artificial intelligence to help you find your perfect home.",
     "footer.quickLinks": "Quick Links",
     "footer.connect": "Connect With Us",
+    "footer.company": "Company",
+    "footer.careers": "Careers",
+    "footer.press": "Press",
+    "footer.blog": "Blog",
+    "footer.comingSoon": "Coming soon",
+    "footer.email": "Email",
+    "footer.whatsapp": "WhatsApp",
+    "footer.language": "Language",
+    "footer.disclaimer": "Keynez AI is a property search platform and is not a licensed estate agent in Hong Kong. All listings link to the licensed agent or owner responsible for that listing. EAA license verification where applicable.",
 
     // Hero Section
     "hero.title": "Your Property Intelligence Companion in ",
@@ -403,6 +412,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.description": "Keynez AI 是香港首屈一指的人工智能物業搜尋平台。我們運用先進的人工智能技術，助您找到理想的家。",
     "footer.quickLinks": "快速連結",
     "footer.connect": "關注我們",
+    "footer.company": "公司",
+    "footer.careers": "招聘",
+    "footer.press": "新聞",
+    "footer.blog": "網誌",
+    "footer.comingSoon": "即將推出",
+    "footer.email": "電郵",
+    "footer.whatsapp": "WhatsApp",
+    "footer.language": "語言",
+    "footer.disclaimer": "Keynez AI 是物業搜尋平台，並非香港持牌地產代理。所有盤源均連結至負責該盤源的持牌代理或業主。如適用，會核實地產代理監管局牌照。",
 
     // Hero Section
     "hero.title": "新一代 · ",
@@ -751,6 +769,15 @@ export const translations: Record<Language, Record<string, string>> = {
     "footer.description": "Keynez AI 是香港首屈一指的人工智能房产搜索平台。我们运用先进的人工智能技术，帮您找到理想的家。",
     "footer.quickLinks": "快速链接",
     "footer.connect": "关注我们",
+    "footer.company": "公司",
+    "footer.careers": "招聘",
+    "footer.press": "新闻",
+    "footer.blog": "博客",
+    "footer.comingSoon": "即将推出",
+    "footer.email": "邮箱",
+    "footer.whatsapp": "WhatsApp",
+    "footer.language": "语言",
+    "footer.disclaimer": "Keynez AI 是物业搜索平台，并非香港持牌地产代理。所有房源均链接至负责该房源的持牌代理或业主。如适用，会核实地产代理监管局牌照。",
 
     // Hero Section
     "hero.title": "新一代 · ",
