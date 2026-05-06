@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/integrations/supabase/client';
 import keynezLogo from '@/assets/keynez-logo.jpg';
 const emailSchema = z.string().email();
 const quickLinks = [{
@@ -21,23 +21,7 @@ const quickLinks = [{
   labelKey: 'footer.privacy',
   href: '/privacy'
 }];
-const socialLinks = [{
-  icon: Facebook,
-  href: 'https://facebook.com',
-  label: 'Facebook'
-}, {
-  icon: Instagram,
-  href: 'https://instagram.com',
-  label: 'Instagram'
-}, {
-  icon: Twitter,
-  href: 'https://twitter.com',
-  label: 'Twitter'
-}, {
-  icon: Linkedin,
-  href: 'https://linkedin.com',
-  label: 'LinkedIn'
-}];
+const socialLinks: { icon: React.ComponentType<{ className?: string }>; href: string; label: string }[] = [];
 export function Footer() {
   const {
     t
