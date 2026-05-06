@@ -392,6 +392,16 @@ export const translations: Record<Language, Record<string, string>> = {
     "hero.search": "搜尋物業...",
     "hero.searchButton": "搜尋",
 
+    // How It Works Section
+    "how.title": "運作方式",
+    "how.subtitle": "三個簡單步驟，找到你的下一個家",
+    "how.step1.title": "告訴我們你的需要",
+    "how.step1.desc": "用廣東話、英文或普通話描述你心目中的理想居所。",
+    "how.step2.title": "AI 搜遍每個平台",
+    "how.step2.desc": "一次過搜尋 28Hse、中原、美聯、Squarefoot、OneDay 及業主盤。",
+    "how.step3.title": "比較與篩選",
+    "how.step3.desc": "並排比較、AI 匹配評分，匯出 PDF 或加入研究畫布。",
+
     // Search Chat
     "search.placeholder": "想搵乜嘢樓盤呢？",
     "search.button": "搜尋",
