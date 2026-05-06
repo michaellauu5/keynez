@@ -183,9 +183,6 @@ export function Footer() {
             {t('footer.disclaimer')}
           </p>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <Link to="/" className="flex items-center">
-              <img src={keynezLogo} alt="Keynez AI" className="h-10 w-auto" />
-            </Link>
             <p className="text-sm text-primary-foreground/60">
               © {currentYear} Keynez AI. {t('footer.copyright')}.
             </p>
