@@ -59,7 +59,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Hero Section
     "hero.title": "Your Property Intelligence Companion in ",
     "hero.titleAccent": "Hong Kong",
-    "hero.subtitle": "Fullest property source coverage in town\n One stop professional comparioson tool\n Best place to find great property deals · powered by AI",
+    "hero.subtitle": "Fullest property source coverage in town\n One stop professional comparison tool\n Best place to find great property deals · powered by AI",
     "hero.search": "Search properties...",
     "hero.searchButton": "Search",
 

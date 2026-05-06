@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Instagram, Twitter, Linkedin } from 'lucide-react';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/integrations/supabase/client';
 import keynezLogo from '@/assets/keynez-logo.jpg';
 const emailSchema = z.string().email();
 const quickLinks = [{
@@ -21,23 +21,7 @@ const quickLinks = [{
   labelKey: 'footer.privacy',
   href: '/privacy'
 }];
-const socialLinks = [{
-  icon: Facebook,
-  href: 'https://facebook.com',
-  label: 'Facebook'
-}, {
-  icon: Instagram,
-  href: 'https://instagram.com',
-  label: 'Instagram'
-}, {
-  icon: Twitter,
-  href: 'https://twitter.com',
-  label: 'Twitter'
-}, {
-  icon: Linkedin,
-  href: 'https://linkedin.com',
-  label: 'LinkedIn'
-}];
+const socialLinks: { icon: React.ComponentType<{ className?: string }>; href: string; label: string }[] = [];
 export function Footer() {
   const {
     t
@@ -58,17 +42,13 @@ export function Footer() {
       return;
     }
     setIsLoading(true);
-
-    // Store to localStorage for now (can migrate to Supabase later)
-    const subscribers = JSON.parse(localStorage.getItem('keynez-subscribers') || '[]');
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-      localStorage.setItem('keynez-subscribers', JSON.stringify(subscribers));
+    const { error } = await supabase.from('subscribers').insert({ email });
+    if (error && error.code !== '23505') {
+      toast({ title: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: t('footer.subscribeSuccess') });
+      setEmail('');
     }
-    toast({
-      title: t('footer.subscribeSuccess')
-    });
-    setEmail('');
     setIsLoading(false);
   };
   const currentYear = new Date().getFullYear();
@@ -78,7 +58,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-4">
             <Link to="/" className="inline-block">
-              
+              <img src={keynezLogo} alt="Keynez AI" className="h-8 w-auto" />
             </Link>
             <p className="text-sm text-primary-foreground/80 leading-relaxed">
               {t('footer.description')}
@@ -124,7 +104,7 @@ export function Footer() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             {/* Logo at bottom left */}
             <Link to="/" className="flex items-center">
-              
+              <img src={keynezLogo} alt="Keynez AI" className="h-8 w-auto" />
             </Link>
             
             {/* Copyright */}
