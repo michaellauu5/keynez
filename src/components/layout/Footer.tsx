@@ -42,17 +42,13 @@ export function Footer() {
       return;
     }
     setIsLoading(true);
-
-    // Store to localStorage for now (can migrate to Supabase later)
-    const subscribers = JSON.parse(localStorage.getItem('keynez-subscribers') || '[]');
-    if (!subscribers.includes(email)) {
-      subscribers.push(email);
-      localStorage.setItem('keynez-subscribers', JSON.stringify(subscribers));
+    const { error } = await supabase.from('subscribers').insert({ email });
+    if (error && error.code !== '23505') {
+      toast({ title: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: t('footer.subscribeSuccess') });
+      setEmail('');
     }
-    toast({
-      title: t('footer.subscribeSuccess')
-    });
-    setEmail('');
     setIsLoading(false);
   };
   const currentYear = new Date().getFullYear();
