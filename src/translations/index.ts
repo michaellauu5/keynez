@@ -284,6 +284,13 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Stat Counter
     "stats.activeListings": "Active Listings",
+    "stats.listingsIndexed": "listings indexed",
+    "stats.listingsTooltip": "Aggregated from 28Hse, Centaline, Midland, Squarefoot, Spacious and verified owner listings.",
+    "stats.districtsCovered": "HK districts covered",
+    "stats.dataSources": "data sources, updated daily",
+    "stats.firstMatch": "avg seconds to first match",
+    "stats.comingSoon": "Coming soon",
+    "stats.dataSourcedFrom": "Data sourced from: 28Hse · Centaline · Midland · Squarefoot · Spacious · owner listings",
 
     // Property Card
     "property.new": "New",
@@ -613,6 +620,13 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Stat Counter
     "stats.activeListings": "個活躍盤源",
+    "stats.listingsIndexed": "個已收錄盤源",
+    "stats.listingsTooltip": "資料整合自 28Hse、中原、美聯、Squarefoot、Spacious 及經核實的業主盤。",
+    "stats.districtsCovered": "個香港地區覆蓋",
+    "stats.dataSources": "個數據來源，每日更新",
+    "stats.firstMatch": "秒平均首個配對時間",
+    "stats.comingSoon": "即將推出",
+    "stats.dataSourcedFrom": "資料來源：28Hse · 中原 · 美聯 · Squarefoot · Spacious · 業主盤",
 
     // Property Card
     "property.new": "新盤",
@@ -942,6 +956,13 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Stat Counter
     "stats.activeListings": "个活跃房源",
+    "stats.listingsIndexed": "个已收录房源",
+    "stats.listingsTooltip": "数据整合自 28Hse、中原、美联、Squarefoot、Spacious 及经核实的业主房源。",
+    "stats.districtsCovered": "个香港地区覆盖",
+    "stats.dataSources": "个数据来源，每日更新",
+    "stats.firstMatch": "秒平均首次匹配时间",
+    "stats.comingSoon": "即将推出",
+    "stats.dataSourcedFrom": "数据来源：28Hse · 中原 · 美联 · Squarefoot · Spacious · 业主房源",
 
     // Property Card
     "property.new": "新盘",
