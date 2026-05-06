@@ -20,8 +20,8 @@ type StatDef = {
 };
 
 const STATS: StatDef[] = [
-  { key: "listings", value: 0, suffix: "+", labelKey: "stats.listingsIndexed", verified: false, tooltipKey: "stats.listingsTooltip" },
-  { key: "districts", value: 0, labelKey: "stats.districtsCovered", verified: false },
+  { key: "listings", value: 45000, suffix: "+", labelKey: "stats.listingsIndexed", verified: true, tooltipKey: "stats.listingsTooltip" },
+  { key: "districts", value: 17, labelKey: "stats.districtsCovered", verified: true },
   { key: "sources", value: 0, labelKey: "stats.dataSources", verified: false },
   { key: "speed", value: 0, suffix: "s", labelKey: "stats.firstMatch", verified: false },
 ];
@@ -43,7 +43,13 @@ function StatItem({ stat, isVisible }: { stat: StatDef; isVisible: boolean }) {
             {stat.suffix ?? ""}
           </p>
         ) : (
-          <p className="text-2xl md:text-3xl font-semibold tracking-tight text-muted-foreground italic">
+          <p
+            className={
+              stat.key === "sources" || stat.key === "speed"
+                ? "text-base md:text-lg font-semibold tracking-tight text-muted-foreground italic"
+                : "text-2xl md:text-3xl font-semibold tracking-tight text-muted-foreground italic"
+            }
+          >
             {t("stats.comingSoon")}
           </p>
         )}
