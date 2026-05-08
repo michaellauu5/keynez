@@ -11,6 +11,7 @@ import { AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { MatchQuality } from "./MatchQualityBadge";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { SUGGESTED_PROMPTS } from "@/data/suggestedPrompts";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SlidingPromptRow } from "./SlidingPromptRow";
@@ -138,6 +139,7 @@ export function ChatMessageList({
               {message.role === "assistant" ? (
                 <div className="prose prose-sm dark:prose-invert max-w-none">
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
                       p: ({ children }) => (
                         <p className="mb-2 last:mb-0">{children}</p>
@@ -152,6 +154,26 @@ export function ChatMessageList({
                       ),
                       li: ({ children }) => (
                         <li className="mb-1">{children}</li>
+                      ),
+                      table: ({ children }) => (
+                        <div className="my-2 overflow-x-auto">
+                          <table className="min-w-full border-collapse text-xs">
+                            {children}
+                          </table>
+                        </div>
+                      ),
+                      thead: ({ children }) => (
+                        <thead className="bg-muted/50">{children}</thead>
+                      ),
+                      th: ({ children }) => (
+                        <th className="border border-border px-2 py-1 text-left font-semibold">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="border border-border px-2 py-1 align-top">
+                          {children}
+                        </td>
                       ),
                     }}
                   >
