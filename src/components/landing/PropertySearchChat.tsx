@@ -16,6 +16,7 @@ import { useConversation, ChatMessage } from "@/hooks/useConversation";
 import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
+import { streamAgentReply, type AgentMessage } from "@/lib/agentClient";
 
 interface ExtractedCriteria {
   locations: string[];
@@ -34,9 +35,8 @@ interface ExtractedCriteria {
   specialRequirements: string;
 }
 
-// N8N Webhook configuration
-const N8N_WEBHOOK_URL = 'https://properly.app.n8n.cloud/webhook-test/keynez_agent_input';
-const WEBHOOK_TIMEOUT_MS = 60000;
+// Agent backend timeout (used as a soft cap for streaming requests)
+const AGENT_TIMEOUT_MS = 120000;
 
 const PRICE_DEFAULTS = {
   rent: [2000, 100000] as [number, number],
@@ -199,6 +199,9 @@ export function PropertySearchChat({
   const lastFiltersRef = useRef<FilterState>(DEFAULT_FILTERS);
   const lastSearchModeRef = useRef<"rent" | "buy">("rent");
   const inputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<{ abort: () => void } | null>(null);
+  const [streamingContent, setStreamingContent] = useState<string>("");
+  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
@@ -212,30 +215,28 @@ export function PropertySearchChat({
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
   }, [searchMode]);
 
-  // Loading messages for webhook search
-  const LOADING_MESSAGES = [
-    "🔍 Searching 28hse.com for listings...",
-    "🔍 Checking Squarefoot database...",
-    "🔍 Scanning Spacious listings...",
-    "🔍 Searching Midland Realty...",
-    "🔍 Checking Centaline properties...",
-    "🔍 Gathering results from OneDay...",
-    "📊 Analyzing and ranking properties...",
-    "✨ Preparing your personalized results...",
-  ];
+  // Phase labels driven by tool_start events from the agent backend.
+  const PHASE_LABELS: Record<string, string> = {
+    analyzing: "🔎 Analyzing listing pages...",
+    searching: "🌐 Searching property sites...",
+    ranking: "📊 Ranking matches...",
+    preparing: "✨ Preparing your results...",
+  };
 
-  // Webhook-based unified search using n8n
+  // Streaming agent search via VITE_AGENT_URL
   const executeSearch = useCallback(async (
     query: string, 
     currentFilters: FilterState,
     page: number = 1,
     isFollowUp: boolean = false
   ) => {
+    // Cancel any in-flight stream
+    abortRef.current?.abort();
+
     setIsSearching(true);
     setSelectedIds([]);
     setSearchErrors([]);
-    
-    // Reset source statuses
+    setStreamingContent("");
     setSearchSources(PROPERTY_SOURCES.map(name => ({ name, status: 'pending' as const })));
 
     // Add user message to conversation
@@ -245,287 +246,92 @@ export function PropertySearchChat({
       conversation.addUserMessage(query, true);
     }
 
-    let messageIndex = 0;
-    setThinkingMessage(LOADING_MESSAGES[0]);
-    const thinkingInterval = setInterval(() => {
-      messageIndex = (messageIndex + 1) % LOADING_MESSAGES.length;
-      setThinkingMessage(LOADING_MESSAGES[messageIndex]);
-    }, 2500); // Rotate every 2.5 seconds
+    setShowConversation(true);
+    setThinkingMessage(PHASE_LABELS.analyzing);
 
-    // Animate source progress
-    const sourceInterval = setInterval(() => {
-      setSearchSources(prev => {
-        const searching = prev.filter(s => s.status === 'searching').length;
-        const pending = prev.filter(s => s.status === 'pending');
-        
-        // Mark next 2 as searching
-        if (searching < 3 && pending.length > 0) {
-          const updated = [...prev];
-          const toStart = pending.slice(0, Math.min(2, pending.length));
-          toStart.forEach(s => {
-            const idx = updated.findIndex(u => u.name === s.name);
-            if (idx !== -1) {
-              updated[idx] = { ...updated[idx], status: 'searching' };
-            }
-          });
-          return updated;
-        }
-        return prev;
-      });
-    }, 600);
-
-    // Build webhook payload
-    const conversationHistory = conversation.getConversationContext();
-    const webhookPayload = {
-      user_message: query,
-      filters: {
-        property_type: currentFilters.propertyTypes,
-        transaction_type: searchMode === 'rent' ? 'Rent' : 'Buy',
-        location: currentFilters.locations,
-        price_range: {
-          min: currentFilters.priceRange[0] > PRICE_DEFAULTS[searchMode][0] ? currentFilters.priceRange[0] : null,
-          max: currentFilters.priceRange[1] < PRICE_DEFAULTS[searchMode][1] ? currentFilters.priceRange[1] : null,
-          currency: 'HKD' as const,
-        },
-        bedrooms: currentFilters.bedrooms.length > 0 
-          ? (currentFilters.bedrooms[0] === "Studio" ? 0 : parseInt(currentFilters.bedrooms[0])) 
-          : null,
-        bathrooms: currentFilters.bathrooms.length > 0 
-          ? parseInt(currentFilters.bathrooms[0]) 
-          : null,
-        size_sqft: {
-          min: currentFilters.sizeRange[0] > 0 ? currentFilters.sizeRange[0] : null,
-          max: currentFilters.sizeRange[1] < 5000 ? currentFilters.sizeRange[1] : null,
-        },
-        floor_level: currentFilters.floorLevels,
-        building_age: currentFilters.buildingAge,
-        orientation: currentFilters.orientations,
-        developer: currentFilters.developers,
-        special_features: [] as string[],
-        furnished: null,
-        pet_friendly: null,
-        parking: null,
-      },
-      language: language,
-      conversation_id: sessionStorage.getItem('keynez_conversation_id') || crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      is_followup: isFollowUp,
-      previous_results_count: results.length,
-      conversation_history: conversationHistory.map(msg => ({
-        role: msg.role,
-        message: msg.content,
-      })),
+    // Build a system message capturing app context (mode + active filters).
+    const systemMessage: AgentMessage = {
+      role: "system",
+      content: [
+        `You are the Keynez property search assistant for Hong Kong.`,
+        `Transaction mode: ${searchMode === "rent" ? "Rent" : "Buy"}.`,
+        `User language: ${language}.`,
+        `Active filters: ${JSON.stringify(currentFilters)}.`,
+        `Use the firecrawl_search tool to discover listings and firecrawl_scrape to read pages.`,
+        `When listing properties, prefer GFM Markdown tables.`,
+      ].join(" "),
     };
 
-    // Store conversation ID
-    if (!sessionStorage.getItem('keynez_conversation_id')) {
-      sessionStorage.setItem('keynez_conversation_id', webhookPayload.conversation_id);
-    }
+    const history = conversation.getConversationContext().map<AgentMessage>(m => ({
+      role: m.role,
+      content: m.content,
+    }));
+    const userTurn: AgentMessage = { role: "user", content: query };
+    const outboundMessages = [systemMessage, ...history, userTurn];
+    setAgentMessages(outboundMessages);
 
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+    let acc = "";
+    let sawTool = false;
+    let firstTokenSeen = false;
+    let timedOut = false;
 
-    try {
-      console.log('📤 Payload:', webhookPayload);
-      
-      const response = await fetch(N8N_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(webhookPayload),
-        signal: controller.signal,
-      });
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      abortRef.current?.abort();
+    }, AGENT_TIMEOUT_MS);
 
-      clearTimeout(timeoutId);
-      console.log('📥 Status:', response.status);
+    let resolveDone: () => void = () => {};
+    const completed = new Promise<void>(res => { resolveDone = res; });
 
-      // Mark all sources as done
-      setSearchSources(prev => prev.map(s => ({ ...s, status: 'done' as const })));
-
-      if (!response.ok) {
-        throw new Error(`Search failed with status ${response.status}`);
-      }
-
-      const responseText = await response.text();
-      if (!responseText || responseText.trim() === '') {
-        console.warn('Webhook returned empty response body');
-        conversation.addAssistantMessage("⚠️ Search completed but no data was returned. Please try again.");
-        setShowConversation(true);
-        return;
-      }
-      
-      let data: any;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseErr) {
-        console.error('Failed to parse webhook response:', responseText.substring(0, 200));
-        throw new Error('Invalid response from search service');
-      }
-      
-      console.log('📥 Data:', data);
-      console.log('📥 Response keys:', Object.keys(data));
-
-      // Validate response structure
-      const hasExpectedFormat = data.results !== undefined || data.success !== undefined;
-
-      if (!hasExpectedFormat) {
-        console.warn('Unexpected n8n response format. Expected {success, results, insights, ...} but got:', Object.keys(data));
-        conversation.addAssistantMessage(
-          "The search service returned an unexpected response format. Please check your n8n workflow configuration to ensure it returns the expected JSON structure with `success`, `results`, and `insights` fields.\n\nReceived keys: " + Object.keys(data).join(', ')
-        );
-        setShowConversation(true);
-        clearInterval(thinkingInterval);
-        clearInterval(sourceInterval);
-        setIsSearching(false);
-        setThinkingMessage("");
-        return;
-      }
-
-      if (!data.success && data.error) {
-        throw new Error(data.error);
-      }
-
-      // Map webhook response to existing result format
-      const webhookResults: (PropertyResult & {
-        rank?: number;
-        relevanceScore?: number;
-        matchReason?: string;
-        matchQuality?: 'perfect' | 'good' | 'partial';
-      })[] = (data.results || []).map((r: any, index: number) => ({
-        id: r.reference || `webhook-${index}`,
-        name: r.building_name,
-        location: r.location || r.district || r.area || '',
-        price: searchMode === 'rent' ? (r.monthly_rent || r.rent || r.price || 0) : (r.sale_price || r.price || 0),
-        size: r.size_sqft || 0,
-        bedrooms: r.bedrooms || '-',
-        bathrooms: r.bathrooms || '-',
-        features: r.special_features || [],
-        floorLevel: r.floor_level || '-',
-        propertyType: 'Apartment',
-        buildingAge: '-',
-        orientation: '-',
-        developer: '-',
-        agentName: r.agent_name,
-        agentContact: r.agent_contact,
-        refNumber: r.reference,
-        sourceUrl: r.source_url,
-        sourceName: r.source_name || 'n8n',
-        rank: index + 1,
-        relevanceScore: r.match_score || 50,
-        matchReason: r.match_reason || '',
-        matchQuality: ((r.match_score || 50) >= 80 ? 'perfect' : 
-                      (r.match_score || 50) >= 60 ? 'good' : 'partial') as 'perfect' | 'good' | 'partial',
-      }));
-
-      // Store agent recommendations if provided
-      if (data.agent_recommendations) {
-        // Store in state for PerplexityResults to display
-        setAgentRecommendations(data.agent_recommendations);
-      }
-
-      // Store insights if provided
-      if (data.insights) {
-        setWebhookInsights(data.insights);
-      }
-
-      // Extract criteria from results for highlighting
-      const extractedCriteria: ExtractedCriteria = {
-        locations: currentFilters.locations,
-        priceMin: currentFilters.priceRange[0] > 0 ? currentFilters.priceRange[0] : null,
-        priceMax: currentFilters.priceRange[1] < 200000000 ? currentFilters.priceRange[1] : null,
-        sizeMin: currentFilters.sizeRange[0] > 0 ? currentFilters.sizeRange[0] : null,
-        sizeMax: currentFilters.sizeRange[1] < 5000 ? currentFilters.sizeRange[1] : null,
-        bedrooms: currentFilters.bedrooms.map(b => b === 'Studio' ? 0 : parseInt(b)),
-        bathrooms: currentFilters.bathrooms.map(b => parseInt(b)),
-        propertyTypes: currentFilters.propertyTypes,
-        floorLevels: currentFilters.floorLevels,
-        buildingAge: currentFilters.buildingAge,
-        orientations: currentFilters.orientations,
-        developers: currentFilters.developers,
-        features: [],
-        specialRequirements: query,
-      };
-      setExtractedCriteria(extractedCriteria);
-
-      // Build highlight terms
-      const terms: string[] = [...currentFilters.locations];
-      setHighlightTerms(terms);
-
-      // Set results
-      if (page > 1) {
-        setResults(prev => [...prev, ...webhookResults]);
-      } else {
-        setResults(webhookResults);
-      }
-      
-      setTotalCount(data.results_count || webhookResults.length);
-      setCurrentPage(page);
-      setHasMore(false); // Webhook returns all results at once
-
-      // Add AI response to conversation and attach results to it
-      const resultCount = data.results_count || webhookResults.length;
-      if (resultCount > 0) {
-        const summaryText = data.summary 
-          || `I found **${resultCount} properties** matching your criteria. Here are the top results:`;
-        const assistantMsg = conversation.addAssistantMessage(
-          summaryText,
-          resultCount
-        );
-        
-        // Attach results to this message
-        setMessageResults(prev => ({
-          ...prev,
-          [assistantMsg.id]: {
-            mode: searchMode,
-            results: webhookResults,
-            insights: data.insights || [],
-            agentRecommendations: data.agent_recommendations || [],
-            highlightTerms: terms,
-          }
-        }));
-        
-        setShowConversation(true);
-        toast.success(`${t('search.found')} ${resultCount} ${t('search.matchingProperties')}`);
-      } else {
-        conversation.addAssistantMessage(
-          "No properties found matching your criteria. Try adjusting your filters or expanding your search area."
-        );
-        setShowConversation(true);
-      }
-      
-    } catch (error) {
-      clearTimeout(timeoutId);
-      console.log('❌ Error:', error);
-
-      // Mark sources as error
-      setSearchSources(prev => prev.map(s => ({ ...s, status: 'error' as const })));
-
-      if (error instanceof Error) {
-        if (error.name === 'AbortError') {
-          setSearchErrors(["Search is taking longer than expected. Please try again or refine your filters."]);
-          conversation.addAssistantMessage("⚠️ Search timed out. Please try again or refine your filters.");
-        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          setSearchErrors(["Unable to connect to search service. Please check your connection and try again."]);
-          conversation.addAssistantMessage("⚠️ Cannot connect to search service. Please check your connection.");
-        } else {
-          setSearchErrors([error.message]);
-          conversation.addAssistantMessage(`⚠️ Search failed: ${error.message}. Please try again.`);
+    const handle = streamAgentReply({
+      messages: outboundMessages,
+      onToolStart: ({ name }) => {
+        sawTool = true;
+        if (name === "firecrawl_search") {
+          setThinkingMessage(PHASE_LABELS.searching);
+        } else if (name === "firecrawl_scrape") {
+          setThinkingMessage(PHASE_LABELS.analyzing);
         }
-      } else {
-        setSearchErrors(["An unexpected error occurred."]);
-        conversation.addAssistantMessage("⚠️ An unexpected error occurred. Please try again.");
-      }
-      setShowConversation(true);
-    } finally {
-      clearInterval(thinkingInterval);
-      clearInterval(sourceInterval);
-      setIsSearching(false);
-      setHasSearched(true);
-    }
-  }, [t, conversation, searchMode, language, results.length]);
+      },
+      onToolEnd: () => {
+        setThinkingMessage(PHASE_LABELS.ranking);
+      },
+      onToken: (text) => {
+        if (!firstTokenSeen) {
+          firstTokenSeen = true;
+          if (!sawTool) setThinkingMessage(PHASE_LABELS.preparing);
+        }
+        acc += text;
+        setStreamingContent(acc);
+      },
+      onDone: () => {
+        const finalText = acc.trim() || "(No response from agent.)";
+        conversation.addAssistantMessage(finalText);
+        setStreamingContent("");
+        window.clearTimeout(timeoutId);
+        setIsSearching(false);
+        setHasSearched(true);
+        setThinkingMessage("");
+        setAgentMessages(prev => [...prev, { role: "assistant", content: finalText }]);
+        resolveDone();
+      },
+      onError: (err) => {
+        window.clearTimeout(timeoutId);
+        const message = timedOut
+          ? "⚠️ The agent took too long to respond. Please try again."
+          : `⚠️ ${err.message}`;
+        setSearchErrors([err.message]);
+        conversation.addAssistantMessage(message);
+        setStreamingContent("");
+        setIsSearching(false);
+        setHasSearched(true);
+        setThinkingMessage("");
+        resolveDone();
+      },
+    });
+    abortRef.current = handle;
+    await completed;
+  }, [conversation, searchMode, language]);
 
   // Auto-trigger search when filters or search mode change (debounced)
   useEffect(() => {
@@ -558,6 +364,20 @@ export function PropertySearchChat({
       }
     };
   }, [filters, searchMode, hasSearched, searchQuery, executeSearch]);
+
+  // Inject a transient streaming-assistant message into the rendered list.
+  const renderedMessages = useMemo<ChatMessage[]>(() => {
+    if (!streamingContent) return conversation.messages;
+    return [
+      ...conversation.messages,
+      {
+        id: "__streaming__",
+        role: "assistant",
+        content: streamingContent,
+        timestamp: new Date(),
+      },
+    ];
+  }, [conversation.messages, streamingContent]);
 
   const handleSearch = async () => {
     if (isSearching || !searchQuery.trim()) return;
@@ -687,7 +507,7 @@ export function PropertySearchChat({
 
           {/* Chat Messages Area - Scrollable */}
           <ChatMessageList
-            messages={conversation.messages}
+            messages={renderedMessages}
             suggestions={suggestions}
             onSuggestionClick={handleSuggestionClick}
             isLoading={isSearching}
