@@ -8,7 +8,8 @@ import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
 import { PropertyDetailModal } from "./PropertyDetailModal";
-import { ChatMessageList, WebhookResultData } from "./ChatMessageList";
+import { ChatMessageList, WebhookResultData, ToolStatus } from "./ChatMessageList";
+import { RecommendationsPayload } from "./RecommendationsView";
 import { SearchSource } from "./SearchProgressIndicator";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -16,7 +17,7 @@ import { useConversation, ChatMessage } from "@/hooks/useConversation";
 import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
-import { streamAgentReply, type AgentMessage } from "@/lib/agentClient";
+import { streamChat, type ChatMessage as AgentChatMessage } from "@/services/agentClient";
 
 interface ExtractedCriteria {
   locations: string[];
