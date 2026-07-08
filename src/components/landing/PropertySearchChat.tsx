@@ -200,9 +200,12 @@ export function PropertySearchChat({
   const lastFiltersRef = useRef<FilterState>(DEFAULT_FILTERS);
   const lastSearchModeRef = useRef<"rent" | "buy">("rent");
   const inputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<{ abort: () => void } | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
-  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
+  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([]);
+  const [toolStatus, setToolStatus] = useState<ToolStatus>({ current: "", completed: [] });
+  const [messageRecommendations, setMessageRecommendations] = useState<Record<string, RecommendationsPayload>>({});
+  const lastUserQueryRef = useRef<string>("");
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
