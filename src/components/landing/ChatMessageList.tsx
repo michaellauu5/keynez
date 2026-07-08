@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Sparkles, User, ChevronRight, Loader2 } from "lucide-react";
+import { Sparkles, User, ChevronRight, Loader2, AlertCircle, Check } from "lucide-react";
 import { ChatMessage } from "@/hooks/useConversation";
 import { ChatResultsBubble } from "./ChatResultsBubble";
 import { SearchProgressIndicator, SearchSource } from "./SearchProgressIndicator";
@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import { SUGGESTED_PROMPTS } from "@/data/suggestedPrompts";
 import { useTranslation } from "@/hooks/useTranslation";
 import { SlidingPromptRow } from "./SlidingPromptRow";
+import { RecommendationsView, RecommendationsPayload } from "./RecommendationsView";
 
 export interface WebhookResultData {
   mode: "rent" | "buy";
@@ -27,6 +28,15 @@ export interface WebhookResultData {
   highlightTerms: string[];
 }
 
+export interface ToolStatus {
+  /** Current label to animate (e.g. "正在搜尋盤源指數…"). Empty string when idle. */
+  current: string;
+  /** Completed step summaries (rendered muted with a check). */
+  completed: string[];
+  /** Optional error message to render inline in the status area. */
+  error?: string | null;
+}
+
 interface ChatMessageListProps {
   messages: ChatMessage[];
   suggestions: string[];
@@ -37,6 +47,14 @@ interface ChatMessageListProps {
   loadingMessage?: string;
   // Webhook result data keyed by message ID
   messageResults?: Record<string, WebhookResultData>;
+  // Agent recommendations keyed by assistant message ID
+  messageRecommendations?: Record<string, RecommendationsPayload>;
+  // Live tool status to render during streaming
+  toolStatus?: ToolStatus;
+  // Live streaming assistant token accumulator (for autoscroll deps)
+  streamingContent?: string;
+  // Retry the last user turn (used by error blocks)
+  onRetry?: () => void;
   // Handlers for results
   onRowClick?: (property: PropertyResult | WebSearchResult) => void;
   onExportCSV?: () => void;
@@ -53,6 +71,10 @@ export function ChatMessageList({
   searchSources,
   loadingMessage,
   messageResults,
+  messageRecommendations,
+  toolStatus,
+  streamingContent,
+  onRetry,
   onRowClick,
   onExportCSV,
   onExportPDF,
@@ -71,7 +93,13 @@ export function ChatMessageList({
         behavior: "smooth",
       });
     }
-  }, [messages, isLoading]);
+  }, [
+    messages,
+    isLoading,
+    streamingContent,
+    toolStatus?.current,
+    toolStatus?.completed?.length,
+  ]);
 
   return (
     <div
@@ -110,6 +138,8 @@ export function ChatMessageList({
 
       {messages.map((message) => {
         const resultData = messageResults?.[message.id];
+        const recData = messageRecommendations?.[message.id];
+        const isError = message.role === "assistant" && message.content.startsWith("⚠️");
 
         return (
           <div
@@ -132,7 +162,10 @@ export function ChatMessageList({
                 "rounded-2xl text-sm max-w-[90%]",
                 message.role === "user"
                   ? "bg-accent text-accent-foreground px-4 py-2.5"
-                  : "bg-card border border-border px-4 py-3"
+                  : cn(
+                      "bg-card border border-border px-4 py-3",
+                      isError && "border-destructive/40 bg-destructive/5"
+                    )
               )}
             >
               {/* Text content */}
@@ -184,8 +217,15 @@ export function ChatMessageList({
                 <p>{message.content}</p>
               )}
 
+              {/* Agent recommendations rendered inline */}
+              {message.role === "assistant" && recData && (
+                <div className="mt-3">
+                  <RecommendationsView payload={recData} />
+                </div>
+              )}
+
               {/* Webhook results embedded in assistant message */}
-              {message.role === "assistant" && resultData && (
+              {message.role === "assistant" && resultData && !recData && (
                 <div className="mt-3">
                   <ChatResultsBubble
                     mode={resultData.mode}
@@ -210,14 +250,14 @@ export function ChatMessageList({
               )}
 
               {/* Retry button for error messages */}
-              {message.role === "assistant" && message.content.startsWith("⚠️") && onSearchAgain && (
+              {isError && (onRetry || onSearchAgain) && (
                 <Button
                   variant="outline"
                   size="sm"
-                  className="mt-2 text-xs gap-1"
-                  onClick={onSearchAgain}
+                  className="mt-2 h-7 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
+                  onClick={onRetry ?? onSearchAgain}
                 >
-                  🔄 Retry
+                  重試
                 </Button>
               )}
             </div>
@@ -234,22 +274,35 @@ export function ChatMessageList({
 
       {/* Loading state as system message */}
       {isLoading && (
-        <div className="flex justify-center animate-in fade-in-50 duration-300">
-          <div className="bg-[#F5F5DC]/50 border border-border/30 rounded-2xl px-4 py-3 max-w-[90%] w-full">
-            {searchSources ? (
-              <SearchProgressIndicator
-                sources={searchSources}
-                isSearching={true}
-                totalFound={0}
-                loadingMessage={loadingMessage}
-                estimatedTime="10-30 seconds"
-              />
+        <div className="flex gap-2 animate-in fade-in-50 duration-300">
+          <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center mt-1">
+            <Sparkles className="h-3.5 w-3.5 text-accent" />
+          </div>
+          <div className="flex-1 space-y-1.5 pt-1">
+            {toolStatus?.current ? (
+              <div className="flex items-center gap-2 text-sm text-foreground/80">
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                <span className="animate-pulse">{toolStatus.current}</span>
+              </div>
             ) : (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                <span className="animate-pulse">
-                  {loadingMessage || "Searching..."}
-                </span>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
+                <span className="animate-pulse">{loadingMessage || "分析中…"}</span>
+              </div>
+            )}
+            {toolStatus?.completed?.map((line, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground pl-5 animate-in fade-in slide-in-from-left-1 duration-300"
+              >
+                <Check className="h-3 w-3 text-emerald-500" />
+                <span>{line}</span>
+              </div>
+            ))}
+            {toolStatus?.error && (
+              <div className="flex items-center gap-1.5 text-xs text-destructive pl-5">
+                <AlertCircle className="h-3 w-3" />
+                <span>{toolStatus.error}</span>
               </div>
             )}
           </div>
