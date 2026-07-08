@@ -517,9 +517,12 @@ export function PropertySearchChat({
             suggestions={suggestions}
             onSuggestionClick={handleSuggestionClick}
             isLoading={isSearching}
-            searchSources={searchSources}
             loadingMessage={thinkingMessage}
             messageResults={messageResults}
+            messageRecommendations={messageRecommendations}
+            toolStatus={toolStatus}
+            streamingContent={streamingContent}
+            onRetry={handleRetry}
             onRowClick={handleRowClick}
             onExportCSV={handleExportCSV}
             onExportPDF={handleExportPDF}
@@ -529,6 +532,8 @@ export function PropertySearchChat({
               setHasSearched(false);
               conversation.clearConversation();
               setMessageResults({});
+              setMessageRecommendations({});
+              setAgentMessages([]);
             }}
           />
 
