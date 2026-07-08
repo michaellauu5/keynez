@@ -550,6 +550,43 @@ export function PropertySearchChat({
             </div>
           </div>
 
+          {/* Intake form: entry point before the first message */}
+          {!intakeSubmitted && !conversation.hasHistory && (
+            <div className="px-4 lg:px-6 pb-4">
+              <div className="rounded-xl border border-border bg-background/60 p-4 lg:p-5">
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">告訴我您想找什麼</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    填寫以下條件後開始搜尋，或稍後隨時修改。
+                  </p>
+                </div>
+                <IntakeForm
+                  value={intakeValue}
+                  onChange={setIntakeValue}
+                  onSubmit={handleIntakeSubmit}
+                  disabled={isSearching}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Modify-criteria button after first submit */}
+          {intakeSubmitted && (
+            <div className="px-4 lg:px-6 pb-2 flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setIntakeDialogOpen(true)}
+                disabled={isSearching}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                修改搜尋條件
+              </Button>
+            </div>
+          )}
+
           {/* Chat Messages Area - Scrollable */}
           <ChatMessageList
             messages={renderedMessages}
