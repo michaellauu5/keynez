@@ -380,8 +380,16 @@ export function PropertySearchChat({
   const handleSearch = async () => {
     if (isSearching || !searchQuery.trim()) return;
     lastFiltersRef.current = filters;
-    await executeSearch(searchQuery, filters, 1, conversation.hasHistory);
+    const q = searchQuery;
+    setSearchQuery("");
+    await executeSearch(q, filters, 1, conversation.hasHistory);
   };
+
+  const handleRetry = useCallback(() => {
+    const q = lastUserQueryRef.current;
+    if (!q || isSearching) return;
+    executeSearch(q, filters, 1, conversation.hasHistory);
+  }, [executeSearch, filters, conversation.hasHistory, isSearching]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isSearching) {
