@@ -406,6 +406,30 @@ export function PropertySearchChat({
     executeSearch(q, filters, 1, conversation.hasHistory);
   }, [executeSearch, filters, conversation.hasHistory, isSearching]);
 
+  /**
+   * Compose the intake message: a fenced ```intake JSON block plus optional prose.
+   * The backend understands this and returns results immediately.
+   */
+  const handleIntakeSubmit = useCallback(
+    (payload: IntakePayload, notes: string) => {
+      // Sync the rent/buy toggle with the intake choice.
+      const mode = payload.hard_criteria.transaction_type === "sale" ? "buy" : "rent";
+      if (mode !== searchMode) setSearchMode(mode);
+
+      const isUpdate = intakeSubmitted;
+      const json = JSON.stringify(payload, null, 2);
+      const proseLines: string[] = [];
+      if (isUpdate) proseLines.push("已更新篩選條件。");
+      if (notes) proseLines.push(notes);
+      const message = "```intake\n" + json + "\n```" + (proseLines.length ? "\n\n" + proseLines.join("\n\n") : "");
+
+      setIntakeSubmitted(true);
+      setIntakeDialogOpen(false);
+      executeSearch(message, filters, 1, conversation.hasHistory);
+    },
+    [executeSearch, filters, conversation.hasHistory, searchMode, setSearchMode, intakeSubmitted],
+  );
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isSearching) {
       handleSearch();
