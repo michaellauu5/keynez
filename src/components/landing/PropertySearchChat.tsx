@@ -214,6 +214,13 @@ export function PropertySearchChat({
   const [toolStatus, setToolStatus] = useState<ToolStatus>({ current: "", completed: [] });
   const [messageRecommendations, setMessageRecommendations] = useState<Record<string, RecommendationsPayload>>({});
   const lastUserQueryRef = useRef<string>("");
+
+  // Intake form state (rendered as the entry point before the first message).
+  const [intakeValue, setIntakeValue] = useState<IntakeFormValue>(() =>
+    defaultIntakeValue(externalSearchMode === "buy" ? "sale" : "rent"),
+  );
+  const [intakeSubmitted, setIntakeSubmitted] = useState(false);
+  const [intakeDialogOpen, setIntakeDialogOpen] = useState(false);
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
