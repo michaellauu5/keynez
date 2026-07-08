@@ -18,6 +18,14 @@ import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
 import { streamChat, type ChatMessage as AgentChatMessage } from "@/services/agentClient";
+import {
+  IntakeForm,
+  defaultIntakeValue,
+  type IntakeFormValue,
+  type IntakePayload,
+} from "./IntakeForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SlidersHorizontal } from "lucide-react";
 
 interface ExtractedCriteria {
   locations: string[];
@@ -206,6 +214,13 @@ export function PropertySearchChat({
   const [toolStatus, setToolStatus] = useState<ToolStatus>({ current: "", completed: [] });
   const [messageRecommendations, setMessageRecommendations] = useState<Record<string, RecommendationsPayload>>({});
   const lastUserQueryRef = useRef<string>("");
+
+  // Intake form state (rendered as the entry point before the first message).
+  const [intakeValue, setIntakeValue] = useState<IntakeFormValue>(() =>
+    defaultIntakeValue(externalSearchMode === "buy" ? "sale" : "rent"),
+  );
+  const [intakeSubmitted, setIntakeSubmitted] = useState(false);
+  const [intakeDialogOpen, setIntakeDialogOpen] = useState(false);
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
@@ -391,6 +406,30 @@ export function PropertySearchChat({
     executeSearch(q, filters, 1, conversation.hasHistory);
   }, [executeSearch, filters, conversation.hasHistory, isSearching]);
 
+  /**
+   * Compose the intake message: a fenced ```intake JSON block plus optional prose.
+   * The backend understands this and returns results immediately.
+   */
+  const handleIntakeSubmit = useCallback(
+    (payload: IntakePayload, notes: string) => {
+      // Sync the rent/buy toggle with the intake choice.
+      const mode = payload.hard_criteria.transaction_type === "sale" ? "buy" : "rent";
+      if (mode !== searchMode) setSearchMode(mode);
+
+      const isUpdate = intakeSubmitted;
+      const json = JSON.stringify(payload, null, 2);
+      const proseLines: string[] = [];
+      if (isUpdate) proseLines.push("已更新篩選條件。");
+      if (notes) proseLines.push(notes);
+      const message = "```intake\n" + json + "\n```" + (proseLines.length ? "\n\n" + proseLines.join("\n\n") : "");
+
+      setIntakeSubmitted(true);
+      setIntakeDialogOpen(false);
+      executeSearch(message, filters, 1, conversation.hasHistory);
+    },
+    [executeSearch, filters, conversation.hasHistory, searchMode, setSearchMode, intakeSubmitted],
+  );
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isSearching) {
       handleSearch();
@@ -511,6 +550,43 @@ export function PropertySearchChat({
             </div>
           </div>
 
+          {/* Intake form: entry point before the first message */}
+          {!intakeSubmitted && !conversation.hasHistory && (
+            <div className="px-4 lg:px-6 pb-4">
+              <div className="rounded-xl border border-border bg-background/60 p-4 lg:p-5">
+                <div className="mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">告訴我您想找什麼</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    填寫以下條件後開始搜尋，或稍後隨時修改。
+                  </p>
+                </div>
+                <IntakeForm
+                  value={intakeValue}
+                  onChange={setIntakeValue}
+                  onSubmit={handleIntakeSubmit}
+                  disabled={isSearching}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Modify-criteria button after first submit */}
+          {intakeSubmitted && (
+            <div className="px-4 lg:px-6 pb-2 flex-shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => setIntakeDialogOpen(true)}
+                disabled={isSearching}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                修改搜尋條件
+              </Button>
+            </div>
+          )}
+
           {/* Chat Messages Area - Scrollable */}
           <ChatMessageList
             messages={renderedMessages}
@@ -534,6 +610,7 @@ export function PropertySearchChat({
               setMessageResults({});
               setMessageRecommendations({});
               setAgentMessages([]);
+              setIntakeSubmitted(false);
             }}
           />
 
@@ -586,6 +663,24 @@ export function PropertySearchChat({
         onAddToCanvas={handleAddToCanvas}
         type={selectedProperty && 'buildingName' in selectedProperty ? 'web' : 'ai'}
       />
+
+      {/* Modify-criteria dialog: reopens the intake form prefilled */}
+      <Dialog open={intakeDialogOpen} onOpenChange={setIntakeDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>修改搜尋條件</DialogTitle>
+          </DialogHeader>
+          <IntakeForm
+            value={intakeValue}
+            onChange={setIntakeValue}
+            onSubmit={handleIntakeSubmit}
+            onCancel={() => setIntakeDialogOpen(false)}
+            submitLabel="更新搜尋"
+            disabled={isSearching}
+            compact
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
