@@ -663,6 +663,24 @@ export function PropertySearchChat({
         onAddToCanvas={handleAddToCanvas}
         type={selectedProperty && 'buildingName' in selectedProperty ? 'web' : 'ai'}
       />
+
+      {/* Modify-criteria dialog: reopens the intake form prefilled */}
+      <Dialog open={intakeDialogOpen} onOpenChange={setIntakeDialogOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>修改搜尋條件</DialogTitle>
+          </DialogHeader>
+          <IntakeForm
+            value={intakeValue}
+            onChange={setIntakeValue}
+            onSubmit={handleIntakeSubmit}
+            onCancel={() => setIntakeDialogOpen(false)}
+            submitLabel="更新搜尋"
+            disabled={isSearching}
+            compact
+          />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
