@@ -47,7 +47,7 @@ export interface TokenEvent {
 
 export interface RecommendationsEvent {
   rows: unknown[];
-  dropped?: unknown[];
+  dropped?: number;
   table_markdown?: string;
 }
 
@@ -127,7 +127,7 @@ function dispatchFrame(
       const payload = (data ?? {}) as RecommendationsEvent;
       handlers.onRecommendations?.({
         rows: Array.isArray(payload.rows) ? payload.rows : [],
-        dropped: Array.isArray(payload.dropped) ? payload.dropped : undefined,
+        dropped: typeof payload.dropped === "number" ? payload.dropped : undefined,
         table_markdown:
           typeof payload.table_markdown === "string"
             ? payload.table_markdown

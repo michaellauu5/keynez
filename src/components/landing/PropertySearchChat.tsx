@@ -8,7 +8,8 @@ import { FilterToggleBar, FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
 import { PropertyDetailModal } from "./PropertyDetailModal";
-import { ChatMessageList, WebhookResultData } from "./ChatMessageList";
+import { ChatMessageList, WebhookResultData, ToolStatus } from "./ChatMessageList";
+import { RecommendationsPayload } from "./RecommendationsView";
 import { SearchSource } from "./SearchProgressIndicator";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -16,7 +17,7 @@ import { useConversation, ChatMessage } from "@/hooks/useConversation";
 import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
-import { streamAgentReply, type AgentMessage } from "@/lib/agentClient";
+import { streamChat, type ChatMessage as AgentChatMessage } from "@/services/agentClient";
 
 interface ExtractedCriteria {
   locations: string[];
@@ -199,9 +200,12 @@ export function PropertySearchChat({
   const lastFiltersRef = useRef<FilterState>(DEFAULT_FILTERS);
   const lastSearchModeRef = useRef<"rent" | "buy">("rent");
   const inputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<{ abort: () => void } | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [streamingContent, setStreamingContent] = useState<string>("");
-  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
+  const [agentMessages, setAgentMessages] = useState<AgentChatMessage[]>([]);
+  const [toolStatus, setToolStatus] = useState<ToolStatus>({ current: "", completed: [] });
+  const [messageRecommendations, setMessageRecommendations] = useState<Record<string, RecommendationsPayload>>({});
+  const lastUserQueryRef = useRef<string>("");
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
@@ -215,28 +219,31 @@ export function PropertySearchChat({
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
   }, [searchMode]);
 
-  // Phase labels driven by tool_start events from the agent backend.
-  const PHASE_LABELS: Record<string, string> = {
-    analyzing: "🔎 Analyzing listing pages...",
-    searching: "🌐 Searching property sites...",
-    ranking: "📊 Ranking matches...",
-    preparing: "✨ Preparing your results...",
+  // Traditional-Chinese status labels driven by tool_start events.
+  const TOOL_LABELS: Record<string, string> = {
+    query_listings: "正在搜尋盤源指數…",
+    district_stats: "正在分析區內市場行情…",
+    get_listing_detail: "正在核對盤源詳情…",
   };
+  const DEFAULT_STATUS = "分析中…";
 
-  // Streaming agent search via VITE_AGENT_URL
+  // Streaming agent search via VITE_AGENT_URL (services/agentClient)
   const executeSearch = useCallback(async (
-    query: string, 
+    query: string,
     currentFilters: FilterState,
     page: number = 1,
     isFollowUp: boolean = false
   ) => {
     // Cancel any in-flight stream
     abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setIsSearching(true);
     setSelectedIds([]);
     setSearchErrors([]);
     setStreamingContent("");
+    setToolStatus({ current: DEFAULT_STATUS, completed: [], error: null });
     setSearchSources(PROPERTY_SOURCES.map(name => ({ name, status: 'pending' as const })));
 
     // Add user message to conversation
@@ -245,93 +252,84 @@ export function PropertySearchChat({
     } else if (query && isFollowUp) {
       conversation.addUserMessage(query, true);
     }
+    lastUserQueryRef.current = query;
 
     setShowConversation(true);
-    setThinkingMessage(PHASE_LABELS.analyzing);
+    setThinkingMessage(DEFAULT_STATUS);
 
-    // Build a system message capturing app context (mode + active filters).
-    const systemMessage: AgentMessage = {
-      role: "system",
-      content: [
-        `You are the Keynez property search assistant for Hong Kong.`,
-        `Transaction mode: ${searchMode === "rent" ? "Rent" : "Buy"}.`,
-        `User language: ${language}.`,
-        `Active filters: ${JSON.stringify(currentFilters)}.`,
-        `Use the firecrawl_search tool to discover listings and firecrawl_scrape to read pages.`,
-        `When listing properties, prefer GFM Markdown tables.`,
-      ].join(" "),
-    };
-
-    const history = conversation.getConversationContext().map<AgentMessage>(m => ({
-      role: m.role,
-      content: m.content,
-    }));
-    const userTurn: AgentMessage = { role: "user", content: query };
-    const outboundMessages = [systemMessage, ...history, userTurn];
+    // Conversation history contract: append the raw assistant_content from the
+    // previous `done` event and send the whole array back with the new user turn.
+    const userTurn: AgentChatMessage = { role: "user", content: query };
+    const outboundMessages: AgentChatMessage[] = [...agentMessages, userTurn];
     setAgentMessages(outboundMessages);
 
     let acc = "";
     let sawTool = false;
-    let firstTokenSeen = false;
+    let pendingRecommendations: RecommendationsPayload | null = null;
     let timedOut = false;
 
     const timeoutId = window.setTimeout(() => {
       timedOut = true;
-      abortRef.current?.abort();
+      controller.abort();
     }, AGENT_TIMEOUT_MS);
 
-    let resolveDone: () => void = () => {};
-    const completed = new Promise<void>(res => { resolveDone = res; });
-
-    const handle = streamAgentReply({
-      messages: outboundMessages,
+    await streamChat(outboundMessages, {
+      signal: controller.signal,
       onToolStart: ({ name }) => {
         sawTool = true;
-        if (name === "firecrawl_search") {
-          setThinkingMessage(PHASE_LABELS.searching);
-        } else if (name === "firecrawl_scrape") {
-          setThinkingMessage(PHASE_LABELS.analyzing);
+        const label = TOOL_LABELS[name] ?? `正在執行 ${name}…`;
+        setToolStatus(s => ({ ...s, current: label }));
+        setThinkingMessage(label);
+      },
+      onToolEnd: ({ summary }) => {
+        if (summary) {
+          setToolStatus(s => ({ ...s, completed: [...s.completed, `✓ ${summary}`] }));
         }
       },
-      onToolEnd: () => {
-        setThinkingMessage(PHASE_LABELS.ranking);
-      },
-      onToken: (text) => {
-        if (!firstTokenSeen) {
-          firstTokenSeen = true;
-          if (!sawTool) setThinkingMessage(PHASE_LABELS.preparing);
+      onToken: ({ text }) => {
+        if (!sawTool && !acc) {
+          setToolStatus(s => ({ ...s, current: "正在整理回覆…" }));
         }
         acc += text;
         setStreamingContent(acc);
       },
-      onDone: () => {
-        const finalText = acc.trim() || "(No response from agent.)";
-        conversation.addAssistantMessage(finalText);
-        setStreamingContent("");
-        window.clearTimeout(timeoutId);
-        setIsSearching(false);
-        setHasSearched(true);
-        setThinkingMessage("");
-        setAgentMessages(prev => [...prev, { role: "assistant", content: finalText }]);
-        resolveDone();
+      onRecommendations: (payload) => {
+        pendingRecommendations = payload;
       },
-      onError: (err) => {
+      onError: ({ message }) => {
         window.clearTimeout(timeoutId);
-        const message = timedOut
-          ? "⚠️ The agent took too long to respond. Please try again."
-          : `⚠️ ${err.message}`;
-        setSearchErrors([err.message]);
-        conversation.addAssistantMessage(message);
+        const shown = timedOut
+          ? "⚠️ 代理回應逾時，請再試一次。"
+          : `⚠️ ${message}`;
+        setSearchErrors([message]);
+        setToolStatus({ current: "", completed: [], error: message });
+        conversation.addAssistantMessage(shown);
         setStreamingContent("");
         setIsSearching(false);
         setHasSearched(true);
         setThinkingMessage("");
-        resolveDone();
+        // Roll back the optimistic assistant history entry; retry resends the user turn.
+        setAgentMessages(prev => prev);
+      },
+      onDone: ({ assistant_content }) => {
+        window.clearTimeout(timeoutId);
+        // Contract: append RAW assistant_content string, unmodified, to history.
+        const raw = assistant_content ?? "";
+        const displayed = raw.trim() || acc.trim() || "(沒有內容)";
+        const msg = conversation.addAssistantMessage(displayed);
+        if (pendingRecommendations) {
+          const rec = pendingRecommendations;
+          setMessageRecommendations(prev => ({ ...prev, [msg.id]: rec }));
+        }
+        setAgentMessages(prev => [...prev, { role: "assistant", content: raw }]);
+        setStreamingContent("");
+        setToolStatus({ current: "", completed: [] });
+        setIsSearching(false);
+        setHasSearched(true);
+        setThinkingMessage("");
       },
     });
-    abortRef.current = handle;
-    await completed;
-  }, [conversation, searchMode, language]);
+  }, [conversation, searchMode, language, agentMessages]);
 
   // Auto-trigger search when filters or search mode change (debounced)
   useEffect(() => {
@@ -382,8 +380,16 @@ export function PropertySearchChat({
   const handleSearch = async () => {
     if (isSearching || !searchQuery.trim()) return;
     lastFiltersRef.current = filters;
-    await executeSearch(searchQuery, filters, 1, conversation.hasHistory);
+    const q = searchQuery;
+    setSearchQuery("");
+    await executeSearch(q, filters, 1, conversation.hasHistory);
   };
+
+  const handleRetry = useCallback(() => {
+    const q = lastUserQueryRef.current;
+    if (!q || isSearching) return;
+    executeSearch(q, filters, 1, conversation.hasHistory);
+  }, [executeSearch, filters, conversation.hasHistory, isSearching]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !isSearching) {
@@ -511,9 +517,12 @@ export function PropertySearchChat({
             suggestions={suggestions}
             onSuggestionClick={handleSuggestionClick}
             isLoading={isSearching}
-            searchSources={searchSources}
             loadingMessage={thinkingMessage}
             messageResults={messageResults}
+            messageRecommendations={messageRecommendations}
+            toolStatus={toolStatus}
+            streamingContent={streamingContent}
+            onRetry={handleRetry}
             onRowClick={handleRowClick}
             onExportCSV={handleExportCSV}
             onExportPDF={handleExportPDF}
@@ -523,6 +532,8 @@ export function PropertySearchChat({
               setHasSearched(false);
               conversation.clearConversation();
               setMessageResults({});
+              setMessageRecommendations({});
+              setAgentMessages([]);
             }}
           />
 
