@@ -610,6 +610,7 @@ export function PropertySearchChat({
               setMessageResults({});
               setMessageRecommendations({});
               setAgentMessages([]);
+              setIntakeSubmitted(false);
             }}
           />
 
