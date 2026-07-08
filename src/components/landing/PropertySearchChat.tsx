@@ -18,6 +18,14 @@ import { getRandomSuggestions } from "@/data/suggestionsPool";
 import { useWebhookSearch, WebhookFilters, WebhookPropertyResult, AgentRecommendation } from "@/hooks/useWebhookSearch";
 import { cn } from "@/lib/utils";
 import { streamChat, type ChatMessage as AgentChatMessage } from "@/services/agentClient";
+import {
+  IntakeForm,
+  defaultIntakeValue,
+  type IntakeFormValue,
+  type IntakePayload,
+} from "./IntakeForm";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SlidersHorizontal } from "lucide-react";
 
 interface ExtractedCriteria {
   locations: string[];
