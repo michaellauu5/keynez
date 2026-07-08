@@ -42,15 +42,24 @@ export function Footer() {
 
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = emailSchema.safeParse(email);
+    const trimmed = email.trim().toLowerCase();
+    const result = emailSchema.safeParse(trimmed);
     if (!result.success) {
       toast({ title: t('auth.invalidEmail'), variant: 'destructive' });
       return;
     }
     setIsLoading(true);
-    const { error } = await supabase.from('subscribers').insert({ email });
-    if (error && error.code !== '23505') {
-      toast({ title: error.message, variant: 'destructive' });
+    const { error } = await supabase
+      .from('newsletter_signups')
+      .insert({ email: trimmed });
+    if (error) {
+      // 23505 = unique_violation → already subscribed. Treat as friendly success.
+      if (error.code === '23505') {
+        toast({ title: t('footer.subscribeSuccess') });
+        setEmail('');
+      } else {
+        toast({ title: error.message, variant: 'destructive' });
+      }
     } else {
       toast({ title: t('footer.subscribeSuccess') });
       setEmail('');
