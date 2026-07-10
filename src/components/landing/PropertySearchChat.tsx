@@ -149,6 +149,12 @@ export function PropertySearchChat({
       setSearchModeInternal(externalSearchMode);
     }
   }, [externalSearchMode]);
+
+  // Notify parent when chat/search is initiated so the container can expand
+  useEffect(() => {
+    const active = hasSearched || isSearching || intakeSubmitted;
+    onActiveChange?.(active);
+  }, [hasSearched, isSearching, intakeSubmitted, onActiveChange]);
   
   // Combined results (from both AI database and web search)
   const [results, setResults] = useState<(PropertyResult & {
