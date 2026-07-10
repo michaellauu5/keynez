@@ -120,6 +120,7 @@ interface PropertySearchChatProps {
   onFiltersChange?: (filters: FilterState) => void;
   externalSearchMode?: "rent" | "buy";
   onSearchModeChange?: (mode: "rent" | "buy") => void;
+  onActiveChange?: (active: boolean) => void;
 }
 
 export function PropertySearchChat({
@@ -127,6 +128,7 @@ export function PropertySearchChat({
   onFiltersChange,
   externalSearchMode,
   onSearchModeChange,
+  onActiveChange,
 }: PropertySearchChatProps = {}) {
   const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
@@ -147,6 +149,7 @@ export function PropertySearchChat({
       setSearchModeInternal(externalSearchMode);
     }
   }, [externalSearchMode]);
+
   
   // Combined results (from both AI database and web search)
   const [results, setResults] = useState<(PropertyResult & {
@@ -223,6 +226,12 @@ export function PropertySearchChat({
   const [intakeDialogOpen, setIntakeDialogOpen] = useState(false);
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
+
+  // Notify parent when chat/search is initiated so the container can expand
+  useEffect(() => {
+    const active = hasSearched || isSearching || intakeSubmitted;
+    onActiveChange?.(active);
+  }, [hasSearched, isSearching, intakeSubmitted, onActiveChange]);
 
   // Rotate suggestions when mode changes & reset price range
   useEffect(() => {
