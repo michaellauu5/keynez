@@ -120,6 +120,7 @@ interface PropertySearchChatProps {
   onFiltersChange?: (filters: FilterState) => void;
   externalSearchMode?: "rent" | "buy";
   onSearchModeChange?: (mode: "rent" | "buy") => void;
+  onActiveChange?: (active: boolean) => void;
 }
 
 export function PropertySearchChat({
