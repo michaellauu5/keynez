@@ -227,6 +227,12 @@ export function PropertySearchChat({
   
   const activeFilterCount = countActiveFilters(filters, searchMode);
 
+  // Notify parent when chat/search is initiated so the container can expand
+  useEffect(() => {
+    const active = hasSearched || isSearching || intakeSubmitted;
+    onActiveChange?.(active);
+  }, [hasSearched, isSearching, intakeSubmitted, onActiveChange]);
+
   // Rotate suggestions when mode changes & reset price range
   useEffect(() => {
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
