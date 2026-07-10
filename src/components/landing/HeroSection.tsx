@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { PropertySearchChat } from "./PropertySearchChat";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useFilterSync } from "@/contexts/FilterSyncContext";
+import { cn } from "@/lib/utils";
 
 export function HeroSection() {
   const { t, language } = useTranslation();
   const { chatFilters, setChatFilters, searchMode, setSearchMode } = useFilterSync();
+  const [chatActive, setChatActive] = useState(false);
 
   const renderTitle = () => {
     if (language === 'en') {
