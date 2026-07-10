@@ -128,6 +128,7 @@ export function PropertySearchChat({
   onFiltersChange,
   externalSearchMode,
   onSearchModeChange,
+  onActiveChange,
 }: PropertySearchChatProps = {}) {
   const { t, language } = useTranslation();
   const [searchQuery, setSearchQuery] = useState("");
