@@ -26,6 +26,8 @@
 
 export type ChatRole = "system" | "user" | "assistant";
 
+import { AGENT_URL, KEYNEZ_SECRET } from "@/config";
+
 export interface ChatMessage {
   role: ChatRole;
   content: string;
@@ -70,16 +72,16 @@ export interface StreamChatHandlers {
 }
 
 function getConfig() {
-  const url = import.meta.env.VITE_AGENT_URL as string | undefined;
-  const secret = import.meta.env.VITE_KEYNEZ_SECRET as string | undefined;
+  const url = AGENT_URL;
+  const secret = KEYNEZ_SECRET;
   if (!url) {
     throw new Error(
-      "VITE_AGENT_URL is not configured. Set it to your agent backend base URL."
+      "AGENT_URL is not configured. Set VITE_AGENT_URL or edit src/config.ts."
     );
   }
   if (!secret) {
     throw new Error(
-      "VITE_KEYNEZ_SECRET is not configured. Set it to the shared secret expected by the agent."
+      "KEYNEZ_SECRET is not configured. Set VITE_KEYNEZ_SECRET or edit src/config.ts."
     );
   }
   return { url: url.replace(/\/$/, ""), secret };
