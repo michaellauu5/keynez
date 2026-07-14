@@ -158,7 +158,7 @@ export function IntakeForm({
   disabled,
   compact,
 }: IntakeFormProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [expandedRegion, setExpandedRegion] = useState<RegionKey | null>("hk_island");
   const [error, setError] = useState<string | null>(null);
