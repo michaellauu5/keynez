@@ -70,22 +70,6 @@ const getDefaultFilters = (mode: 'rent' | 'buy'): FilterState => ({
 
 const DEFAULT_FILTERS: FilterState = getDefaultFilters('rent');
 
-function countActiveFilters(filters: FilterState, mode: 'rent' | 'buy'): number {
-  const defaults = PRICE_DEFAULTS[mode];
-  let count = 0;
-  if (filters.propertyTypes.length > 0) count++;
-  if (filters.priceRange[0] !== defaults[0] || filters.priceRange[1] !== defaults[1]) count++;
-  if (filters.locations.length > 0) count++;
-  if (filters.bedrooms.length > 0) count++;
-  if (filters.bathrooms.length > 0) count++;
-  if (filters.sizeRange[0] !== 0 || filters.sizeRange[1] !== 5000) count++;
-  if (filters.floorLevels.length > 0) count++;
-  if (filters.buildingAge.length > 0) count++;
-  if (filters.orientations.length > 0) count++;
-  if (filters.developers.length > 0) count++;
-  return count;
-}
-
 const PROPERTY_SOURCES = [
   "28Hse", "House730", "Squarefoot", "Spacious", "OneDay", 
   "Midland", "Centaline", "Property.hk", "Okay.com"
@@ -224,8 +208,6 @@ export function PropertySearchChat({
   const [intakeSubmitted, setIntakeSubmitted] = useState(false);
   const [intakeDialogOpen, setIntakeDialogOpen] = useState(false);
   
-  const activeFilterCount = countActiveFilters(filters, searchMode);
-
   // Notify parent when chat/search is initiated so the container can expand
   useEffect(() => {
     const active = hasSearched || isSearching || intakeSubmitted;
