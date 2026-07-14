@@ -257,7 +257,7 @@ export function ChatMessageList({
                   className="mt-2 h-7 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
                   onClick={onRetry ?? onSearchAgain}
                 >
-                  重試
+                  {t("chat.retry")}
                 </Button>
               )}
             </div>
