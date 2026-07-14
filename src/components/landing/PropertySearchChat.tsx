@@ -2,9 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Search, Sparkles, Loader2, Filter, X, MessageCircle, Home, Key, RefreshCw, RotateCcw } from "lucide-react";
-import { FilterToggleBar, FilterState } from "./FilterToggleBar";
+import { Search, Sparkles, Loader2 } from "lucide-react";
+import { type FilterState } from "./FilterToggleBar";
 import { PropertyResultsTable, PropertyResult } from "./PropertyResultsTable";
 import { WebSearchResult } from "./WebSearchResultsTable";
 import { PropertyDetailModal } from "./PropertyDetailModal";
@@ -243,13 +242,13 @@ export function PropertySearchChat({
     setPromptSuggestions(getRandomSuggestions(searchMode, 4));
   }, [searchMode]);
 
-  // Traditional-Chinese status labels driven by tool_start events.
+  // Status labels driven by tool_start events (localized).
   const TOOL_LABELS: Record<string, string> = {
-    query_listings: "正在搜尋盤源指數…",
-    district_stats: "正在分析區內市場行情…",
-    get_listing_detail: "正在核對盤源詳情…",
+    query_listings: t("chat.tool.query_listings"),
+    district_stats: t("chat.tool.district_stats"),
+    get_listing_detail: t("chat.tool.get_listing_detail"),
   };
-  const DEFAULT_STATUS = "分析中…";
+  const DEFAULT_STATUS = t("chat.status.default");
 
   // Streaming agent search via VITE_AGENT_URL (services/agentClient)
   const executeSearch = useCallback(async (
@@ -301,7 +300,7 @@ export function PropertySearchChat({
       signal: controller.signal,
       onToolStart: ({ name }) => {
         sawTool = true;
-        const label = TOOL_LABELS[name] ?? `正在執行 ${name}…`;
+        const label = TOOL_LABELS[name] ?? t("chat.tool.generic").replace("{name}", name);
         setToolStatus(s => ({ ...s, current: label }));
         setThinkingMessage(label);
       },
@@ -312,7 +311,7 @@ export function PropertySearchChat({
       },
       onToken: ({ text }) => {
         if (!sawTool && !acc) {
-          setToolStatus(s => ({ ...s, current: "正在整理回覆…" }));
+          setToolStatus(s => ({ ...s, current: t("chat.status.composing") }));
         }
         acc += text;
         setStreamingContent(acc);
@@ -323,7 +322,7 @@ export function PropertySearchChat({
       onError: ({ message }) => {
         window.clearTimeout(timeoutId);
         const shown = timedOut
-          ? "⚠️ 代理回應逾時，請再試一次。"
+          ? t("chat.error.timeout")
           : `⚠️ ${message}`;
         setSearchErrors([message]);
         setToolStatus({ current: "", completed: [], error: message });
@@ -339,7 +338,7 @@ export function PropertySearchChat({
         window.clearTimeout(timeoutId);
         // Contract: append RAW assistant_content string, unmodified, to history.
         const raw = assistant_content ?? "";
-        const displayed = raw.trim() || acc.trim() || "(沒有內容)";
+        const displayed = raw.trim() || acc.trim() || "—";
         const msg = conversation.addAssistantMessage(displayed);
         if (pendingRecommendations) {
           const rec = pendingRecommendations;
@@ -428,15 +427,35 @@ export function PropertySearchChat({
       const isUpdate = intakeSubmitted;
       const json = JSON.stringify(payload, null, 2);
       const proseLines: string[] = [];
-      if (isUpdate) proseLines.push("已更新篩選條件。");
+      if (isUpdate) proseLines.push(t("chat.intake.updated"));
       if (notes) proseLines.push(notes);
       const message = "```intake\n" + json + "\n```" + (proseLines.length ? "\n\n" + proseLines.join("\n\n") : "");
 
+      // Reflect intake selections into the shared FilterState so downstream
+      // consumers (listings sync) stay coherent.
+      const mappedFilters: FilterState = {
+        ...filters,
+        propertyTypes: filters.propertyTypes,
+        priceRange: [payload.hard_criteria.budget_hkd.min, payload.hard_criteria.budget_hkd.max],
+        locations: payload.hard_criteria.districts,
+        districts: payload.hard_criteria.districts,
+        bedrooms: payload.hard_criteria.bedrooms
+          ? Array.from(
+              { length: Math.max(0, Math.min(payload.hard_criteria.bedrooms.max, 5) - payload.hard_criteria.bedrooms.min + 1) },
+              (_, i) => String(payload.hard_criteria.bedrooms!.min + i),
+            )
+          : [],
+        sizeRange: payload.hard_criteria.saleable_sqft
+          ? [payload.hard_criteria.saleable_sqft.min, payload.hard_criteria.saleable_sqft.max]
+          : filters.sizeRange,
+      };
+      setFilters(mappedFilters);
+
       setIntakeSubmitted(true);
       setIntakeDialogOpen(false);
-      executeSearch(message, filters, 1, conversation.hasHistory);
+      executeSearch(message, mappedFilters, 1, conversation.hasHistory);
     },
-    [executeSearch, filters, conversation.hasHistory, searchMode, setSearchMode, intakeSubmitted],
+    [executeSearch, filters, setFilters, conversation.hasHistory, searchMode, setSearchMode, intakeSubmitted, t],
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -499,74 +518,14 @@ export function PropertySearchChat({
     <>
       <Card className="border-0 bg-card/80 shadow-xl backdrop-blur-sm print:shadow-none print:border">
         <CardContent className="p-0 flex flex-col" style={{ minHeight: '600px' }}>
-          {/* Header: Rent/Buy Toggle + Filters */}
-          <div className="p-4 lg:p-6 pb-0 flex-shrink-0">
-            {/* CRITICAL: Rent vs Buy Toggle */}
-            <div className="mb-4 flex items-center justify-center">
-              <div className="inline-flex items-center p-1 rounded-full bg-muted border-2 border-muted">
-                <Button
-                  variant={searchMode === "rent" ? "default" : "ghost"}
-                  size="sm"
-                  className={cn(
-                    "rounded-full px-6 gap-2 transition-all",
-                    searchMode === "rent" && "bg-accent text-accent-foreground shadow-md"
-                  )}
-                  onClick={() => setSearchMode("rent")}
-                >
-                  <Key className="h-4 w-4" />
-                  {t('chat.toggle.rent')}
-                </Button>
-                <Button
-                  variant={searchMode === "buy" ? "default" : "ghost"}
-                  size="sm"
-                  className={cn(
-                    "rounded-full px-6 gap-2 transition-all",
-                    searchMode === "buy" && "bg-primary text-primary-foreground shadow-md"
-                  )}
-                  onClick={() => setSearchMode("buy")}
-                >
-                  <Home className="h-4 w-4" />
-                  {t('chat.toggle.buy')}
-                </Button>
-              </div>
-            </div>
-
-            {/* Filter Section */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Filter className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-foreground">{t('filter.filters')}</span>
-                  {activeFilterCount > 0 && (
-                    <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 text-xs font-semibold">
-                      {activeFilterCount} {t('filter.filtersActive')}
-                    </Badge>
-                  )}
-                </div>
-                {activeFilterCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground"
-                    onClick={handleClearAllFilters}
-                  >
-                    <X className="h-3 w-3" />
-                    {t('filter.clearAll')}
-                  </Button>
-                )}
-              </div>
-              <FilterToggleBar filters={filters} onFiltersChange={setFilters} searchMode={searchMode} />
-            </div>
-          </div>
-
           {/* Intake form: entry point before the first message */}
           {!intakeSubmitted && !conversation.hasHistory && (
-            <div className="px-4 lg:px-6 pb-4">
+            <div className="p-4 lg:p-6">
               <div className="rounded-xl border border-border bg-background/60 p-4 lg:p-5">
                 <div className="mb-3">
-                  <h3 className="text-sm font-semibold text-foreground">告訴我您想找什麼</h3>
+                  <h3 className="text-sm font-semibold text-foreground">{t("chat.intake.title")}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    填寫以下條件後開始搜尋，或稍後隨時修改。
+                    {t("chat.intake.subtitle")}
                   </p>
                 </div>
                 <IntakeForm
@@ -581,7 +540,7 @@ export function PropertySearchChat({
 
           {/* Modify-criteria button after first submit */}
           {intakeSubmitted && (
-            <div className="px-4 lg:px-6 pb-2 flex-shrink-0">
+            <div className="px-4 lg:px-6 pt-4 pb-2 flex-shrink-0">
               <Button
                 type="button"
                 variant="outline"
@@ -591,7 +550,7 @@ export function PropertySearchChat({
                 disabled={isSearching}
               >
                 <SlidersHorizontal className="h-3.5 w-3.5" />
-                修改搜尋條件
+                {t("chat.intake.modifyBtn")}
               </Button>
             </div>
           )}
@@ -636,7 +595,7 @@ export function PropertySearchChat({
                   onKeyDown={handleKeyDown}
                   placeholder={
                     conversation.hasHistory
-                      ? 'Ask a follow-up: "show more", "3 bedrooms instead", "tell me about #3"...'
+                      ? t("chat.input.followupPlaceholder")
                       : t('search.placeholder')
                   }
                   className="h-12 pl-10 pr-4 text-base placeholder:text-muted-foreground/60 placeholder:font-normal"
@@ -677,14 +636,14 @@ export function PropertySearchChat({
       <Dialog open={intakeDialogOpen} onOpenChange={setIntakeDialogOpen}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>修改搜尋條件</DialogTitle>
+            <DialogTitle>{t("chat.intake.modifyDialogTitle")}</DialogTitle>
           </DialogHeader>
           <IntakeForm
             value={intakeValue}
             onChange={setIntakeValue}
             onSubmit={handleIntakeSubmit}
             onCancel={() => setIntakeDialogOpen(false)}
-            submitLabel="更新搜尋"
+            submitLabel={t("chat.intake.submitUpdate")}
             disabled={isSearching}
             compact
           />
