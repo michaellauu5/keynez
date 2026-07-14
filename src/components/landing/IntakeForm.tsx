@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import { HK_REGIONS, RegionKey } from "@/data/hkDistricts";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ---------- Intake payload types ----------
 
@@ -58,25 +59,25 @@ const RENT_BUDGET_RANGE: [number, number] = [5_000, 80_000];
 const SALE_BUDGET_RANGE: [number, number] = [2_000_000, 30_000_000];
 const SQFT_RANGE: [number, number] = [200, 2000];
 
-const BEDROOM_CHIPS: { value: string; label: string }[] = [
-  { value: "0", label: "開放式" },
-  { value: "1", label: "1房" },
-  { value: "2", label: "2房" },
-  { value: "3", label: "3房" },
-  { value: "4+", label: "4房+" },
+const BEDROOM_CHIPS: { value: string; labelKey: string }[] = [
+  { value: "0", labelKey: "intake.bed.studio" },
+  { value: "1", labelKey: "intake.bed.1" },
+  { value: "2", labelKey: "intake.bed.2" },
+  { value: "3", labelKey: "intake.bed.3" },
+  { value: "4+", labelKey: "intake.bed.4plus" },
 ];
 
-const SOFT_ROWS: { key: keyof IntakeSoftPreferences; label: string }[] = [
-  { key: "near_mtr", label: "近地鐵" },
-  { key: "newer_building", label: "樓齡較新" },
-  { key: "view", label: "景觀" },
-  { key: "furnished_appliances", label: "連傢電" },
-  { key: "renovated", label: "有裝修" },
-  { key: "owner_direct", label: "業主盤" },
-  { key: "pet_friendly", label: "可養寵物" },
-  { key: "clubhouse", label: "有會所" },
-  { key: "quiet", label: "寧靜" },
-  { key: "high_floor", label: "高層" },
+const SOFT_ROWS: { key: keyof IntakeSoftPreferences; labelKey: string }[] = [
+  { key: "near_mtr", labelKey: "intake.soft.near_mtr" },
+  { key: "newer_building", labelKey: "intake.soft.newer_building" },
+  { key: "view", labelKey: "intake.soft.view" },
+  { key: "furnished_appliances", labelKey: "intake.soft.furnished_appliances" },
+  { key: "renovated", labelKey: "intake.soft.renovated" },
+  { key: "owner_direct", labelKey: "intake.soft.owner_direct" },
+  { key: "pet_friendly", labelKey: "intake.soft.pet_friendly" },
+  { key: "clubhouse", labelKey: "intake.soft.clubhouse" },
+  { key: "quiet", labelKey: "intake.soft.quiet" },
+  { key: "high_floor", labelKey: "intake.soft.high_floor" },
 ];
 
 export function defaultIntakeValue(txn: TransactionType = "rent"): IntakeFormValue {
@@ -153,10 +154,11 @@ export function IntakeForm({
   onChange,
   onSubmit,
   onCancel,
-  submitLabel = "開始搜尋",
+  submitLabel,
   disabled,
   compact,
 }: IntakeFormProps) {
+  const { t } = useTranslation();
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [expandedRegion, setExpandedRegion] = useState<RegionKey | null>("hk_island");
   const [error, setError] = useState<string | null>(null);
@@ -197,15 +199,15 @@ export function IntakeForm({
   };
 
   const validationHint = useMemo(() => {
-    if (value.districts.length === 0) return "請選擇至少一個地區";
+    if (value.districts.length === 0) return t("intake.err.noDistrict");
     const [min, max] = value.budget;
-    if (max <= min) return "預算上限必須大於下限";
+    if (max <= min) return t("intake.err.budgetInvalid");
     if (isRent && max < 3_000) {
       const wan = Math.round(max / 10_000);
-      return `您是指 $${wan || 1}萬嗎？`;
+      return t("intake.err.rentTypo").replace("{n}", String(wan || 1));
     }
     return null;
-  }, [value.districts, value.budget, isRent]);
+  }, [value.districts, value.budget, isRent, t]);
 
   const handleSubmit = () => {
     if (validationHint) {
@@ -220,7 +222,7 @@ export function IntakeForm({
     <div className={cn("space-y-5", compact && "space-y-4")}>
       {/* 1. Transaction type */}
       <div>
-        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">租/買</Label>
+        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("intake.rentBuy")}</Label>
         <div className="inline-flex items-center p-1 rounded-full bg-muted">
           <Button
             type="button"
@@ -232,7 +234,7 @@ export function IntakeForm({
             )}
             onClick={() => setTransaction("rent")}
           >
-            <Key className="h-3.5 w-3.5" /> 租
+            <Key className="h-3.5 w-3.5" /> {t("intake.rent")}
           </Button>
           <Button
             type="button"
@@ -244,7 +246,7 @@ export function IntakeForm({
             )}
             onClick={() => setTransaction("sale")}
           >
-            <Home className="h-3.5 w-3.5" /> 買
+            <Home className="h-3.5 w-3.5" /> {t("intake.buy")}
           </Button>
         </div>
       </div>
@@ -253,7 +255,7 @@ export function IntakeForm({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            地區 <span className="text-destructive">*</span>
+            {t("intake.districts")} <span className="text-destructive">*</span>
           </Label>
           {value.districts.length > 0 && (
             <button
@@ -261,7 +263,7 @@ export function IntakeForm({
               onClick={() => patch({ districts: [] })}
               className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-0.5"
             >
-              <X className="h-3 w-3" /> 清除
+              <X className="h-3 w-3" /> {t("intake.clear")}
             </button>
           )}
         </div>
@@ -330,12 +332,12 @@ export function IntakeForm({
       <div>
         <div className="flex items-center justify-between mb-1.5">
           <Label className="text-xs font-medium text-muted-foreground">
-            預算 <span className="text-destructive">*</span>
-            {isRent && <span className="ml-1 text-[11px] text-muted-foreground">（月租）</span>}
+            {t("intake.budget")} <span className="text-destructive">*</span>
+            {isRent && <span className="ml-1 text-[11px] text-muted-foreground">{t("intake.monthly")}</span>}
           </Label>
           <span className="text-xs font-medium text-foreground">
             {fmtBudget(value.budget[0], value.transaction_type)} – {fmtBudget(value.budget[1], value.transaction_type)}
-            {isRent && <span className="text-muted-foreground">/月</span>}
+            {isRent && <span className="text-muted-foreground">{t("intake.perMonth")}</span>}
           </span>
         </div>
         <Slider
@@ -351,7 +353,7 @@ export function IntakeForm({
 
       {/* 4. Bedrooms */}
       <div>
-        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">房數</Label>
+        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("intake.bedrooms")}</Label>
         <div className="flex flex-wrap gap-1.5">
           {BEDROOM_CHIPS.map(c => {
             const active = value.bedrooms.includes(c.value);
@@ -367,7 +369,7 @@ export function IntakeForm({
                     : "bg-background border-border hover:border-accent/50"
                 )}
               >
-                {c.label}
+                {t(c.labelKey)}
               </button>
             );
           })}
@@ -377,21 +379,21 @@ export function IntakeForm({
       {/* 5. Saleable sqft */}
       <div>
         <div className="flex items-center justify-between mb-1.5">
-          <Label className="text-xs font-medium text-muted-foreground">實用面積</Label>
+          <Label className="text-xs font-medium text-muted-foreground">{t("intake.sqft")}</Label>
           <div className="flex items-center gap-2">
             {value.sqftEnabled ? (
               <span className="text-xs font-medium text-foreground">
-                {value.sqft[0]} – {value.sqft[1]} 呎
+                {value.sqft[0]} – {value.sqft[1]} {t("intake.sqftUnit")}
               </span>
             ) : (
-              <span className="text-xs text-muted-foreground">不限</span>
+              <span className="text-xs text-muted-foreground">{t("intake.sqftUnlimited")}</span>
             )}
             <button
               type="button"
               className="text-[11px] text-accent hover:underline"
               onClick={() => patch({ sqftEnabled: !value.sqftEnabled })}
             >
-              {value.sqftEnabled ? "重設為不限" : "設定範圍"}
+              {value.sqftEnabled ? t("intake.sqftReset") : t("intake.sqftSetRange")}
             </button>
           </div>
         </div>
@@ -416,18 +418,19 @@ export function IntakeForm({
             className="flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
           >
             {advancedOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-            進階偏好（可選）
+            {t("intake.advanced")}
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-2 space-y-1.5">
           {SOFT_ROWS.map(row => {
             const val = value.soft[row.key] ?? 0;
+            const label = t(row.labelKey);
             return (
               <div
                 key={row.key}
                 className="flex items-center justify-between py-1 px-2 rounded hover:bg-muted/40"
               >
-                <span className="text-xs text-foreground">{row.label}</span>
+                <span className="text-xs text-foreground">{label}</span>
                 <div className="flex items-center gap-0.5">
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
@@ -435,7 +438,7 @@ export function IntakeForm({
                       type="button"
                       onClick={() => setSoft(row.key, n)}
                       className="p-0.5"
-                      aria-label={`${row.label} ${n} 星`}
+                      aria-label={`${label} ${n}`}
                     >
                       <Star
                         className={cn(
@@ -454,11 +457,11 @@ export function IntakeForm({
 
       {/* 7. Notes */}
       <div>
-        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">其他要求</Label>
+        <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">{t("intake.notes")}</Label>
         <Textarea
           value={value.notes}
           onChange={(e) => patch({ notes: e.target.value.slice(0, 500) })}
-          placeholder="例如：想要靠海、有工作間、避開高速公路旁…"
+          placeholder={t("intake.notesPlaceholder")}
           rows={2}
           className="text-sm resize-none"
         />
@@ -475,11 +478,11 @@ export function IntakeForm({
           disabled={disabled || !!validationHint}
           className="bg-accent text-accent-foreground hover:bg-accent/90"
         >
-          {submitLabel}
+          {submitLabel ?? t("chat.intake.submit")}
         </Button>
         {onCancel && (
           <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
-            取消
+            {t("chat.intake.cancel")}
           </Button>
         )}
       </div>

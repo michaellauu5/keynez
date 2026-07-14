@@ -1,74 +1,72 @@
-## Goal
+# Plan: unify chat filters + fix language coverage
 
-Replace the n8n webhook-based mock search flow in `PropertySearchChat.tsx` with a real backend call that streams Server-Sent Events (SSE) from a configurable agent endpoint. Drive the existing "thinking" UI from tool events, and render the final assistant reply as Markdown (with GFM tables).
+## 1. Remove the duplicated filter UI
 
-## Files
+Right now `PropertySearchChat` renders two filter surfaces stacked on top of each other:
 
-### 1. New: `src/lib/agentClient.ts`
+- The **original chip-based bar**: the Rent/Buy toggle + `FilterToggleBar` (property types, price, districts, bedrooms, size, floor, age, orientation, developer, facilities, views, characteristics), plus the "X filters active / Clear all" row.
+- The **new intake form** (`IntakeForm`) with 租/買 toggle, region → district chips, 預算 slider, 房數, 面積, 軟性偏好, notes.
 
-Thin SSE client. No React, no app state — just fetch + stream parsing.
+The intake form is the newer, richer, and required-fields-validated one, and it already owns the same axes (transaction type, districts, budget, bedrooms, sqft). We'll **remove the older bar** and keep the intake form as the single source of truth.
 
-- Read config from `import.meta.env`:
-  - `VITE_AGENT_URL` (base URL)
-  - `VITE_AGENT_SHARED_SECRET` (sent as `x-keynez-secret` header)
-- Export types:
-  - `AgentMessage = { role: 'system' | 'user' | 'assistant'; content: string }`
-  - Callback shapes for `onToken(text)`, `onToolStart({ name, args })`, `onToolEnd({ name, summary })`, `onDone()`, plus optional `onError(err)` and `signal?: AbortSignal`.
-- Export `streamAgentReply({ messages, onToken, onToolStart, onToolEnd, onDone, onError, signal })`:
-  - `POST ${VITE_AGENT_URL}/chat` with `content-type: application/json` and `x-keynez-secret: VITE_AGENT_SHARED_SECRET`, body `{ messages }`.
-  - Throw a clear error if env vars are missing.
-  - Read `response.body` as a `ReadableStream`, decode with `TextDecoder`, buffer by `\n\n` SSE frame boundaries.
-  - Parse each frame's `event:` and `data:` lines; `data` is JSON.
-  - Dispatch:
-    - `event: token`     → `onToken(data.text ?? data)` (string payload tolerated)
-    - `event: tool_start` → `onToolStart({ name, args })`
-    - `event: tool_end`   → `onToolEnd({ name, summary })`
-    - `event: done`       → `onDone()` and exit loop
-  - Return a `{ abort }` handle (wraps the AbortController) so callers can cancel.
+Changes in `src/components/landing/PropertySearchChat.tsx`:
 
-### 2. New deps
+- Remove the JSX block that renders the Rent/Buy pill toggle + `Filter` label row + `FilterToggleBar` (roughly lines 503–560).
+- Remove imports that become unused: `FilterToggleBar`, `Filter`, `X`, `Home`, `Key`, `Badge`, `countActiveFilters`, `activeFilterCount`, `handleClearAllFilters` and its helpers if no longer used.
+- Keep the `searchMode` state, but drive it exclusively from the intake form's `transaction_type` (already wired in `handleIntakeSubmit`). Continue to sync it to parent via `onSearchModeChange`.
+- Keep the auto-search-on-filter-change effect but simplify: filter changes now come only from intake submissions, so we can drop the debounced re-run tied to the removed bar. Follow-up searches after intake still go through the chat input.
+- `FilterSyncContext`/`externalFilters`: keep the prop shape so `HeroSection` still compiles, but populate `filters` from the intake payload inside `handleIntakeSubmit` (map districts, priceRange, bedrooms, sizeRange) so downstream consumers (property listings sync) keep working. No behavior change for them beyond filters now being sourced from intake.
+- The "修改搜尋條件" button (already present) remains the only way to change filters after the first submit — this is the "integrate to make it cleaner" behavior the user asked for.
 
-Add `react-markdown` and `remark-gfm` via `bun add` so the assistant bubble can render GFM tables.
+`FilterToggleBar.tsx` itself is still used by `PropertyListingsSection` / listings pages, so we leave the file in place; we only stop rendering it inside the chat.
 
-### 3. `src/components/landing/PropertySearchChat.tsx`
+## 2. Make chat UI honor the page language
 
-Replace the n8n `executeSearch` body (the `fetch(N8N_WEBHOOK_URL, …)` block plus all webhook response parsing) with a streaming agent call. Keep everything else — filters, `searchMode`, suggestions, mode toggle, `FilterToggleBar`, `ChatMessageList`, modal — unchanged.
+The language selector supports **English / 繁體中文 / 简体中文**, but several chat surfaces are hardcoded (mostly to Traditional Chinese). Route every user-visible string through `useTranslation()` and add matching keys to all three locales in `src/translations/index.ts`.
 
-- Maintain a `messages: AgentMessage[]` state alongside the existing `useConversation` hook (system + user + assistant turns). Seed with one `system` message describing Keynez context (mode, language, active filters serialized as JSON) so the backend has filter context without changing the request shape.
-- On submit:
-  1. Push the user turn into `messages` and into the existing conversation hook.
-  2. Set `thinkingMessage` to the localized "analyzing" string, `isSearching = true`.
-  3. Create an empty assistant message id; accumulate streamed tokens into a ref-backed string and update the displayed assistant content as tokens arrive.
-  4. Call `streamAgentReply({ messages: [...messages, userTurn], onToken, onToolStart, onToolEnd, onDone })`.
-- Tool → thinking-state mapping (drives the existing four phases):
-  - `firecrawl_search`  → `'searching'`
-  - `firecrawl_scrape`  → `'analyzing'`
-  - any other tool      → keep current phase
-  - on first token with no prior tool events → `'preparing'`
-  - on `onDone` → clear thinking and finalize the assistant message
-- Render the final assistant content with `<ReactMarkdown remarkPlugins={[remarkGfm]}>` inside the existing assistant bubble (in `ChatMessageList` the assistant branch already uses ReactMarkdown — extend that component to accept `remark-gfm` so streamed tables render correctly). No structural change to message list.
-- Drop the n8n-specific state that is no longer fed (`agentRecommendations`, `webhookInsights`, `messageResults`, `searchSources` animation, `LOADING_MESSAGES` rotation). The progress UI keeps working off `thinkingMessage` only.
-- Keep `filters`, `searchMode`, and `FilterSyncContext` wiring exactly as today.
-- Add an `AbortController` ref so a new submit cancels an in-flight stream.
+Strings to translate (with new i18n keys):
 
-### 4. `.env.example`
+`PropertySearchChat.tsx`:
+- `chat.tool.query_listings` — "Searching listings…" / "正在搜尋盤源指數…" / "正在搜寻盘源指数…"
+- `chat.tool.district_stats` — market analysis line
+- `chat.tool.get_listing_detail` — verifying listing details line
+- `chat.tool.generic` — "Running {name}…" template
+- `chat.status.default` — "Analyzing…" / "分析中…" / "分析中…"
+- `chat.status.composing` — "Composing reply…" / "正在整理回覆…"
+- `chat.error.timeout` — "⚠️ Agent response timed out. Please try again."
+- `chat.error.prefix` — "⚠️ {message}"
+- `chat.intake.updatedNote` — "Filters updated." / "已更新篩選條件。"
+- `chat.intake.title` — "Tell me what you're looking for" / "告訴我您想找什麼"
+- `chat.intake.subtitle` — "Fill in your criteria to start; you can revise anytime."
+- `chat.intake.modifyButton` — "Edit criteria" / "修改搜尋條件"
+- `chat.intake.modifyDialogTitle` — same
+- `chat.intake.submitUpdate` — "Update search" / "更新搜尋"
+- `chat.input.followupPlaceholder` — English/繁/简 versions of the follow-up hint.
 
-Append:
-```
-VITE_AGENT_URL=
-VITE_AGENT_SHARED_SECRET=
-```
+`ChatMessageList.tsx`:
+- Fallback string on line 290 ("分析中…") → use `chat.status.default`.
+- Any other hardcoded UI copy in the file (retry button, empty state, section headers) — audit and translate.
 
-`.env` is auto-managed and not edited by hand; the user will add the real values via the Lovable secrets/env UI.
+`IntakeForm.tsx`:
+- All hardcoded Chinese labels: `intake.bedroom.studio` (開放式), soft-preference labels (近地鐵, 樓齡較新, 景觀, 連傢電, 有裝修, 業主盤, 可養寵物, 有會所, 寧靜, 高層), validation messages ("請選擇至少一個地區", "預算上限必須大於下限"), sqft toggle labels ("重設為不限" / "設定範圍"), notes placeholder, default `submitLabel` ("開始搜尋"), and section headings inside the form (租/買, 地區, 預算, 房數, 面積, 軟性偏好, 備註).
+- Region preset labels 港島/九龍/新界 and the district chip labels stay in Chinese as **data values** (the backend expects Traditional Chinese district names per project rules), but their surrounding UI labels get translated.
+
+`RecommendationsView.tsx`:
+- Table headers on lines 103–104 (排名, 屋苑/大廈, 地區, 價格, 房數, 面積, 樓齡, 距離港鐵, 景觀, 特色, 評分, 代理/業主, 來源) → i18n keys under `rec.table.*`.
+- "查看原盤" button, "已剔除 N 個資料不完整的盤源" muted line, "—" placeholder is fine.
+
+`translations/index.ts`:
+- Add all new keys to `en`, `zh-HK`, `zh-CN` blocks. Traditional stays as today; add English and Simplified equivalents. Reuse existing keys where they already exist (`chat.toggle.rent`, `filter.filters`, etc. — but most of those are on the bar we're removing).
+
+## 3. Verification
+
+- Type-check passes.
+- Visually confirm the chat card shows only the intake form before first search, and the "Edit criteria" button after.
+- Switch language to English and 简体中文 in the header dropdown, then open the chat: intake labels, tool status animations, streaming placeholders, retry copy, and recommendations table header all follow the selection.
+- Submit a search in each language and confirm the tool status line ("Searching listings…") localizes.
 
 ## Out of scope
 
-- No backend/edge-function changes — the agent is assumed to live at `VITE_AGENT_URL`.
-- No changes to `useWebhookSearch`, `PropertyResultsTable`, or `ChatResultsBubble` data shapes; they simply won't be populated by the agent path until tool events carry structured results (future work).
-- No changes to translations, layout, or routing.
-
-## Verification
-
-- Build passes.
-- With env vars unset, submitting shows a clear error toast (from `onError`) instead of a silent failure.
-- With env vars set against a stub SSE server, the four thinking phases progress correctly and the final Markdown (including a GFM table) renders inside the assistant bubble.
+- The `FilterToggleBar` component itself and the listings pages that use it — untouched.
+- Backend `intake` payload contract — unchanged; districts still sent in Traditional Chinese.
+- Any styling redesign of the intake form beyond removing the sibling bar above it.

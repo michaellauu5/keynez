@@ -257,7 +257,7 @@ export function ChatMessageList({
                   className="mt-2 h-7 text-xs gap-1 border-destructive/40 text-destructive hover:bg-destructive/10"
                   onClick={onRetry ?? onSearchAgain}
                 >
-                  重試
+                  {t("chat.retry")}
                 </Button>
               )}
             </div>
@@ -287,7 +287,7 @@ export function ChatMessageList({
             ) : (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-accent" />
-                <span className="animate-pulse">{loadingMessage || "分析中…"}</span>
+                <span className="animate-pulse">{loadingMessage || t("chat.status.default")}</span>
               </div>
             )}
             {toolStatus?.completed?.map((line, i) => (

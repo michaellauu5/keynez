@@ -2,6 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/hooks/useTranslation";
 
 /**
  * A single listing row from the agent `recommendations` event.
@@ -64,7 +65,7 @@ function FeatureChips({ tags }: { tags?: string[] }) {
   );
 }
 
-function SourceButton({ url }: { url?: string }) {
+function SourceButton({ url, label }: { url?: string; label: string }) {
   if (!url) return <span className="text-muted-foreground">—</span>;
   return (
     <Button
@@ -75,22 +76,32 @@ function SourceButton({ url }: { url?: string }) {
     >
       <a href={url} target="_blank" rel="noopener noreferrer">
         <ExternalLink className="h-3 w-3" />
-        查看原盤
+        {label}
       </a>
     </Button>
   );
 }
 
 export function RecommendationsView({ payload }: { payload: RecommendationsPayload }) {
+  const { t } = useTranslation();
   const { rows, dropped } = payload;
   if (!rows || rows.length === 0) {
     return (
       <div className="text-xs text-muted-foreground italic">
-        未找到符合條件的盤源。
-        {dropped && dropped > 0 ? ` 已剔除 ${dropped} 個資料不完整的盤源。` : ""}
+        {t("rec.empty")}
+        {dropped && dropped > 0 ? " " + t("rec.dropped").replace("{n}", String(dropped)) : ""}
       </div>
     );
   }
+
+  const headers = [
+    t("rec.h.rank"), t("rec.h.name"), t("rec.h.district"), t("rec.h.price"),
+    t("rec.h.bedrooms"), t("rec.h.size"), t("rec.h.age"), t("rec.h.mtr"),
+    t("rec.h.view"), t("rec.h.features"), t("rec.h.score"), t("rec.h.agent"), t("rec.h.source"),
+  ];
+  const viewSourceLabel = t("rec.viewSource");
+  const yearsLabel = t("rec.years");
+  const bedsLabel = t("rec.beds");
 
   return (
     <div className="space-y-3">
@@ -99,10 +110,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
         <table className="min-w-full text-xs">
           <thead className="bg-muted/50 text-muted-foreground">
             <tr>
-              {[
-                "排名","屋苑/大廈","地區","價格","房數","面積","樓齡",
-                "距離港鐵","景觀","特色","評分","代理/業主","來源",
-              ].map(h => (
+              {headers.map(h => (
                 <th key={h} className="px-2 py-2 text-left font-medium whitespace-nowrap">{h}</th>
               ))}
             </tr>
@@ -122,7 +130,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
                 <td className="px-2 py-2 whitespace-nowrap font-semibold text-foreground">{fmtPrice(r.price_hkd)}</td>
                 <td className="px-2 py-2">{fmtOr(r.bedrooms)}</td>
                 <td className="px-2 py-2 whitespace-nowrap">{r.saleable_sqft ? `${r.saleable_sqft} ft²` : "—"}</td>
-                <td className="px-2 py-2 whitespace-nowrap">{r.building_age_years != null ? `${r.building_age_years} 年` : "—"}</td>
+                <td className="px-2 py-2 whitespace-nowrap">{r.building_age_years != null ? `${r.building_age_years} ${yearsLabel}` : "—"}</td>
                 <td className="px-2 py-2 whitespace-nowrap">{fmtOr(r.mtr_distance)}</td>
                 <td className="px-2 py-2">{fmtOr(r.view)}</td>
                 <td className="px-2 py-2 min-w-[140px]"><FeatureChips tags={r.feature_tags} /></td>
@@ -134,7 +142,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
                   ) : "—"}
                 </td>
                 <td className="px-2 py-2">{fmtOr(r.agent_owner)}</td>
-                <td className="px-2 py-2"><SourceButton url={r.source_url} /></td>
+                <td className="px-2 py-2"><SourceButton url={r.source_url} label={viewSourceLabel} /></td>
               </tr>
             ))}
           </tbody>
@@ -174,7 +182,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
             </div>
 
             <div className="text-xs text-muted-foreground">
-              {fmtOr(r.bedrooms, " 房")} · {r.saleable_sqft ? `${r.saleable_sqft} ft²` : "—"} · {r.building_age_years != null ? `${r.building_age_years} 年樓` : "—"}
+              {fmtOr(r.bedrooms, ` ${bedsLabel}`)} · {r.saleable_sqft ? `${r.saleable_sqft} ft²` : "—"} · {r.building_age_years != null ? `${r.building_age_years} ${yearsLabel}` : "—"}
             </div>
 
             {r.mtr_distance || r.view ? (
@@ -189,7 +197,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-[10px] text-muted-foreground">{fmtOr(r.agent_owner)}</span>
-              <SourceButton url={r.source_url} />
+              <SourceButton url={r.source_url} label={viewSourceLabel} />
             </div>
           </div>
         ))}
@@ -197,7 +205,7 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
 
       {dropped != null && dropped > 0 && (
         <p className="text-[11px] text-muted-foreground italic">
-          已剔除 {dropped} 個資料不完整的盤源
+          {t("rec.dropped").replace("{n}", String(dropped))}
         </p>
       )}
     </div>
