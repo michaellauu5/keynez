@@ -17,9 +17,10 @@ export interface RecommendationRow {
   saleable_sqft?: number;
   building_age_years?: number;
   mtr_distance?: string;
+  mtr?: string;
   view?: string;
   feature_tags?: string[];
-  score?: number;
+  score?: number | string;
   agent_owner?: string;
   source?: string;
   source_url?: string;
@@ -29,6 +30,7 @@ export interface RecommendationRow {
 export interface RecommendationsPayload {
   rows: RecommendationRow[];
   dropped?: number;
+  truncated?: boolean;
   table_markdown?: string;
 }
 
@@ -47,7 +49,7 @@ function fmtOr(value: unknown, suffix = ""): string {
 
 function FeatureChips({ tags }: { tags?: string[] }) {
   if (!tags || tags.length === 0) return <>—</>;
-  const shown = tags.slice(0, 5);
+  const shown = tags.slice(0, 4);
   const overflow = tags.length - shown.length;
   return (
     <div className="flex flex-wrap gap-1">
@@ -63,6 +65,15 @@ function FeatureChips({ tags }: { tags?: string[] }) {
       )}
     </div>
   );
+}
+
+/** Score arrives pre-formatted like "9/10" or "9/10 — 開揚海景". */
+function parseScore(score?: number | string): { badge: string; reason?: string } | null {
+  if (score == null || score === "") return null;
+  if (typeof score === "number") return { badge: `${score}/10` };
+  const idx = score.indexOf(" — ");
+  if (idx === -1) return { badge: score.trim() };
+  return { badge: score.slice(0, idx).trim(), reason: score.slice(idx + 3).trim() };
 }
 
 function SourceButton({ url, label }: { url?: string; label: string }) {
@@ -84,7 +95,7 @@ function SourceButton({ url, label }: { url?: string; label: string }) {
 
 export function RecommendationsView({ payload }: { payload: RecommendationsPayload }) {
   const { t } = useTranslation();
-  const { rows, dropped } = payload;
+  const { rows, dropped, truncated } = payload;
   if (!rows || rows.length === 0) {
     return (
       <div className="text-xs text-muted-foreground italic">
@@ -117,6 +128,10 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
           </thead>
           <tbody>
             {rows.map((r, i) => (
+              (() => {
+              const mtr = r.mtr ?? r.mtr_distance;
+              const scoreParts = parseScore(r.score);
+              return (
               <tr
                 key={i}
                 className={cn(
@@ -131,19 +146,28 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
                 <td className="px-2 py-2">{fmtOr(r.bedrooms)}</td>
                 <td className="px-2 py-2 whitespace-nowrap">{r.saleable_sqft ? `${r.saleable_sqft} ft²` : "—"}</td>
                 <td className="px-2 py-2 whitespace-nowrap">{r.building_age_years != null ? `${r.building_age_years} ${yearsLabel}` : "—"}</td>
-                <td className="px-2 py-2 whitespace-nowrap">{fmtOr(r.mtr_distance)}</td>
+                <td className="px-2 py-2 whitespace-nowrap">{fmtOr(mtr)}</td>
                 <td className="px-2 py-2">{fmtOr(r.view)}</td>
                 <td className="px-2 py-2 min-w-[140px]"><FeatureChips tags={r.feature_tags} /></td>
                 <td className="px-2 py-2 whitespace-nowrap">
-                  {r.score != null ? (
-                    <Badge className="bg-accent/20 text-accent-foreground hover:bg-accent/20 font-semibold">
-                      {r.score}/10
-                    </Badge>
+                  {scoreParts ? (
+                    <div className="flex flex-col gap-1 max-w-[160px]">
+                      <Badge className="bg-accent/20 text-accent-foreground hover:bg-accent/20 font-semibold w-fit">
+                        {scoreParts.badge}
+                      </Badge>
+                      {scoreParts.reason && (
+                        <span className="text-[10px] text-muted-foreground truncate" title={scoreParts.reason}>
+                          {scoreParts.reason}
+                        </span>
+                      )}
+                    </div>
                   ) : "—"}
                 </td>
                 <td className="px-2 py-2">{fmtOr(r.agent_owner)}</td>
                 <td className="px-2 py-2"><SourceButton url={r.source_url} label={viewSourceLabel} /></td>
               </tr>
+              );
+              })()
             ))}
           </tbody>
         </table>
@@ -151,7 +175,10 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
 
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {rows.map((r, i) => (
+        {rows.map((r, i) => {
+          const mtr = r.mtr ?? r.mtr_distance;
+          const scoreParts = parseScore(r.score);
+          return (
           <div
             key={i}
             className="rounded-lg border border-border bg-card p-3 space-y-2"
@@ -166,18 +193,26 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
                 />
               ) : null}
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   <span className="font-semibold text-foreground">#{r.rank ?? i + 1}</span>
-                  <span>·</span>
-                  <span>{fmtOr(r.district)}</span>
                 </div>
-                <div className="font-medium text-sm text-foreground truncate">{fmtOr(r.building_name)}</div>
+                <div className="text-sm text-foreground truncate">
+                  <span className="font-bold">{fmtOr(r.building_name)}</span>
+                  {r.district ? <span className="text-muted-foreground"> · {r.district}</span> : null}
+                </div>
                 <div className="font-semibold text-sm text-foreground">{fmtPrice(r.price_hkd)}</div>
               </div>
-              {r.score != null && (
-                <Badge className="bg-accent/20 text-accent-foreground hover:bg-accent/20 font-semibold flex-shrink-0">
-                  {r.score}/10
-                </Badge>
+              {scoreParts && (
+                <div className="flex flex-col items-end gap-1 flex-shrink-0 max-w-[45%]">
+                  <Badge className="bg-accent/20 text-accent-foreground hover:bg-accent/20 font-semibold">
+                    {scoreParts.badge}
+                  </Badge>
+                  {scoreParts.reason && (
+                    <span className="text-[10px] text-muted-foreground truncate max-w-full text-right" title={scoreParts.reason}>
+                      {scoreParts.reason}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
@@ -185,10 +220,10 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
               {fmtOr(r.bedrooms, ` ${bedsLabel}`)} · {r.saleable_sqft ? `${r.saleable_sqft} ft²` : "—"} · {r.building_age_years != null ? `${r.building_age_years} ${yearsLabel}` : "—"}
             </div>
 
-            {r.mtr_distance || r.view ? (
+            {mtr || r.view ? (
               <div className="text-xs text-muted-foreground">
-                {r.mtr_distance ? `🚇 ${r.mtr_distance}` : ""}
-                {r.mtr_distance && r.view ? " · " : ""}
+                {mtr ? `🚇 ${mtr}` : ""}
+                {mtr && r.view ? " · " : ""}
                 {r.view ? `🌇 ${r.view}` : ""}
               </div>
             ) : null}
@@ -200,12 +235,19 @@ export function RecommendationsView({ payload }: { payload: RecommendationsPaylo
               <SourceButton url={r.source_url} label={viewSourceLabel} />
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {dropped != null && dropped > 0 && (
         <p className="text-[11px] text-muted-foreground italic">
           {t("rec.dropped").replace("{n}", String(dropped))}
+        </p>
+      )}
+
+      {truncated && (
+        <p className="text-[11px] text-muted-foreground italic">
+          因篇幅所限，僅顯示部分結果——可要求我重新排序或收窄條件
         </p>
       )}
     </div>
