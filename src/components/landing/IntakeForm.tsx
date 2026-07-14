@@ -276,7 +276,7 @@ export function IntakeForm({
                 variant="secondary"
                 className="bg-accent/15 text-foreground gap-1 pr-1 py-0.5"
               >
-                {d}
+                {getDistrictLabel(d, language)}
                 <button
                   type="button"
                   onClick={() => toggleDistrict(d)}
@@ -299,7 +299,7 @@ export function IntakeForm({
               className="rounded-full h-7 px-3 text-xs"
               onClick={() => setExpandedRegion(expandedRegion === r.key ? null : r.key)}
             >
-              {r.label}
+              {getRegionLabel(r.key, language)}
             </Button>
           ))}
         </div>
@@ -320,7 +320,7 @@ export function IntakeForm({
                       : "bg-background border-border hover:border-accent/50 text-foreground"
                   )}
                 >
-                  {d}
+                  {getDistrictLabel(d, language)}
                 </button>
               );
             })}
