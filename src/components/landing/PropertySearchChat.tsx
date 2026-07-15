@@ -318,13 +318,18 @@ export function PropertySearchChat({
       },
       onDone: ({ assistant_content }) => {
         window.clearTimeout(timeoutId);
-        // Contract: append RAW assistant_content string, unmodified, to history.
+        // Contract: assistant_content is INTERNAL state — append raw to the
+        // outbound message history for the next turn, but NEVER render it.
+        // The visible assistant bubble contains only what streamed via token
+        // events (plus the recommendations component).
         const raw = assistant_content ?? "";
-        const displayed = raw.trim() || acc.trim() || "—";
-        const msg = conversation.addAssistantMessage(displayed);
-        if (pendingRecommendations) {
-          const rec = pendingRecommendations;
-          setMessageRecommendations(prev => ({ ...prev, [msg.id]: rec }));
+        const displayed = acc;
+        if (displayed.trim() || pendingRecommendations) {
+          const msg = conversation.addAssistantMessage(displayed);
+          if (pendingRecommendations) {
+            const rec = pendingRecommendations;
+            setMessageRecommendations(prev => ({ ...prev, [msg.id]: rec }));
+          }
         }
         setAgentMessages(prev => [...prev, { role: "assistant", content: raw }]);
         setStreamingContent("");
@@ -336,37 +341,10 @@ export function PropertySearchChat({
     });
   }, [conversation, searchMode, language, agentMessages]);
 
-  // Auto-trigger search when filters or search mode change (debounced)
-  useEffect(() => {
-    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(lastFiltersRef.current);
-    const modeChanged = searchMode !== lastSearchModeRef.current;
-    
-    if ((filtersChanged || modeChanged) && hasSearched) {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-      
-      // If mode changed, clear previous results first
-      if (modeChanged) {
-        setResults([]);
-        setWebResults([]);
-        setHasSearched(false);
-      }
-      
-      searchTimeoutRef.current = setTimeout(() => {
-        executeSearch(searchQuery, filters, 1, true);
-      }, 300);
-      
-      lastFiltersRef.current = filters;
-      lastSearchModeRef.current = searchMode;
-    }
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [filters, searchMode, hasSearched, searchQuery, executeSearch]);
+  // NOTE: We intentionally do NOT auto-trigger streamChat on filter/mode
+  // changes. The agent backend must only be called from explicit user
+  // actions (intake submit, send button, retry). Any auto-send here would
+  // produce a stray follow-up request right after `done`.
 
   // Inject a transient streaming-assistant message into the rendered list.
   const renderedMessages = useMemo<ChatMessage[]>(() => {
