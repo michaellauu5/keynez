@@ -6,7 +6,8 @@
  */
 
 export const AGENT_URL: string =
-  (import.meta.env.VITE_AGENT_URL as string | undefined) ?? "http://localhost:8000";
+  (import.meta.env.VITE_AGENT_URL as string | undefined) ??
+  "https://island-impose-either-hostel.trycloudflare.com";
 
 export const KEYNEZ_SECRET: string =
   (import.meta.env.VITE_KEYNEZ_SECRET as string | undefined) ?? "test-secret-123";
